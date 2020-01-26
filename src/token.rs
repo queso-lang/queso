@@ -18,7 +18,7 @@ pub enum TokenType {
     If, Else, For, While, Match,
     Break, Continue,
     Trace, Return, In, Catch,
-    This, Prv, Static, New, Base,
+    This, Prv, Static, New, Base, Init,
     True, False,
 
     EOF,
@@ -29,7 +29,7 @@ pub enum TokenType {
 pub struct Token {
     pub t: TokenType,
     pub val: String,
-    // pub pos: Pos
+    pub pos: TokenPos
 }
 
 impl std::fmt::Display for Token {
@@ -39,5 +39,19 @@ impl std::fmt::Display for Token {
             write!(f, "{:?}: {}", self.t, self.val)
         }
         else {write!(f, "{:?}", self.t)}
+    }
+}
+
+pub struct TokenPos {
+    pub from_col: u32,
+    pub to_col: u32,
+    pub line: u32
+}
+
+impl TokenPos {
+    pub fn new(from_col: u32, to_col: u32, line: u32) -> TokenPos {
+        TokenPos {
+            from_col, to_col, line
+        }
     }
 }

@@ -4,6 +4,8 @@
 mod token;
 use token::*;
 
+mod lexer;
+
 fn main() {
     
 }

@@ -2,7 +2,7 @@
 name = "rsqueso"
 version = "0.1.0"
 authors = ["Mateusz Sowiński-Smętny <matisowagm@gmail.com>"]
-edition = "2020"
+edition = "2018"
 
 
 [dependencies]
