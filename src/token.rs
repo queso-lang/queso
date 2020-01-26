@@ -1,3 +1,5 @@
+use crate::Lexer;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenType {
     LeftParen, RightParen, LeftBracket, RightBracket, LeftBrace, RightBrace,
@@ -27,6 +29,7 @@ pub enum TokenType {
     Invalid
 }
 
+#[derive(Clone)]
 pub struct Token {
     pub t: TokenType,
     pub val: String,
@@ -43,6 +46,7 @@ impl std::fmt::Display for Token {
     }
 }
 
+#[derive(Clone)]
 pub struct TokenPos {
     pub from_col: u32,
     pub to_col: u32,
@@ -54,5 +58,49 @@ impl TokenPos {
         TokenPos {
             from_col, to_col, line
         }
+    }
+}
+
+#[derive(Clone)]
+enum Nullable<T: Clone> {
+    Val(T),
+    Null
+}
+
+impl<T: Clone> Nullable<T> where T: Clone {
+    pub fn get(&self) -> T where T: Clone {
+        match self {
+            Nullable::Val(val) => {
+                return val.clone();
+            }
+            Nullable::Null => {
+                panic!();
+            }
+        }
+    }
+    pub fn set(&mut self, val: T) where T: Clone {
+        let test = Nullable::Val(val).clone();
+        *self = test;
+    }
+}
+
+
+pub struct TokenStream {
+    lexer: Lexer,
+
+    _last: Nullable<Token>,
+    _cur: Nullable<Token>
+}
+
+impl TokenStream {
+    pub fn next(&mut self) {
+        self._last = self._cur.clone();
+        self._cur = Nullable::Val(self.lexer.lex_next());
+    }
+    pub fn last(&self) -> Token {
+        self._last.get()
+    }
+    pub fn cur(&self) -> Token {
+        self._cur.get()
     }
 }
