@@ -197,3 +197,60 @@ impl Lexer {
         else { self.new_token(TokenType::Identifier) }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_strings() {
+        let mut lexer = Lexer::new(String::from("\"foo\" \'bar\' \"b\'uz\'z\" \'y\"ee\"t\'"));
+        
+        assert_eq!(lexer.lex_next().val, "\"foo\"");
+        assert_eq!(lexer.lex_next().val, "\'bar\'");
+        assert_eq!(lexer.lex_next().val, "\"b\'uz\'z\"");
+        assert_eq!(lexer.lex_next().val, "\'y\"ee\"t\'");
+    }
+
+    #[test]
+    fn test_identifiers() {
+        let mut lexer = Lexer::new(String::from("abc let def emit"));
+        
+        assert_eq!(lexer.lex_next().t, TokenType::Identifier);
+        assert_eq!(lexer.lex_next().t, TokenType::Let);
+        assert_eq!(lexer.lex_next().val, "def");
+        assert_eq!(lexer.lex_next().val, "emit");
+    }
+
+    #[test]
+    fn test_numbers() {
+        let mut lexer = Lexer::new(String::from("123 4.56"));
+        
+        assert_eq!(lexer.lex_next().t, TokenType::Number);
+        assert_eq!(lexer.lex_next().val, "4.56");
+    }
+
+    #[test]
+    fn test_invalid() {
+        let mut lexer = Lexer::new(String::from("^ ` Ł"));
+        
+        assert_eq!(lexer.lex_next().t, TokenType::Invalid);
+        assert_eq!(lexer.lex_next().t, TokenType::Invalid);
+        assert_eq!(lexer.lex_next().t, TokenType::Invalid);
+    }
+
+    #[test]
+    fn test_comments() {
+        let mut lexer = Lexer::new(String::from("//test"));
+        
+        assert_eq!(lexer.lex_next().t, TokenType::EOF);
+    }
+
+    #[test]
+    fn test_newline() {
+        let mut lexer = Lexer::new(String::from("abc\ndef"));
+        
+        assert_eq!(lexer.lex_next().val, "abc");
+        assert_eq!(lexer.lex_next().val, "def");
+    }
+}
