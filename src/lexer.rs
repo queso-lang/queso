@@ -76,9 +76,14 @@ impl Lexer {
             '+' => self.new_token(TokenType::Plus),
             ',' => self.new_token(TokenType::Comma),
             '.' => self.new_token(TokenType::Dot),
-            '*' => self.new_token(TokenType::Star),
+            '#' => self.new_token(TokenType::Hash),
+            '%' => self.new_token(TokenType::Percent),
 
-            '@' => {
+            '*' => {
+                let t = if self.match_token('*') {TokenType::StarStar} else {TokenType::Star};
+                self.new_token(t)
+            },
+            '-' => {
                 let t = if self.match_token('>') {TokenType::Arrow} else {TokenType::Minus};
                 self.new_token(t)
             },
