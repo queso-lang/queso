@@ -19,6 +19,7 @@ pub enum TokenType {
     Break, Continue,
     Trace, Return, In, Catch,
     This, Prv, Static, New, Base, Init,
+    Emit, On,
     True, False,
 
     EOF,
