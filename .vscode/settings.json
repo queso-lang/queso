@@ -1,0 +1,7 @@
+{
+"debug.allowBreakpointsEverywhere": true,
+"editor.tabSize": 4,
+"files.eol": "\n",
+"editor.insertSpaces": true,
+"editor.detectIndentation": false
+}
