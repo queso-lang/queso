@@ -119,13 +119,13 @@ impl Lexer {
             },
             '/' => {
                 if self.match_token('/') {
-                    while *self.peek(0) != '\n' && !self.is_eof() {
+                    while self.peek(0) != & '\n' && !self.is_eof() {
                         self.next();
                     }
                     self.lex_next()
                 }
                 else if self.match_token('*') {
-                    while *self.peek(0) != '*' && *self.peek(1) != '/' && self.is_eof() {
+                    while self.peek(0) != & '*' && self.peek(1) != & '/' && self.is_eof() {
                         self.next();
                     }
                     //improve this
@@ -144,7 +144,7 @@ impl Lexer {
                 if c.is_ascii_digit() {
                     return self.make_number()
                 }
-                else if c.is_ascii_alphabetic() || *c == '_' {
+                else if c.is_ascii_alphabetic() || c == & '_' {
                     return self.make_identifier()
                 }
                 self.new_token(TokenType::Invalid)
@@ -153,8 +153,8 @@ impl Lexer {
     }
 
     fn make_string(&mut self, quote_type: char) -> Token {
-        while self.peek(0) != &quote_type && self.is_eof() {
-            if *self.peek(0) == '\n' { self.line +=1 }
+        while self.peek(0) != &quote_type && !self.is_eof() {
+            println!("{:?}", self.peek(0));
             self.next();
         }
         if self.is_eof() {
@@ -169,7 +169,7 @@ impl Lexer {
         while self.peek(0).is_ascii_digit() {
             self.next();
         }
-        if *self.peek(0) == '.' && self.peek(1).is_ascii_digit() {
+        if self.peek(0) == & '.' && self.peek(1).is_ascii_digit() {
             self.next();
 
             while self.peek(0).is_ascii_digit() {self.next();}
@@ -178,14 +178,14 @@ impl Lexer {
         self.new_token(TokenType::Number)
     }
     fn make_identifier(&mut self) -> Token {
-        while self.peek(0).is_ascii_alphabetic() || *self.peek(0) == '_' {
+        while self.peek(0).is_ascii_alphabetic() || self.peek(0) == & '_' {
             self.next();
         }
 
-        let lexeme = &self.src[(self.from_col as usize)..(self.to_col as usize)];
-        let lexeme: String = lexeme.iter().collect();
+        let val = &self.src[(self.from_col as usize)..(self.to_col as usize)];
+        let val: String = val.iter().collect();
 
-        if let Some(t) = KEYWORDS.get(&*lexeme) {
+        if let Some(t) = KEYWORDS.get(&*val) {
             let t: TokenType = t.to_owned();
             self.new_token(t)
         }
