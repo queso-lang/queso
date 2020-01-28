@@ -32,7 +32,7 @@ type InfixFn = fn(&mut Parser, Expr) -> Expr;
 
 pub struct Parser {
     toks: TokenStream,
-
+    had_error: bool,
     rules: HashMap<TokenType, ParserRule>
 }
 
@@ -42,6 +42,7 @@ impl Parser {
         let rules: HashMap<TokenType, ParserRule> = HashMap::new();
         let mut parser = Parser {
             toks,
+            had_error: false,
             rules
         };
 
@@ -74,7 +75,12 @@ impl Parser {
             self.toks.next();
             return;
         }
-        error(self.toks.peek(), msg);
+        self.error(self.toks.peek().clone(), msg);
+    }
+
+    fn error(&mut self, t: Token, msg: &'static str) {
+        self.had_error = true;
+        error(t, msg);
     }
 }
 
@@ -96,7 +102,8 @@ impl Parser {
             return left;
         }
 
-        error(self.toks.peek(), "Expected an expression");
+        let cur = self.toks.peek().clone();
+        self.error(cur, "Expected an expression");
         return Expr::Error;
     }
 
