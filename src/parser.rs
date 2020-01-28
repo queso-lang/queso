@@ -50,9 +50,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn expr(&mut self, rbp: u8) -> Result<Expr, String> {
-        println!("expr {}", rbp);
         let mut left = self.nud()?;
-        println!("{}", left);
         while self.is_next_tighter(rbp.clone()){
             if let Some(tok) = self.toks.peek() {
                 if tok.t == TokenType::RightParen {
@@ -61,7 +59,6 @@ impl<'a> Parser<'a> {
             }
             left = self.led(left)?;
         }
-        println!("not tighter");
         Ok(left)
     }
 
