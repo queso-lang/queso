@@ -123,4 +123,4 @@ All help is welcome! Let's make this delicious language a reality.
 
 #### License
 
-Apacho 2.0
+Apache 2.0
