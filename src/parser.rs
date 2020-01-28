@@ -32,7 +32,7 @@ type InfixFn = fn(&mut Parser, Expr) -> Expr;
 
 pub struct Parser {
     toks: TokenStream,
-    had_error: bool,
+    pub had_error: bool,
     rules: HashMap<TokenType, ParserRule>
 }
 
@@ -159,5 +159,24 @@ impl Parser {
         let stmt = Stmt::Expr(self.expr());
         self.consume(TokenType::Semi, "Expected a SEMI after expression");
         stmt
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // only error tests for now
+    #[test]
+    fn test_arithmetic() {
+        assert!(run(String::from("1 + 2 * 3;")));
+        assert!(run(String::from("(1 + 2) * 3;")));
+        assert!(run(String::from("!(1 + 2) * -3;")));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_panic() {
+        assert!(run(String::from("1 + 2 * 3")));
     }
 }

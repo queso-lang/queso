@@ -33,7 +33,7 @@ fn repl() {
     }
 }
 
-fn run(src: String) {
+fn run(src: String) -> bool {
     let mut lexer = Lexer::new(src);
 
     let mut toks = TokenStream::new(lexer);
@@ -41,5 +41,7 @@ fn run(src: String) {
     let mut parser = Parser::new(toks);
     parser.program().iter().for_each(|stmt| {
         println!("{}", stmt);
-    })
+    });
+
+    !parser.had_error
 }
