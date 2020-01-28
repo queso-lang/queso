@@ -70,7 +70,7 @@ enum Nullable<T: Clone> {
 pub struct TokenStream {
     lexer: Lexer,
 
-    cur: Option<Token>
+    cur: Token
 }
 
 impl TokenStream {
@@ -79,22 +79,17 @@ impl TokenStream {
         let next = lexer.lex_next();
         TokenStream {
             lexer,
-            cur: TokenStream::eof_to_none(next)
+            cur: next
         }
     }
 
-    pub fn next(&mut self) -> Option<Token> {
+    pub fn next(&mut self) -> Token {
         let last = self.cur.clone();
         let tok = self.lexer.lex_next();
 
-        self.cur = TokenStream::eof_to_none(tok);
         last
     }
-    pub fn peek(&mut self) -> Option<&Token> {
-        self.cur.as_ref()
-    }
-
-    fn eof_to_none(tok: Token) -> Option<Token> {
-        if tok.t != TokenType::EOF {Some(tok)} else {None}
+    pub fn peek(&mut self) -> &Token {
+        &self.cur
     }
 }

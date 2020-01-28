@@ -17,6 +17,6 @@ fn main() {
     let mut toks = Vec::<Token>::new();
     
     let mut toks = TokenStream::new(lexer);
-    let mut parser = Parser::new(toks);
-    println!("{}", parser.expr(BP::Zero as u8).expect(""));
+    // let mut parser = Parser::new(toks);
+    // println!("{}", parser.expr(BP::Zero as u8).expect(""));
 }
