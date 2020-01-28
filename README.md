@@ -34,7 +34,7 @@ trace salsas |> filterSpicySalsas();
 ```
 So, what's going on here? this looks a little different than other langs
 
-**First**, function declaration has a colon `:`. That's because the function body doesn't have to be a block. It just has to be an expression. The salsas.filter(...) is immediately returned. Lambdas are similar, in fact salsa: salsa.isSpicy is an example of one.
+**First**, function declaration has a colon `:`. That's because the function body doesn't have to be a block. It just has to be an expression. The `salsas.filter(...)` is immediately returned. Lambdas are similar, in fact `salsa: salsa.isSpicy` is an example of one.
 
 When invoked with an array, filterSpicySalsas returns a subarray containining only the salsas that have a field `isSpicy = true`
 
