@@ -72,6 +72,7 @@ impl Lexer {
             '{' => self.new_token(TokenType::LeftBrace),
             '}' => self.new_token(TokenType::RightBrace),
 
+            ';' => self.new_token(TokenType::Semi),
             '~' => self.new_token(TokenType::Tilde),
             '+' => self.new_token(TokenType::Plus),
             ',' => self.new_token(TokenType::Comma),

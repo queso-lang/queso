@@ -151,7 +151,6 @@ impl Parser {
     fn expr_stmt(&mut self) -> Stmt {
         let stmt = Stmt::Expr(self.expr());
         self.consume(TokenType::Semi, "Expected a SEMI after expression");
-        self.toks.next(); //replace with syncing later
         stmt
     }
 }
