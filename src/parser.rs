@@ -51,7 +51,7 @@ impl<'a> Parser<'a> {
 
     pub fn expr(&mut self, rbp: u8) -> Result<Expr, String> {
         let mut left = self.nud()?;
-        while self.is_next_tighter(rbp.clone()){
+        while self.is_next_tighter(rbp){
             if let Some(tok) = self.toks.peek() {
                 if tok.t == TokenType::RightParen {
                     break;
