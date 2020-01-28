@@ -78,7 +78,6 @@ impl Parser {
         
         if let Some(f) = prefix_rule {
             let mut left = f(self);
-            println!("{}", left);
             loop {
                 let cur = self.toks.peek().clone();
                 if bp > self.get_rule(cur.t).bp {break;}
@@ -118,13 +117,13 @@ impl Parser {
     }
 
     pub fn number(&mut self) -> Expr {
-        // println!("{}", self.toks.peek().clone());
         Expr::Constant(self.toks.next().clone())
     }
 
     pub fn grouping(&mut self) -> Expr {
+        self.toks.next();
         let expr = self.expr();
-        self.consume(TokenType::RightBrace, "Unmatched (");
+        self.consume(TokenType::RightParen, "Unmatched (");
         expr
     }
 }
