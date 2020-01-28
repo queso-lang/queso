@@ -23,3 +23,18 @@ impl std::fmt::Display for Expr {
     }
 }
 
+#[derive(Debug)]
+pub enum Stmt {
+    Expr(Expr),
+    // FnDecl(Token, )
+}
+
+impl std::fmt::Display for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Stmt::Expr(expr) => write!(f, "{};", expr),
+            _ => panic!("display trait not defined")
+        }
+    }
+}
+

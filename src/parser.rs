@@ -36,6 +36,7 @@ pub struct Parser {
     rules: HashMap<TokenType, ParserRule>
 }
 
+// utils
 impl Parser {
     pub fn new(toks: TokenStream) -> Parser {
         let rules: HashMap<TokenType, ParserRule> = HashMap::new();
@@ -67,10 +68,7 @@ impl Parser {
 
         parser
     }
-}
 
-// EXPR
-impl Parser {
     fn consume(&mut self, t: TokenType, msg: &'static str) {
         if self.toks.peek().t == t {
             self.toks.next();
@@ -78,7 +76,10 @@ impl Parser {
         }
         error(self.toks.peek(), msg);
     }
+}
 
+// EXPR
+impl Parser {
     fn parse_bp(&mut self, bp: u8) -> Expr {
         let cur = self.toks.peek();
         let prefix_rule = self.get_rule(cur.t).prefix;
@@ -133,3 +134,24 @@ impl Parser {
         self.consume(TokenType::RightParen, "Unmatched (");
         expr
     }
+}
+
+// STMT
+impl Parser {
+    pub fn program(&mut self) -> Vec<Stmt> {
+        let mut stmts = Vec::<Stmt>::new();
+        while self.toks.peek().t != TokenType::EOF {
+            stmts.push(self.stmt());
+        }
+        stmts
+    }
+    fn stmt(&mut self) -> Stmt {
+        self.expr_stmt()
+    }
+    fn expr_stmt(&mut self) -> Stmt {
+        let stmt = Stmt::Expr(self.expr());
+        self.consume(TokenType::Semi, "Expected a SEMI after expression");
+        self.toks.next(); //replace with syncing later
+        stmt
+    }
+}
