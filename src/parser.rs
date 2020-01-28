@@ -59,6 +59,9 @@ impl Parser {
         parser.rules.insert(TokenType::Star,
             ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Multitplication as u8});
 
+        parser.rules.insert(TokenType::Bang,
+            ParserRule {prefix: Some(Parser::unary),    infix: None,                    bp: BP::Addition as u8});
+
         parser.rules.insert(TokenType::Number,
             ParserRule {prefix: Some(Parser::number),   infix: None,                    bp: BP::Zero as u8});
 
