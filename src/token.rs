@@ -1,6 +1,6 @@
 use crate::Lexer;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TokenType {
     LeftParen, RightParen, LeftBracket, RightBracket, LeftBrace, RightBrace,
 
@@ -85,11 +85,10 @@ impl TokenStream {
 
     pub fn next(&mut self) -> Token {
         let last = self.cur.clone();
-        let tok = self.lexer.lex_next();
-
+        self.cur = self.lexer.lex_next();
         last
     }
-    pub fn peek(&mut self) -> &Token {
+    pub fn peek(&self) -> &Token {
         &self.cur
     }
 }
