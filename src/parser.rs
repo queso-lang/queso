@@ -102,7 +102,7 @@ impl Parser {
     }
 
     pub fn unary(&mut self) -> Expr {
-        let op = self.toks.peek().clone();
+        let op = self.toks.next();
         let expr = self.parse_bp(BP::Unary as u8);
         Expr::Unary(op, Box::new(expr))
     }
