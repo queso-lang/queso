@@ -32,7 +32,7 @@ type InfixFn = fn(&mut Parser, Expr) -> Expr;
 
 pub struct Parser {
     toks: TokenStream,
-
+    pub had_error: bool,
     rules: HashMap<TokenType, ParserRule>
 }
 
@@ -42,6 +42,7 @@ impl Parser {
         let rules: HashMap<TokenType, ParserRule> = HashMap::new();
         let mut parser = Parser {
             toks,
+            had_error: false,
             rules
         };
 
@@ -74,7 +75,12 @@ impl Parser {
             self.toks.next();
             return;
         }
-        error(self.toks.peek(), msg);
+        self.error(self.toks.peek().clone(), msg);
+    }
+
+    fn error(&mut self, t: Token, msg: &'static str) {
+        self.had_error = true;
+        error(t, msg);
     }
 }
 
@@ -96,7 +102,8 @@ impl Parser {
             return left;
         }
 
-        error(self.toks.peek(), "Expected an expression");
+        let cur = self.toks.peek().clone();
+        self.error(cur, "Expected an expression");
         return Expr::Error;
     }
 
@@ -152,5 +159,24 @@ impl Parser {
         let stmt = Stmt::Expr(self.expr());
         self.consume(TokenType::Semi, "Expected a SEMI after expression");
         stmt
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // only error tests for now
+    #[test]
+    fn test_arithmetic() {
+        assert!(run(String::from("1 + 2 * 3;")));
+        assert!(run(String::from("(1 + 2) * 3;")));
+        assert!(run(String::from("!(1 + 2) * -3;")));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_panic() {
+        assert!(run(String::from("1 + 2 * 3")));
     }
 }
