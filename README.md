@@ -3,7 +3,7 @@
 ![license](https://img.shields.io/github/license/queso-lang/queso)
 ![size](https://img.shields.io/github/repo-size/queso-lang/queso)
 ![maintained](https://img.shields.io/maintenance/yes/2020)
-![issues](https://img.shields.io/github/issues/queso-lang/queso)
+![issues](https://img.shields.io/github/issues-closed/queso-lang/queso)
 ![helpwanted](https://img.shields.io/github/labels/queso-lang/queso/help%20wanted)
 
 ### What is **queso**?
