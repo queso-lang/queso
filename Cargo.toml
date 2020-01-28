@@ -1,0 +1,9 @@
+[package]
+name = "rsqueso"
+version = "0.1.0"
+authors = ["Mateusz Sowiński-Smętny <matisowagm@gmail.com>"]
+edition = "2018"
+
+
+[dependencies]
+phf = { version = "0.8", features = ["macros"] }
