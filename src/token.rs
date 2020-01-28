@@ -29,7 +29,7 @@ pub enum TokenType {
     Invalid
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Token {
     pub t: TokenType,
     pub val: String,
@@ -46,7 +46,7 @@ impl std::fmt::Display for Token {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TokenPos {
     pub from_col: u32,
     pub to_col: u32,
@@ -88,19 +88,23 @@ impl<T: Clone> Nullable<T> where T: Clone {
 pub struct TokenStream {
     lexer: Lexer,
 
-    _last: Nullable<Token>,
-    _cur: Nullable<Token>
+    //last: Option<Token>,
+    cur: Option<Token>
 }
 
 impl TokenStream {
-    pub fn next(&mut self) {
-        self._last = self._cur.clone();
-        self._cur = Nullable::Val(self.lexer.lex_next());
+    pub fn next(&mut self) -> Option<Token> {
+        let last = self.cur.clone();
+        self.cur = Some(self.lexer.lex_next());
+        last
     }
-    pub fn last(&self) -> Token {
-        self._last.get()
+    pub fn peek(&self) -> Option<&Token> {
+        self.cur.as_ref()
     }
-    pub fn cur(&self) -> Token {
-        self._cur.get()
-    }
+    // pub fn last(&self) -> Token {
+    //     self._last.get()
+    // }
+    // pub fn cur(&self) -> Token {
+    //     self._cur.get()
+    // }
 }
