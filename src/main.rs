@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused)]
+use std::io::{self, Read};
 
 mod token;
 use token::*;
@@ -17,9 +18,24 @@ mod error_reporter;
 use error_reporter::*;
 
 fn main() {
-    let mut lexer = Lexer::new("0; 1 - (2 + 3);".to_string());
-    let mut toks = Vec::<Token>::new();
-    
+    repl();
+}
+
+fn repl() {
+    loop {
+        print!(">");
+        io::Write::flush(&mut io::stdout()).expect("flush failed!");
+        let mut buf = String::new();
+        if let Ok(_) = io::stdin().read_line(&mut buf) {
+            run(buf);
+        }
+        println!();
+    }
+}
+
+fn run(src: String) {
+    let mut lexer = Lexer::new(src);
+
     let mut toks = TokenStream::new(lexer);
 
     let mut parser = Parser::new(toks);
