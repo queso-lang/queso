@@ -13,13 +13,10 @@ use parser::*;
 mod ast;
 use ast::*;
 fn main() {
-    let mut lexer = Lexer::new("1 ** (2+4) ** 3".to_string());
+    let mut lexer = Lexer::new("1 % (2+3) ** 4".to_string());
     let mut toks = Vec::<Token>::new();
-    loop {
-        let tok = lexer.lex_next();
-        if tok.t == TokenType::EOF {break;};
-        toks.push(tok);
-    }
-    let mut parser = Parser::new(toks.iter());
+    
+    let mut toks = TokenStream::new(lexer);
+    let mut parser = Parser::new(toks);
     println!("{}", parser.expr(BP::Zero as u8).expect(""));
 }

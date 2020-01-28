@@ -26,9 +26,8 @@ impl Token {
     fn lbp(&self) -> u8 {
         match self.t {
             TokenType::Plus | TokenType::Minus => BP::Addition as u8,
-            TokenType::Star | TokenType::Slash => BP::Multitplication as u8,
+            TokenType::Star | TokenType::Slash | TokenType::Percent => BP::Multitplication as u8,
             TokenType::StarStar => BP::Exponentiation as u8,
-            TokenType::RightParen | TokenType::LeftParen => BP::Atom as u8,
             _ => BP::Zero as u8
         }
     }
@@ -40,13 +39,13 @@ impl Token {
     }
 }
 
-pub struct Parser<'a> {
-    pub toks: Peekable<Iter<'a, Token>>
+pub struct Parser {
+    pub toks: TokenStream
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(toks: Iter<'a, Token>) -> Parser<'a> {
-        Parser{ toks: toks.peekable() }
+impl Parser {
+    pub fn new(toks: TokenStream) -> Parser {
+        Parser{ toks }
     }
 
     pub fn expr(&mut self, rbp: u8) -> Result<Expr, String> {
@@ -63,7 +62,7 @@ impl<'a> Parser<'a> {
     }
 
     fn nud(&mut self) -> Result<Expr, String> {
-        self.toks.next().map_or(Err("incomplete".to_string()), |tok| {
+        self.toks.next().map_or(Err("Expected an expression".to_string()), |tok| {
             match tok.t {
                 TokenType::Number => Ok(Expr::Number(tok.clone())),
                 TokenType::LeftParen => {
@@ -85,14 +84,16 @@ impl<'a> Parser<'a> {
     }
 
     fn led(&mut self, expr: Expr) -> Result<Expr, String> {
-        self.toks.next().map_or(Err("incomplete".to_string()), |tok| {
+        self.toks.next().map_or(Err("Expected an expression".to_string()), |tok| {
             match tok.t {
-                TokenType::Plus | TokenType::Minus | TokenType::Star | TokenType::Slash | TokenType::StarStar => {
+                TokenType::Plus | TokenType::Minus |
+                TokenType::Star | TokenType::Slash | TokenType::Percent |
+                TokenType::StarStar => {
                     let rhs = self.expr(tok.lbp() + tok.assoc())?;
                     Ok(Expr::Binary(Box::new(expr), tok.clone(), Box::new(rhs)))
                 },
                 TokenType::RightParen => Ok(expr),
-                _ => Err("Expected an operator".to_string())
+                _ => Err(format!("{}", tok))
             }
         })
     }

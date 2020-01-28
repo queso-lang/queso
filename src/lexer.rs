@@ -57,11 +57,11 @@ impl Lexer {
 //implementation
 impl Lexer {
     pub fn lex_next(&mut self) -> Token{
+        self.from_col = self.to_col;
+        
         if self.is_eof() {
             return self.new_token(TokenType::EOF);
         }
-
-        self.from_col = self.to_col;
 
         let c = self.next();
         match c {

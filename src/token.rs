@@ -67,44 +67,34 @@ enum Nullable<T: Clone> {
     Null
 }
 
-impl<T: Clone> Nullable<T> where T: Clone {
-    pub fn get(&self) -> T where T: Clone {
-        match self {
-            Nullable::Val(val) => {
-                return val.clone();
-            }
-            Nullable::Null => {
-                panic!();
-            }
-        }
-    }
-    pub fn set(&mut self, val: T) where T: Clone {
-        let test = Nullable::Val(val).clone();
-        *self = test;
-    }
-}
-
-
 pub struct TokenStream {
     lexer: Lexer,
 
-    //last: Option<Token>,
     cur: Option<Token>
 }
 
 impl TokenStream {
+    pub fn new(lexer: Lexer) -> TokenStream {
+        let mut lexer = lexer;
+        let next = lexer.lex_next();
+        TokenStream {
+            lexer,
+            cur: TokenStream::eof_to_none(next)
+        }
+    }
+
     pub fn next(&mut self) -> Option<Token> {
         let last = self.cur.clone();
-        self.cur = Some(self.lexer.lex_next());
+        let tok = self.lexer.lex_next();
+
+        self.cur = TokenStream::eof_to_none(tok);
         last
     }
-    pub fn peek(&self) -> Option<&Token> {
+    pub fn peek(&mut self) -> Option<&Token> {
         self.cur.as_ref()
     }
-    // pub fn last(&self) -> Token {
-    //     self._last.get()
-    // }
-    // pub fn cur(&self) -> Token {
-    //     self._cur.get()
-    // }
+
+    fn eof_to_none(tok: Token) -> Option<Token> {
+        if tok.t != TokenType::EOF {Some(tok)} else {None}
+    }
 }
