@@ -60,13 +60,17 @@ impl Parser {
             ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Multitplication as u8});
 
         parser.rules.insert(TokenType::Bang,
-            ParserRule {prefix: Some(Parser::unary),    infix: None,                    bp: BP::Addition as u8});
+            ParserRule {prefix: Some(Parser::unary),    infix: None,                    bp: BP::Zero as u8});
 
         parser.rules.insert(TokenType::Number,
             ParserRule {prefix: Some(Parser::number),   infix: None,                    bp: BP::Zero as u8});
 
         parser
     }
+}
+
+// EXPR
+impl Parser {
     fn consume(&mut self, t: TokenType, msg: &'static str) {
         if self.toks.peek().t == t {
             self.toks.next();
@@ -75,7 +79,7 @@ impl Parser {
         error(self.toks.peek(), msg);
     }
 
-    pub fn parse_bp(&mut self, bp: u8) -> Expr {
+    fn parse_bp(&mut self, bp: u8) -> Expr {
         let cur = self.toks.peek();
         let prefix_rule = self.get_rule(cur.t).prefix;
         
@@ -95,7 +99,7 @@ impl Parser {
         return Expr::Error;
     }
 
-    pub fn get_rule(&self, t: TokenType) -> ParserRule {
+    fn get_rule(&self, t: TokenType) -> ParserRule {
         let default = ParserRule {prefix: None, infix: None, bp: BP::Zero as u8};
         self.rules.get(&t).unwrap_or(&default).clone()
     }
@@ -104,13 +108,13 @@ impl Parser {
         self.parse_bp(BP::Assignment as u8)
     }
 
-    pub fn unary(&mut self) -> Expr {
+    fn unary(&mut self) -> Expr {
         let op = self.toks.next();
         let expr = self.parse_bp(BP::Unary as u8);
         Expr::Unary(op, Box::new(expr))
     }
 
-    pub fn binary(&mut self, left: Expr) -> Expr {
+    fn binary(&mut self, left: Expr) -> Expr {
         let op = self.toks.next().clone();
         
         let rule = self.get_rule(op.t);
@@ -119,14 +123,13 @@ impl Parser {
         Expr::Binary(Box::new(left), op, Box::new(right))
     }
 
-    pub fn number(&mut self) -> Expr {
+    fn number(&mut self) -> Expr {
         Expr::Constant(self.toks.next().clone())
     }
 
-    pub fn grouping(&mut self) -> Expr {
+    fn grouping(&mut self) -> Expr {
         self.toks.next();
         let expr = self.expr();
         self.consume(TokenType::RightParen, "Unmatched (");
         expr
     }
-}
