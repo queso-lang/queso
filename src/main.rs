@@ -20,6 +20,9 @@ use error_reporter::*;
 mod chunk;
 use chunk::*;
 
+mod compiler;
+use compiler::*;
+
 fn main() {
     repl();
 }
