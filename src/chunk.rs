@@ -1,6 +1,6 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
-    Constant {id: u16},
+    Constant (u16),
     Negate,
     Add,
     Subtract,
@@ -8,16 +8,18 @@ pub enum Instruction {
     Divide,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Value {
     Bool(bool),
     Number(f64),
     Null
 }
 
+#[derive(Clone, Debug)]
 struct LineRL {pub line: u32, pub repeat: u16}
 type LineVec = Vec<LineRL>;
 
+#[derive(Clone)]
 pub struct Chunk {
     instrs: Vec<Instruction>,
     consts: Vec<Value>,
@@ -26,10 +28,13 @@ pub struct Chunk {
 
 impl Chunk {
     fn add_line(&mut self, line: u32) {
-        match self.lines.last_mut() {
-            Some(last_line) => if last_line.line == line { last_line.repeat += 1 },
-            None => self.lines.push(LineRL {line, repeat: 1})
+        if let Some(last_line) = self.lines.last_mut() {
+            if last_line.line == line {
+                last_line.repeat += 1;
+                return;
+            }
         }
+        self.lines.push(LineRL {line, repeat: 1});
     }
 
     // api
@@ -89,8 +94,44 @@ impl Chunk {
     }
     pub fn print_instr_info(&self, instr: &Instruction) {
         match instr {
-            Instruction::Constant {id} => println!("{:?}, value: {:?}", instr, self.get_const(*id)),
+            Instruction::Constant (id) => println!("{:?}, value: {:?}", instr, self.get_const(*id)),
             _ => println!("{:?}", instr)
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_consts() {
+        let mut chk = Chunk::new();
+        chk.add_const(Value::Number(1.23));
+        chk.add_const(Value::Bool(true));
+        chk.add_const(Value::Null);
+        assert_eq!(chk.get_const(0).clone(), Value::Number(1.23));
+        assert_eq!(chk.get_const(1).clone(), Value::Bool(true));
+        assert_eq!(chk.get_const(2).clone(), Value::Null);
+    }
+
+    #[test]
+    fn test_instrs() {
+        let mut chk = Chunk::new();
+        chk.add_const(Value::Number(1.23));
+        chk.add_const(Value::Number(2.));
+        chk.add_instr(Instruction::Constant(0), 0);
+        chk.add_instr(Instruction::Constant(1), 1);
+        chk.add_instr(Instruction::Multiply, 0);
+        assert_eq!(chk.get_instr(0).clone(), Instruction::Constant(0));
+        assert_eq!(chk.get_const(0).clone(), Value::Number(1.23));
+        assert_eq!(chk.get_line_no(0), 0);
+
+        assert_eq!(chk.get_instr(1).clone(), Instruction::Constant(1));
+        assert_eq!(chk.get_const(1).clone(), Value::Number(2.));
+        assert_eq!(chk.get_line_no(1), 1);
+
+        assert_eq!(chk.get_instr(2).clone(), Instruction::Multiply);
+        assert_eq!(chk.get_line_no(2), 0);
     }
 }
