@@ -6,6 +6,8 @@ pub enum Instruction {
     Subtract,
     Multiply,
     Divide,
+
+    Return
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -16,7 +18,7 @@ pub enum Value {
 }
 
 #[derive(Clone, Debug)]
-struct LineRL {pub line: u32, pub repeat: u16}
+pub struct LineRL {pub line: u32, pub repeat: u16}
 type LineVec = Vec<LineRL>;
 
 #[derive(Clone)]
@@ -60,6 +62,9 @@ impl Chunk {
     pub fn get_instr(&self, instr_id: usize) -> &Instruction {
         self.instrs.get(instr_id)
             .expect("The VM failed to access an instruction. This might be a problem with the interpreter itself.")
+    }
+    pub fn try_get_instr(&self, instr_id: usize) -> Option<&Instruction> {
+        self.instrs.get(instr_id)
     }
     pub fn get_line_no(&self, instr_id: u32) -> u32 {
         let mut cur: u32 = 0;

@@ -23,6 +23,9 @@ use chunk::*;
 mod compiler;
 use compiler::*;
 
+mod vm;
+use vm::*;
+
 fn main() {
     repl();
 }
