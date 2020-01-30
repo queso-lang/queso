@@ -8,6 +8,7 @@ pub enum Instruction {
     Divide,
 }
 
+#[derive(Debug)]
 pub enum Value {
     Bool(bool),
     Number(f64),
@@ -65,5 +66,31 @@ impl Chunk {
         }
         
         panic!("The VM failed to access a line. This might be a problem with the interpreter itself.")
+    }
+
+    // pretty print
+    pub fn print(&self, name: &'static str) {
+        println!("== {} ==", name);
+        for i in 0..self.instrs.len() {
+            self.print_instr(i, true);
+        }
+    }
+    pub fn print_instr(&self, instr_id: usize, hide_repeating_lines: bool) {
+        print!("{:04} {:>4} ", instr_id,
+            if instr_id >= 1
+            && self.get_line_no(instr_id as u32) == self.get_line_no((instr_id-1) as u32)
+            && hide_repeating_lines {
+                "".to_string()
+            } else {
+                self.get_line_no(instr_id as u32).to_string()
+            }
+        );
+        self.print_instr_info(&self.get_instr(instr_id));
+    }
+    pub fn print_instr_info(&self, instr: &Instruction) {
+        match instr {
+            Instruction::Constant {id} => println!("{:?}, value: {:?}", instr, self.get_const(*id)),
+            _ => println!("{:?}", instr)
+        };
     }
 }
