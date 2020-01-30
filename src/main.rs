@@ -17,6 +17,9 @@ use ast::*;
 mod error_reporter;
 use error_reporter::*;
 
+mod chunk;
+use chunk::*;
+
 fn main() {
     repl();
 }
