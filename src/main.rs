@@ -26,6 +26,12 @@ use compiler::*;
 mod vm;
 use vm::*;
 
+mod instruction;
+use instruction::*;
+
+mod value;
+use value::*;
+
 fn main() {
     repl();
 }

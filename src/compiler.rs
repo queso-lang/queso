@@ -8,7 +8,7 @@ impl Compile for Expr {
     fn compile(&self, chk: &mut Chunk) {
         match self {
             Expr::Constant(tok) => {
-                let const_id = chk.add_const(tok.to_value());
+                let const_id = chk.add_const(Value::from(tok));
                 chk.add_instr(Instruction::PushConstant(const_id), tok.pos.line);
             },
             Expr::Binary(left, op, right) => {

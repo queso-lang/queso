@@ -1,38 +1,5 @@
 use crate::*;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Instruction {
-    PushConstant (u16),
-    PushTrue,
-    PushFalse,
-    PushNull,
-    Negate,
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-    Not,
-
-    Return
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum Value {
-    Bool(bool),
-    Number(f64),
-    Null
-}
-
-impl Value {
-    pub fn is_truthy(&self) -> bool {
-        match self {
-            Value::Bool(b) => *b,
-            Value::Number(n) => *n!=0.,
-            Value::Null => false
-        }
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct LineRL {pub line: u32, pub repeat: u16}
 type LineVec = Vec<LineRL>;
