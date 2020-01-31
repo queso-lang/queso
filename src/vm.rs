@@ -5,9 +5,7 @@ type Stack = Vec<Value>;
 pub struct VM {
     chk: Chunk,
     cur_instr: usize,
-    stack: Stack,
-
-    pub had_error: bool
+    stack: Stack
 }
 
 impl VM {
@@ -15,17 +13,16 @@ impl VM {
         VM {
             chk: Chunk::new(),
             cur_instr: 0,
-            stack: Stack::new(),
-            had_error: false
+            stack: Stack::new()
         }
     }
-    pub fn execute(&mut self, chk: Chunk) {
+    pub fn execute(&mut self, chk: Chunk) -> Result<(), &'static str> {
         self.chk = chk;
         self.cur_instr = 0;
         self.run()
     }
 
-    fn run(&mut self) {
+    fn run(&mut self) -> Result<(), &'static str> {
         println!("===========\nrun:");
 
         loop {
@@ -55,10 +52,65 @@ impl VM {
                                 self.stack.push(Value::Number(-num));
                             },
                             _ => {
-                                self.had_error = true;
-                                return;
+                                return Err("The negation operator can only be used with numbers");
                             }
                         }                        
+                    },
+                    Instruction::Add => {
+                        let b = self.pop_stack();
+                        let a = self.pop_stack();
+                        println!("Push: {:?} + {:?}", a, b);
+
+                        match (a, b) {
+                            (Value::Number(n1), Value::Number(n2)) => {
+                                self.stack.push(Value::Number(n1 + n2));
+                            },
+                            _ => {
+                                return Err("The addition operator can only be used with numbers");
+                            }
+                        }
+                    },
+                    Instruction::Subtract => {
+                        let b = self.pop_stack();
+                        let a = self.pop_stack();
+                        println!("Push: {:?} - {:?}", a, b);
+
+                        match (a, b) {
+                            (Value::Number(n1), Value::Number(n2)) => {
+                                self.stack.push(Value::Number(n1 - n2));
+                            },
+                            _ => {
+                                return Err("The subtraction operator can only be used with numbers");
+                            }
+                        }
+                    },
+                    Instruction::Multiply => {
+                        let b = self.pop_stack();
+                        let a = self.pop_stack();
+                        println!("Push: {:?} * {:?}", a, b);
+
+                        match (a, b) {
+                            (Value::Number(n1), Value::Number(n2)) => {
+                                self.stack.push(Value::Number(n1 * n2));
+                            },
+                            _ => {
+                                return Err("The multiplication operator can only be used with numbers");
+                            }
+                        }
+                    },
+                    Instruction::Divide => {
+                        let b = self.pop_stack();
+                        let a = self.pop_stack();
+                        println!("Push: {:?} / {:?}", a, b);
+
+                        match (a, b) {
+                            (Value::Number(n1), Value::Number(n2)) => {
+                                self.stack.push(Value::Number(n1 / n2));
+                            },
+                            _ => {
+                                return Err("The division operator can only be used with numbers");
+                            }
+                        }
                     },
 
                     #[allow(unreachable_patterns)]
@@ -67,6 +119,8 @@ impl VM {
             }
             else {break};
         }
+
+        Ok(())
     }
 
     fn next_instr(&mut self) -> Option<&Instruction> {
@@ -105,8 +159,52 @@ mod tests {
         chk.add_instr(Instruction::Return, 0);
 
         let mut vm = VM::new();
-        vm.execute(chk);
 
-        assert!(!vm.had_error);
+        assert_eq!(vm.execute(chk), Ok(()));
+    }
+
+    #[test]
+    fn test_arithmetic() {
+        let mut chk = Chunk::new();
+        
+        //5 - 5 / 2.5 + 1 * 2 = 5
+        //consts[0] = 5, consts[1] = 5, consts[2] = 2.5, consts[3] = 1, consts[4] = 2
+        //push 0
+        //push 1
+        //push 2
+        //divide
+        //subtract
+        //push 3
+        //push 4
+        //multiply
+        //add
+        chk.add_const(Value::Number(5.));
+        chk.add_instr(Instruction::Constant(0), 0);
+
+        chk.add_const(Value::Number(5.));
+        chk.add_instr(Instruction::Constant(1), 0);
+
+        chk.add_const(Value::Number(2.5));
+        chk.add_instr(Instruction::Constant(2), 0);
+
+        chk.add_instr(Instruction::Divide, 0);
+
+        chk.add_instr(Instruction::Subtract, 0);
+
+        chk.add_const(Value::Number(1.));
+        chk.add_instr(Instruction::Constant(3), 0);
+
+        chk.add_const(Value::Number(2.));
+        chk.add_instr(Instruction::Constant(4), 0);
+
+        chk.add_instr(Instruction::Multiply, 0);
+
+        chk.add_instr(Instruction::Add, 0);
+
+        chk.add_instr(Instruction::Return, 0);
+
+        let mut vm = VM::new();
+
+        assert_eq!(vm.execute(chk), Ok(()));
     }
 }
