@@ -11,6 +11,7 @@ pub enum Instruction {
     Subtract,
     Multiply,
     Divide,
+    Not,
 
     Return
 }
@@ -20,6 +21,16 @@ pub enum Value {
     Bool(bool),
     Number(f64),
     Null
+}
+
+impl Value {
+    pub fn is_truthy(&self) -> bool {
+        match self {
+            Value::Bool(b) => *b,
+            Value::Number(n) => *n!=0.,
+            Value::Null => false
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

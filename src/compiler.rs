@@ -22,6 +22,14 @@ impl Compile for Expr {
                     _ => unimplemented!()
                 }
             },
+            Expr::Unary(op, right) => {
+                right.compile(chk);
+                match op.t {
+                    TokenType::Minus  => chk.add_instr(Instruction::Negate, op.pos.line),
+                    TokenType::Bang => chk.add_instr(Instruction::Not, op.pos.line),
+                    _ => unimplemented!()
+                }
+            }
             Expr::TrueLiteral(tok) => chk.add_instr(Instruction::PushTrue, tok.pos.line),
             Expr::FalseLiteral(tok) => chk.add_instr(Instruction::PushFalse, tok.pos.line),
             Expr::NullLiteral(tok) => chk.add_instr(Instruction::PushNull, tok.pos.line),

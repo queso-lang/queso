@@ -68,6 +68,11 @@ impl VM {
                             }
                         }                        
                     },
+                    Instruction::Not => {
+                        let val = self.pop_stack();
+                        println!("Not top of stack: {:?}", val);
+                        self.stack.push(Value::Bool(!val.is_truthy()))                     
+                    },
                     Instruction::Add => {
                         let b = self.pop_stack();
                         let a = self.pop_stack();
