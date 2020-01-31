@@ -1,6 +1,6 @@
 use crate::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Constant(Token),
     Grouping(Box<Expr>),
@@ -23,7 +23,7 @@ impl std::fmt::Display for Expr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Stmt {
     Expr(Expr),
     // FnDecl(Token, )

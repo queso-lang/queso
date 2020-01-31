@@ -48,9 +48,21 @@ fn run(src: String) -> bool {
     let mut toks = TokenStream::new(lexer);
 
     let mut parser = Parser::new(toks);
-    parser.program().iter().for_each(|stmt| {
-        println!("{}", stmt);
-    });
+    // parser.program().iter().for_each(|stmt| {
+    //     println!("{}", stmt);
+    // });
 
-    !parser.had_error
+    if !parser.had_error {
+        let stmts = parser.program();
+        let stmt = stmts.get(0).expect("yeet");
+        let stmt = stmt.clone();
+        let mut chk = Chunk::new();
+        let compiler = Compiler {};
+        compiler.compile(&mut chk, stmt);
+
+        let mut vm = VM::new();
+        vm.execute(chk);
+    }
+
+    true
 }
