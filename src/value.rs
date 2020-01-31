@@ -4,6 +4,7 @@ use crate::*;
 pub enum Value {
     Bool(bool),
     Number(f64),
+    String(String),
     Null
 }
 
@@ -12,6 +13,7 @@ impl Value {
         match self {
             Value::Bool(b) => *b,
             Value::Number(n) => *n!=0.,
+            Value::String(s) => s.len() > 0,
             Value::Null => false
         }
     }
@@ -19,6 +21,10 @@ impl Value {
         match self {
             Value::Number(num) => return Ok(num.clone()),
             Value::Bool(b) => return Err(()),
+            Value::String(s) => return match s.parse::<f64>() {
+                Ok(num) => return Ok(num),
+                _ => return Err(())
+            },
             Value::Null => return Err(())
         }
     }
@@ -29,17 +35,7 @@ impl Value {
         }
     }
     pub fn is_equal_to(&self, to: &Value) -> bool {
-        return match (self, to) {
-            (Value::Bool(b), val) | (val, Value::Bool(b)) => *b == val.is_truthy(),
-            (Value::Number(n), val) | (val, Value::Number(n)) => {
-                if let Ok(num) = val.to_number() {
-                    return *n == num
-                }
-                return false
-            },
-            (Value::Null, Value::Null) => true,
-            _ => false
-        }
+        return self == to;
     }
 }
 
