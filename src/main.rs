@@ -61,7 +61,11 @@ fn run(src: String) -> bool {
         compiler.compile(&mut chk, stmt);
 
         let mut vm = VM::new();
-        vm.execute(chk);
+        let res = vm.execute(chk);
+        match res {
+            Err(err) => println!("{}", err),
+            _ => {}
+        }
     }
 
     true

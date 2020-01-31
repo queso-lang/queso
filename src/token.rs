@@ -1,4 +1,4 @@
-use crate::Lexer;
+use crate::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TokenType {
@@ -43,6 +43,27 @@ impl std::fmt::Display for Token {
             write!(f, "{:?}: {}", self.t, self.val)
         }
         else {write!(f, "{:?}", self.t)}
+    }
+}
+
+impl Token {
+    pub fn to_value(&self) -> Value {
+        if self.t == TokenType::True {
+            return Value::Bool(true);
+        }
+        else if self.t == TokenType::False {
+            return Value::Bool(false);
+        }
+        else if self.t == TokenType::Null {
+            return Value::Null;
+        }
+        else if self.t == TokenType::Number {
+            return Value::Number(
+                self.val.parse::<f64>()
+                    .expect("Error parsing float! This might be a problem with the interpreter itself.")
+            );
+        }
+        unimplemented!()
     }
 }
 

@@ -1,6 +1,11 @@
+use crate::*;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
-    Constant (u16),
+    PushConstant (u16),
+    PushTrue,
+    PushFalse,
+    PushNull,
     Negate,
     Add,
     Subtract,
@@ -99,7 +104,7 @@ impl Chunk {
     }
     pub fn print_instr_info(&self, instr: &Instruction) {
         match instr {
-            Instruction::Constant (id) => println!("{:?}, value: {:?}", instr, self.get_const(*id)),
+            Instruction::PushConstant (id) => println!("{:?}, value: {:?}", instr, self.get_const(*id)),
             _ => println!("{:?}", instr)
         };
     }
@@ -125,14 +130,14 @@ mod tests {
         let mut chk = Chunk::new();
         chk.add_const(Value::Number(1.23));
         chk.add_const(Value::Number(2.));
-        chk.add_instr(Instruction::Constant(0), 0);
-        chk.add_instr(Instruction::Constant(1), 1);
+        chk.add_instr(Instruction::PushConstant(0), 0);
+        chk.add_instr(Instruction::PushConstant(1), 1);
         chk.add_instr(Instruction::Multiply, 0);
-        assert_eq!(chk.get_instr(0).clone(), Instruction::Constant(0));
+        assert_eq!(chk.get_instr(0).clone(), Instruction::PushConstant(0));
         assert_eq!(chk.get_const(0).clone(), Value::Number(1.23));
         assert_eq!(chk.get_line_no(0), 0);
 
-        assert_eq!(chk.get_instr(1).clone(), Instruction::Constant(1));
+        assert_eq!(chk.get_instr(1).clone(), Instruction::PushConstant(1));
         assert_eq!(chk.get_const(1).clone(), Value::Number(2.));
         assert_eq!(chk.get_line_no(1), 1);
 

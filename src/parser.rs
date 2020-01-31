@@ -67,6 +67,16 @@ impl Parser {
         parser.rules.insert(TokenType::Number,
             ParserRule {prefix: Some(Parser::number),   infix: None,                    bp: BP::Zero as u8});
 
+        parser.rules.insert(TokenType::True,
+            ParserRule {prefix: Some(Parser::boolnull), infix: None,                    bp: BP::Zero as u8});
+
+        parser.rules.insert(TokenType::False,
+            ParserRule {prefix: Some(Parser::boolnull), infix: None,                    bp: BP::Zero as u8});
+
+        parser.rules.insert(TokenType::Null,
+            ParserRule {prefix: Some(Parser::boolnull), infix: None,                    bp: BP::Zero as u8});
+
+
         parser
     }
 
@@ -135,6 +145,16 @@ impl Parser {
         Expr::Constant(self.toks.next().clone())
     }
 
+    fn boolnull(&mut self) -> Expr {
+        let tok = self.toks.next().clone();
+        match tok.t {
+            TokenType::True  => Expr::TrueLiteral(tok),
+            TokenType::False => Expr::FalseLiteral(tok),
+            TokenType::Null  => Expr::NullLiteral(tok),
+            _ => panic!("This is a problem with the interpreter itself.")
+        }
+    }
+
     fn grouping(&mut self) -> Expr {
         self.toks.next();
         let expr = self.expr();
@@ -165,18 +185,4 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // only error tests for now
-    #[test]
-    fn test_arithmetic() {
-        assert!(run(String::from("1 + 2 * 3;")));
-        assert!(run(String::from("(1 + 2) * 3;")));
-        assert!(run(String::from("!(1 + 2) * -3;")));
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_panic() {
-        assert!(run(String::from("1 + 2 * 3")));
-    }
 }

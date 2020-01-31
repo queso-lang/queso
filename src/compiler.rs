@@ -1,26 +1,5 @@
 use crate::*;
 
-impl Token {
-    pub fn to_value(&self) -> Value {
-        if self.t == TokenType::True {
-            return Value::Bool(true);
-        }
-        else if self.t == TokenType::False {
-            return Value::Bool(false);
-        }
-        else if self.t == TokenType::Null {
-            return Value::Null;
-        }
-        else if self.t == TokenType::Number {
-            return Value::Number(
-                self.val.parse::<f64>()
-                    .expect("Error parsing float! This might be a problem with the interpreter itself.")
-            );
-        }
-        unimplemented!()
-    }
-}
-
 pub trait Compile {
     fn compile(&self, chk: &mut Chunk);
 }
@@ -30,7 +9,7 @@ impl Compile for Expr {
         match self {
             Expr::Constant(tok) => {
                 let const_id = chk.add_const(tok.to_value());
-                chk.add_instr(Instruction::Constant(const_id), tok.pos.line);
+                chk.add_instr(Instruction::PushConstant(const_id), tok.pos.line);
             },
             Expr::Binary(left, op, right) => {
                 left.compile(chk);
@@ -43,6 +22,9 @@ impl Compile for Expr {
                     _ => unimplemented!()
                 }
             },
+            Expr::TrueLiteral(tok) => chk.add_instr(Instruction::PushTrue, tok.pos.line),
+            Expr::FalseLiteral(tok) => chk.add_instr(Instruction::PushFalse, tok.pos.line),
+            Expr::NullLiteral(tok) => chk.add_instr(Instruction::PushNull, tok.pos.line),
             _ => unimplemented!()
         }
     }
@@ -113,8 +95,8 @@ mod tests {
         let compiler = Compiler {};
         compiler.compile(&mut chk, expr_stmt);
 
-        assert_eq!(chk.get_instr(0).clone(), Instruction::Constant(0));
-        assert_eq!(chk.get_instr(1).clone(), Instruction::Constant(1));
+        assert_eq!(chk.get_instr(0).clone(), Instruction::PushConstant(0));
+        assert_eq!(chk.get_instr(1).clone(), Instruction::PushConstant(1));
         assert_eq!(chk.get_instr(2).clone(), Instruction::Multiply);
         assert_eq!(chk.get_instr(3).clone(), Instruction::Return);
     }

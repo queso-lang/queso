@@ -7,6 +7,8 @@ pub enum Expr {
     Binary(Box<Expr>, Token, Box<Expr>),
     Unary(Token, Box<Expr>),
 
+    TrueLiteral(Token), FalseLiteral(Token), NullLiteral(Token), 
+
     Error
 }
 

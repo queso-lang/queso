@@ -38,11 +38,23 @@ impl VM {
 
                         break;
                     },
-                    Instruction::Constant(id) => {
+                    Instruction::PushConstant(id) => {
                         let id = *id;
                         let constant: &Value = self.chk.get_const(id);
                         println!("Push constant to stack: {:?}", constant);
                         self.stack.push(constant.clone());
+                    },
+                    Instruction::PushTrue => {
+                        println!("Push true to stack");
+                        self.stack.push(Value::Bool(true));
+                    },
+                    Instruction::PushFalse => {
+                        println!("Push false to stack");
+                        self.stack.push(Value::Bool(false));
+                    },
+                    Instruction::PushNull => {
+                        println!("Push null to stack");
+                        self.stack.push(Value::Null);
                     },
                     Instruction::Negate => {
                         let val = self.pop_stack();
@@ -154,7 +166,7 @@ mod tests {
         let mut chk = Chunk::new();
         
         chk.add_const(Value::Number(5.));
-        chk.add_instr(Instruction::Constant(0), 0);
+        chk.add_instr(Instruction::PushConstant(0), 0);
         chk.add_instr(Instruction::Negate, 0);
         chk.add_instr(Instruction::Return, 0);
 
@@ -179,23 +191,23 @@ mod tests {
         //multiply
         //add
         chk.add_const(Value::Number(5.));
-        chk.add_instr(Instruction::Constant(0), 0);
+        chk.add_instr(Instruction::PushConstant(0), 0);
 
         chk.add_const(Value::Number(5.));
-        chk.add_instr(Instruction::Constant(1), 0);
+        chk.add_instr(Instruction::PushConstant(1), 0);
 
         chk.add_const(Value::Number(2.5));
-        chk.add_instr(Instruction::Constant(2), 0);
+        chk.add_instr(Instruction::PushConstant(2), 0);
 
         chk.add_instr(Instruction::Divide, 0);
 
         chk.add_instr(Instruction::Subtract, 0);
 
         chk.add_const(Value::Number(1.));
-        chk.add_instr(Instruction::Constant(3), 0);
+        chk.add_instr(Instruction::PushConstant(3), 0);
 
         chk.add_const(Value::Number(2.));
-        chk.add_instr(Instruction::Constant(4), 0);
+        chk.add_instr(Instruction::PushConstant(4), 0);
 
         chk.add_instr(Instruction::Multiply, 0);
 
