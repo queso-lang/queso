@@ -160,7 +160,6 @@ impl Lexer {
 
     fn make_string(&mut self, quote_type: char) -> Token {
         while self.peek(0) != &quote_type && !self.is_eof() {
-            println!("{:?}", self.peek(0));
             self.next();
         }
         if self.is_eof() {

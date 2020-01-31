@@ -41,21 +41,19 @@ impl Value {
 
 impl From<&Token> for Value {
     fn from(tok: &Token) -> Value {
-        if tok.t == TokenType::True {
-            return Value::Bool(true);
-        }
-        else if tok.t == TokenType::False {
-            return Value::Bool(false);
-        }
-        else if tok.t == TokenType::Null {
-            return Value::Null;
-        }
-        else if tok.t == TokenType::Number {
-            return Value::Number(
+        return match tok.t {
+            TokenType::Number => Value::Number(
                 tok.val.parse::<f64>()
                     .expect("Error parsing float! This might be a problem with the interpreter itself.")
-            );
+            ),
+            TokenType::String => {
+                let s = tok.val.clone();
+                Value::String(s[1..s.len()-1].to_string())
+            },
+            TokenType::True   => Value::Bool(true),
+            TokenType::False  => Value::Bool(false),
+            TokenType::Null   => Value::Null,
+            _ => unimplemented!()
         }
-        unimplemented!()
     }
 }
