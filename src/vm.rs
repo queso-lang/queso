@@ -7,7 +7,7 @@ pub struct VM {
     cur_instr: usize,
     stack: Stack,
 
-    pub hadError: bool
+    pub had_error: bool
 }
 
 impl VM {
@@ -16,7 +16,7 @@ impl VM {
             chk: Chunk::new(),
             cur_instr: 0,
             stack: Stack::new(),
-            hadError: false
+            had_error: false
         }
     }
     pub fn execute(&mut self, chk: Chunk) {
@@ -55,7 +55,7 @@ impl VM {
                                 self.stack.push(Value::Number(-num));
                             },
                             _ => {
-                                self.hadError = true;
+                                self.had_error = true;
                                 return;
                             }
                         }                        
@@ -107,6 +107,6 @@ mod tests {
         let mut vm = VM::new();
         vm.execute(chk);
 
-        assert!(!vm.hadError);
+        assert!(!vm.had_error);
     }
 }
