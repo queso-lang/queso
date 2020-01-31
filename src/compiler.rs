@@ -8,7 +8,7 @@ impl Token {
         else if self.t == TokenType::False {
             return Value::Bool(false);
         }
-        else if self.t == TokenType::Tilde {
+        else if self.t == TokenType::Null {
             return Value::Null;
         }
         else if self.t == TokenType::Number {

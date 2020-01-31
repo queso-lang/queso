@@ -14,7 +14,7 @@ pub enum TokenType {
     Less, LessEqual,
 
     Identifier, String, Number,
-    Tilde,
+    Null,
 
     Let, Mut, Class, Fn,
     If, Else, For, While, Match,
