@@ -19,6 +19,15 @@ impl Compile for Expr {
                     TokenType::Minus => chk.add_instr(Instruction::Subtract, op.pos.line),
                     TokenType::Star  => chk.add_instr(Instruction::Multiply, op.pos.line),
                     TokenType::Slash => chk.add_instr(Instruction::Divide, op.pos.line),
+                    TokenType::Slash => chk.add_instr(Instruction::Divide, op.pos.line),
+
+                    TokenType::EqualEqual   => chk.add_instr(Instruction::Equal, op.pos.line),
+                    TokenType::BangEqual    => chk.add_instr(Instruction::NotEqual, op.pos.line),
+                    TokenType::GreaterEqual => chk.add_instr(Instruction::GreaterEqual, op.pos.line),
+                    TokenType::LessEqual    => chk.add_instr(Instruction::LessEqual, op.pos.line),
+                    TokenType::Greater      => chk.add_instr(Instruction::Greater, op.pos.line),
+                    TokenType::Less         => chk.add_instr(Instruction::Less, op.pos.line),
+
                     _ => unimplemented!()
                 }
             },

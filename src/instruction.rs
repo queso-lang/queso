@@ -6,12 +6,20 @@ pub enum Instruction {
     PushTrue,
     PushFalse,
     PushNull,
+
     Negate,
+    Not,
     Add,
     Subtract,
     Multiply,
     Divide,
-    Not,
+
+    Equal,
+    NotEqual,
+    GreaterEqual,
+    LessEqual,
+    Greater,
+    Less,
 
     Return
 }

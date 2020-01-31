@@ -76,6 +76,24 @@ impl Parser {
         parser.rules.insert(TokenType::Null,
             ParserRule {prefix: Some(Parser::boolnull), infix: None,                    bp: BP::Zero as u8});
 
+        parser.rules.insert(TokenType::EqualEqual,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Equality as u8});
+
+        parser.rules.insert(TokenType::BangEqual,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Equality as u8});
+
+        parser.rules.insert(TokenType::Greater,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
+
+        parser.rules.insert(TokenType::GreaterEqual,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
+
+        parser.rules.insert(TokenType::Less,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
+
+        parser.rules.insert(TokenType::LessEqual,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
+
 
         parser
     }

@@ -15,6 +15,32 @@ impl Value {
             Value::Null => false
         }
     }
+    pub fn to_number(&self) -> Result<f64, ()> {
+        match self {
+            Value::Number(num) => return Ok(num.clone()),
+            Value::Bool(b) => return Err(()),
+            Value::Null => return Err(())
+        }
+    }
+    pub fn is_greater_than(&self, than: &Value) -> bool {
+        return match (self, than) {
+            (Value::Number(n1), Value::Number(n2)) => n1 > n2,
+            _ => false
+        }
+    }
+    pub fn is_equal_to(&self, to: &Value) -> bool {
+        return match (self, to) {
+            (Value::Bool(b), val) | (val, Value::Bool(b)) => *b == val.is_truthy(),
+            (Value::Number(n), val) | (val, Value::Number(n)) => {
+                if let Ok(num) = val.to_number() {
+                    return *n == num
+                }
+                return false
+            },
+            (Value::Null, Value::Null) => true,
+            _ => false
+        }
+    }
 }
 
 impl From<&Token> for Value {
