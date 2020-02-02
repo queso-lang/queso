@@ -12,7 +12,6 @@
 
 **queso** promotes the *everything is an expression notion*, which fits nicely in a functional scripting language. However, declarations (`let`, `mut`, `fn`, `class`) are not considered expressions,
 since `if a -> let b` doesn't make sense.
-A snippet showcasing some of queso's functional features:
 
 **queso** runs everywhere **C** does. It is an interpreted language and uses a byte code virtual machine to make it silky smooth.
 
