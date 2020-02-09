@@ -58,15 +58,17 @@ impl VM {
                     },
                     Instruction::Negate => {
                         let val = self.pop_stack();
-                        match val {
-                            Value::Number(num) => {
-                                println!("Negate top of stack: {:?}", val);
-                                self.stack.push(Value::Number(-num));
-                            },
-                            _ => {
-                                return Err("The negation operator can only be used with numbers");
-                            }
-                        }                        
+                        match val.to_number() {
+                            Ok(num) => self.stack.push(Value::Number(-num)),
+                            Err(err) => return Err(err)
+                        }                       
+                    },
+                    Instruction::ToNumber => {
+                        let val = self.pop_stack();
+                        match val.to_number() {
+                            Ok(num) => self.stack.push(Value::Number(num)),
+                            Err(err) => return Err(err)
+                        }                      
                     },
                     Instruction::Not => {
                         let val = self.pop_stack();
@@ -82,8 +84,14 @@ impl VM {
                             (Value::Number(n1), Value::Number(n2)) => {
                                 self.stack.push(Value::Number(n1 + n2));
                             },
+                            (Value::String(s1), v @ _) | (v @ _, Value::String(s1)) => {
+                                match v.to_string() {
+                                    Ok(s2) => self.stack.push(Value::String(s1 + &s2)),
+                                    Err(err) => return Err(err)
+                                }
+                            },
                             _ => {
-                                return Err("The addition operator can only be used with numbers");
+                                return Err("The addition operator can only be used with numbers and strings");
                             }
                         }
                     },
@@ -122,6 +130,9 @@ impl VM {
 
                         match (a, b) {
                             (Value::Number(n1), Value::Number(n2)) => {
+                                if n2 == 0. {
+                                    return Err("Cannot divide by 0");
+                                }
                                 self.stack.push(Value::Number(n1 / n2));
                             },
                             _ => {

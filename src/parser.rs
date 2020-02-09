@@ -53,7 +53,7 @@ impl Parser {
             ParserRule {prefix: Some(Parser::unary),    infix: Some(Parser::binary),    bp: BP::Addition as u8});
 
         parser.rules.insert(TokenType::Plus,
-            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Addition as u8});
+            ParserRule {prefix: Some(Parser::unary),    infix: Some(Parser::binary),    bp: BP::Addition as u8});
 
         parser.rules.insert(TokenType::Slash,
             ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Multitplication as u8});

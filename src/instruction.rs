@@ -8,6 +8,7 @@ pub enum Instruction {
     PushNull,
 
     Negate,
+    ToNumber,
     Not,
     Add,
     Subtract,

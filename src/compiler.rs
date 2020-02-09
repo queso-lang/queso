@@ -35,6 +35,7 @@ impl Compile for Expr {
                 right.compile(chk);
                 match op.t {
                     TokenType::Minus  => chk.add_instr(Instruction::Negate, op.pos.line),
+                    TokenType::Plus  => chk.add_instr(Instruction::ToNumber, op.pos.line),
                     TokenType::Bang => chk.add_instr(Instruction::Not, op.pos.line),
                     _ => unimplemented!()
                 }

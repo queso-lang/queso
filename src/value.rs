@@ -17,15 +17,25 @@ impl Value {
             Value::Null => false
         }
     }
-    pub fn to_number(&self) -> Result<f64, ()> {
+    pub fn to_number(&self) -> Result<f64, &'static str> {
         match self {
             Value::Number(num) => return Ok(num.clone()),
-            Value::Bool(b) => return Err(()),
+            Value::Bool(b) => return Ok(if *b {1.} else {0.}),
             Value::String(s) => return match s.parse::<f64>() {
                 Ok(num) => return Ok(num),
-                _ => return Err(())
+                _ => return Err("Could not convert the string to a number")
             },
-            Value::Null => return Err(())
+            Value::Null => return Ok(0.),
+            _ => return Err("This operand cannot be converted to a number")
+        }
+    }
+    pub fn to_string(&self) -> Result<String, &'static str> {
+        match self {
+            Value::String(s) => return Ok(s.clone()),
+            Value::Bool(b) => return Ok((if *b {"true"} else {"false"}).to_string()),
+            Value::Number(num) => return Ok(num.to_string()),
+            Value::Null => return Ok("".to_string()),
+            _ => return Err("This operand cannot be converted to a string")
         }
     }
     pub fn is_greater_than(&self, than: &Value) -> bool {
