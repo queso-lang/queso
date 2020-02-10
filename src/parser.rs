@@ -53,7 +53,7 @@ impl Parser {
             ParserRule {prefix: Some(Parser::unary),    infix: Some(Parser::binary),    bp: BP::Addition as u8});
 
         parser.rules.insert(TokenType::Plus,
-            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Addition as u8});
+            ParserRule {prefix: Some(Parser::unary),    infix: Some(Parser::binary),    bp: BP::Addition as u8});
 
         parser.rules.insert(TokenType::Slash,
             ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Multitplication as u8});
@@ -65,7 +65,38 @@ impl Parser {
             ParserRule {prefix: Some(Parser::unary),    infix: None,                    bp: BP::Zero as u8});
 
         parser.rules.insert(TokenType::Number,
-            ParserRule {prefix: Some(Parser::number),   infix: None,                    bp: BP::Zero as u8});
+            ParserRule {prefix: Some(Parser::literal),  infix: None,                    bp: BP::Zero as u8});
+
+        parser.rules.insert(TokenType::String,
+            ParserRule {prefix: Some(Parser::literal),  infix: None,                    bp: BP::Zero as u8});
+
+        parser.rules.insert(TokenType::True,
+            ParserRule {prefix: Some(Parser::literal),  infix: None,                    bp: BP::Zero as u8});
+
+        parser.rules.insert(TokenType::False,
+            ParserRule {prefix: Some(Parser::literal),  infix: None,                    bp: BP::Zero as u8});
+
+        parser.rules.insert(TokenType::Null,
+            ParserRule {prefix: Some(Parser::literal),  infix: None,                    bp: BP::Zero as u8});
+
+        parser.rules.insert(TokenType::EqualEqual,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Equality as u8});
+
+        parser.rules.insert(TokenType::BangEqual,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Equality as u8});
+
+        parser.rules.insert(TokenType::Greater,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
+
+        parser.rules.insert(TokenType::GreaterEqual,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
+
+        parser.rules.insert(TokenType::Less,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
+
+        parser.rules.insert(TokenType::LessEqual,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
+
 
         parser
     }
@@ -131,8 +162,16 @@ impl Parser {
         Expr::Binary(Box::new(left), op, Box::new(right))
     }
 
-    fn number(&mut self) -> Expr {
-        Expr::Constant(self.toks.next().clone())
+    fn literal(&mut self) -> Expr {
+        let tok = self.toks.next().clone();
+        match tok.t {
+            TokenType::Number => Expr::Constant(tok),
+            TokenType::String => Expr::Constant(tok),
+            TokenType::True   => Expr::TrueLiteral(tok),
+            TokenType::False  => Expr::FalseLiteral(tok),
+            TokenType::Null   => Expr::NullLiteral(tok),
+            _ => panic!("This is a problem with the interpreter itself.")
+        }
     }
 
     fn grouping(&mut self) -> Expr {
@@ -165,18 +204,4 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // only error tests for now
-    #[test]
-    fn test_arithmetic() {
-        assert!(run(String::from("1 + 2 * 3;")));
-        assert!(run(String::from("(1 + 2) * 3;")));
-        assert!(run(String::from("!(1 + 2) * -3;")));
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_panic() {
-        assert!(run(String::from("1 + 2 * 3")));
-    }
 }

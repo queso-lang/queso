@@ -1,4 +1,4 @@
-use crate::Lexer;
+use crate::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TokenType {
@@ -14,7 +14,7 @@ pub enum TokenType {
     Less, LessEqual,
 
     Identifier, String, Number,
-    Tilde,
+    Null,
 
     Let, Mut, Class, Fn,
     If, Else, For, While, Match,

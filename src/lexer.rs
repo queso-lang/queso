@@ -73,7 +73,7 @@ impl Lexer {
             '}' => self.new_token(TokenType::RightBrace),
 
             ';' => self.new_token(TokenType::Semi),
-            '~' => self.new_token(TokenType::Tilde),
+            '~' => self.new_token(TokenType::Null),
             '+' => self.new_token(TokenType::Plus),
             ',' => self.new_token(TokenType::Comma),
             '.' => self.new_token(TokenType::Dot),
@@ -160,7 +160,6 @@ impl Lexer {
 
     fn make_string(&mut self, quote_type: char) -> Token {
         while self.peek(0) != &quote_type && !self.is_eof() {
-            println!("{:?}", self.peek(0));
             self.next();
         }
         if self.is_eof() {

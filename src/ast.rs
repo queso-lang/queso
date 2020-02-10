@@ -1,11 +1,13 @@
 use crate::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Constant(Token),
     Grouping(Box<Expr>),
     Binary(Box<Expr>, Token, Box<Expr>),
     Unary(Token, Box<Expr>),
+
+    TrueLiteral(Token), FalseLiteral(Token), NullLiteral(Token), 
 
     Error
 }
@@ -23,7 +25,7 @@ impl std::fmt::Display for Expr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Stmt {
     Expr(Expr),
     // FnDecl(Token, )
@@ -37,4 +39,3 @@ impl std::fmt::Display for Stmt {
         }
     }
 }
-
