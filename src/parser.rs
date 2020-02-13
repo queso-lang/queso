@@ -5,6 +5,7 @@ use std::collections::HashMap;
 #[derive(Clone)]
 pub enum BP {
     Zero,
+    KeywordExpr, //trace, return, throw,
     Assignment,
     Or,
     And,
@@ -97,8 +98,15 @@ impl Parser {
         parser.rules.insert(TokenType::LessEqual,
             ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
 
+        parser.rules.insert(TokenType::Trace,
+            ParserRule {prefix: Some(Parser::unary),    infix: None,                    bp: BP::KeywordExpr as u8});
 
         parser
+    }
+    
+    fn get_rule(&self, t: TokenType) -> ParserRule {
+        let default = ParserRule {prefix: None, infix: None, bp: BP::Zero as u8};
+        self.rules.get(&t).unwrap_or(&default).clone()
     }
 
     fn consume(&mut self, t: TokenType, msg: &'static str) {
@@ -136,11 +144,6 @@ impl Parser {
         let cur = self.toks.peek().clone();
         self.error(cur, "Expected an expression");
         return Expr::Error;
-    }
-
-    fn get_rule(&self, t: TokenType) -> ParserRule {
-        let default = ParserRule {prefix: None, infix: None, bp: BP::Zero as u8};
-        self.rules.get(&t).unwrap_or(&default).clone()
     }
 
     pub fn expr(&mut self) -> Expr {

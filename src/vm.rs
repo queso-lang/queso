@@ -182,6 +182,13 @@ impl VM {
 
                         self.stack.push(Value::Bool(b.is_greater_than(&a)));
                     },
+                    Instruction::Trace => {
+                        let a = self.pop_stack();
+                        println!("Trace: {:?}", a);
+
+                        //maybe don't pop at all?
+                        self.stack.push(a);
+                    },
 
                     #[allow(unreachable_patterns)]
                     _ => unimplemented!()
