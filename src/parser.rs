@@ -99,7 +99,7 @@ impl Parser {
             ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
 
         parser.rules.insert(TokenType::Trace,
-            ParserRule {prefix: Some(Parser::unary),    infix: None,                    bp: BP::KeywordExpr as u8});
+            ParserRule {prefix: Some(Parser::unarykw),  infix: None,                    bp: BP::KeywordExpr as u8});
 
         parser
     }
@@ -153,6 +153,12 @@ impl Parser {
     fn unary(&mut self) -> Expr {
         let op = self.toks.next();
         let expr = self.parse_bp(BP::Unary as u8);
+        Expr::Unary(op, Box::new(expr))
+    }
+
+    fn unarykw(&mut self) -> Expr {
+        let op = self.toks.next();
+        let expr = self.parse_bp(BP::KeywordExpr as u8);
         Expr::Unary(op, Box::new(expr))
     }
 
