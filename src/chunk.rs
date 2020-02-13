@@ -12,7 +12,7 @@ pub struct Chunk {
 }
 
 impl Chunk {
-    fn add_line(&mut self, line: u32) {
+    pub fn add_line(&mut self, line: u32) {
         if let Some(last_line) = self.lines.last_mut() {
             if last_line.line == line {
                 last_line.repeat += 1;

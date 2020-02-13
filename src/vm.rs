@@ -289,4 +289,21 @@ mod tests {
 
         assert_eq!(vm.execute(chk), Ok(()));
     }
+
+    #[test]
+    fn test_kwexpr() {
+        let mut chk = Chunk::new();
+        chk.add_line(0);
+        
+        chk.add_const(Value::Number(5.));
+        chk.add_instr(Instruction::PushConstant(0), 0);
+
+        chk.add_instr(Instruction::Trace, 0);
+
+        chk.add_instr(Instruction::Return, 0);
+
+        let mut vm = VM::new();
+
+        assert_eq!(vm.execute(chk), Ok(()));
+    }
 }
