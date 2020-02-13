@@ -22,5 +22,7 @@ pub enum Instruction {
     Greater,
     Less,
 
+    Trace,
+
     Return
 }

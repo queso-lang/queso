@@ -182,6 +182,18 @@ impl VM {
 
                         self.stack.push(Value::Bool(b.is_greater_than(&a)));
                     },
+                    Instruction::Trace => {
+                        let a = self.pop_stack();
+                        println!("Trace: {:?}", a);
+
+                        let val = a.to_string().unwrap_or("".to_string());
+                        //add filename
+                        let line_no = self.chk.get_line_no(self.cur_instr as u32);
+                        println!("[{}] {}", line_no, val);
+                        //maybe don't pop at all?
+
+                        self.stack.push(a);
+                    },
 
                     #[allow(unreachable_patterns)]
                     _ => unimplemented!()
@@ -270,6 +282,23 @@ mod tests {
         chk.add_instr(Instruction::Multiply, 0);
 
         chk.add_instr(Instruction::Add, 0);
+
+        chk.add_instr(Instruction::Return, 0);
+
+        let mut vm = VM::new();
+
+        assert_eq!(vm.execute(chk), Ok(()));
+    }
+
+    #[test]
+    fn test_kwexpr() {
+        let mut chk = Chunk::new();
+        chk.add_line(0);
+        
+        chk.add_const(Value::Number(5.));
+        chk.add_instr(Instruction::PushConstant(0), 0);
+
+        chk.add_instr(Instruction::Trace, 0);
 
         chk.add_instr(Instruction::Return, 0);
 

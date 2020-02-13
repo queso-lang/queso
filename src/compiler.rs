@@ -34,9 +34,10 @@ impl Compile for Expr {
             Expr::Unary(op, right) => {
                 right.compile(chk);
                 match op.t {
-                    TokenType::Minus  => chk.add_instr(Instruction::Negate, op.pos.line),
+                    TokenType::Minus => chk.add_instr(Instruction::Negate, op.pos.line),
                     TokenType::Plus  => chk.add_instr(Instruction::ToNumber, op.pos.line),
-                    TokenType::Bang => chk.add_instr(Instruction::Not, op.pos.line),
+                    TokenType::Bang  => chk.add_instr(Instruction::Not, op.pos.line),
+                    TokenType::Trace => chk.add_instr(Instruction::Trace, op.pos.line),
                     _ => unimplemented!()
                 }
             }

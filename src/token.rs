@@ -91,4 +91,12 @@ impl TokenStream {
     pub fn peek(&self) -> &Token {
         &self.cur
     }
+
+    pub fn nextif(&mut self, t: TokenType) -> bool {
+        if self.peek().t == t {
+            self.next();
+            return true;
+        }
+        return false;
+    }
 }
