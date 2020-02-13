@@ -186,7 +186,12 @@ impl VM {
                         let a = self.pop_stack();
                         println!("Trace: {:?}", a);
 
+                        let val = a.to_string().unwrap_or("".to_string());
+                        //add filename
+                        let line_no = self.chk.get_line_no(self.cur_instr as u32);
+                        println!("[{}] {}", line_no, val);
                         //maybe don't pop at all?
+
                         self.stack.push(a);
                     },
 
