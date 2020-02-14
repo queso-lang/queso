@@ -33,7 +33,18 @@ mod value;
 use value::*;
 
 extern crate clap; 
-use clap::{App, Arg, crate_version}; 
+use clap::{App, Arg, crate_version};
+
+#[derive(Clone)]
+struct DebugOpts {
+    pub tokens: bool, pub ast: bool, pub instrs: bool
+}
+
+#[derive(Clone)]
+struct QuesoOpts {
+    pub debug: DebugOpts
+}
+
 
 fn main() {
     let matches = App::new("queso")
@@ -64,27 +75,38 @@ fn main() {
         )
        .get_matches();
 
+
+    let debug_opts = DebugOpts {
+        tokens: matches.occurrences_of("debug tokens") > 0,
+        ast: matches.occurrences_of("debug ast") > 0,
+        instrs: matches.occurrences_of("debug instrs") > 0
+    };
+
+    let opts = QuesoOpts {
+        debug: debug_opts
+    };
+
     if let Some(file) = matches.value_of("file") {
         unimplemented!()
     }
     else {
-        repl()
+        repl(opts)
     }
 }
 
-fn repl() {
+fn repl(opts: QuesoOpts) {
     loop {
         print!(">");
         io::Write::flush(&mut io::stdout()).expect("flush failed!");
         let mut buf = String::new();
         if let Ok(_) = io::stdin().read_line(&mut buf) {
-            run(buf);
+            run(opts.clone(), buf);
         }
         println!();
     }
 }
 
-fn run(src: String) -> bool {
+fn run(opts: QuesoOpts, src: String) -> bool {
     let mut lexer = Lexer::new(src);
 
     let mut toks = TokenStream::new(lexer);
