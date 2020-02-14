@@ -7,3 +7,4 @@ edition = "2018"
 
 [dependencies]
 phf = { version = "0.8", features = ["macros"] }
+clap = "2.33.0"

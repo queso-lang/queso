@@ -32,8 +32,44 @@ use instruction::*;
 mod value;
 use value::*;
 
+extern crate clap; 
+use clap::{App, Arg, crate_version}; 
+
 fn main() {
-    repl();
+    let matches = App::new("queso")
+       .version(crate_version!())
+       .about("The interpreter for the queso language")
+       .arg(
+           Arg::with_name("file")
+           .help("The file to be run")
+           .index(1)
+        )
+        .arg(
+            Arg::with_name("debug tokens")
+            .long("#tokens")
+            .help("turns on debug token logging")
+            .hidden(true)
+        )
+        .arg(
+            Arg::with_name("debug ast")
+            .long("#ast")
+            .help("turns on debug AST visualisation")
+            .hidden(true)
+        )
+        .arg(
+            Arg::with_name("debug instrs")
+            .long("#instrs")
+            .help("turns on bytecode instructions logging")
+            .hidden(true)
+        )
+       .get_matches();
+
+    if let Some(file) = matches.value_of("file") {
+        unimplemented!()
+    }
+    else {
+        repl()
+    }
 }
 
 fn repl() {
