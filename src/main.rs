@@ -110,14 +110,27 @@ fn run(opts: QuesoOpts, src: String) -> bool {
     let mut lexer = Lexer::new(src);
 
     let mut toks = TokenStream::new(lexer);
+    if opts.debug.tokens {
+        let mut toks = toks.clone();
+        println!("== TOKENS ==");
+        while toks.peek().t != TokenType::EOF {
+            println!("{}", toks.next());
+        }
+    }
 
     let mut parser = Parser::new(toks);
-    // parser.program().iter().for_each(|stmt| {
-    //     println!("{}", stmt);
-    // });
+    let stmts = parser.program();
 
     if !parser.had_error {
-        let stmts = parser.program();
+
+        if opts.debug.ast {
+            let mut stmts = stmts.clone();
+            println!("== AST ==");
+            stmts.iter().for_each(|stmt| {
+                println!("{}", stmt);
+            });
+        }
+
         let stmt = stmts.get(0).expect("yeet");
         let stmt = stmt.clone();
         let mut chk = Chunk::new();
@@ -130,7 +143,9 @@ fn run(opts: QuesoOpts, src: String) -> bool {
             Err(err) => println!("{}", err),
             _ => {}
         }
+
+        return true;
     }
 
-    true
+    false
 }
