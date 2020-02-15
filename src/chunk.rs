@@ -69,7 +69,7 @@ impl Chunk {
         }
     }
     pub fn print_instr(&self, instr_id: usize, hide_repeating_lines: bool) {
-        print!("{:04} {:>4} ", instr_id,
+        print!("{:<4} ", 
             if instr_id >= 1
             && self.get_line_no(instr_id as u32) == self.get_line_no((instr_id-1) as u32)
             && hide_repeating_lines {

@@ -11,6 +11,7 @@ static KEYWORDS: phf::Map<&'static str, TokenType> = phf_map! {
      "true" => TokenType::True, "false" => TokenType::False
 };
 
+#[derive(Clone)]
 pub struct Lexer {
     src: Vec<char>,
 

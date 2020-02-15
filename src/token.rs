@@ -67,6 +67,7 @@ enum Nullable<T: Clone> {
     Null
 }
 
+#[derive(Clone)]
 pub struct TokenStream {
     lexer: Lexer,
 
