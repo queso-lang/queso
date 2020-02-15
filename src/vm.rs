@@ -99,13 +99,11 @@ impl VM {
                     },
                     Instruction::Not => {
                         let val = self.pop_stack();
-                        println!("Not top of stack: {:?}", val);
                         self.stack.push(Value::Bool(!val.is_truthy()))                     
                     },
                     Instruction::Add => {
                         let b = self.pop_stack();
                         let a = self.pop_stack();
-                        println!("Push: {:?} + {:?}", a, b);
 
                         match (a, b) {
                             (Value::Number(n1), Value::Number(n2)) => {
@@ -125,7 +123,6 @@ impl VM {
                     Instruction::Subtract => {
                         let b = self.pop_stack();
                         let a = self.pop_stack();
-                        println!("Push: {:?} - {:?}", a, b);
 
                         match (a, b) {
                             (Value::Number(n1), Value::Number(n2)) => {
@@ -139,7 +136,6 @@ impl VM {
                     Instruction::Multiply => {
                         let b = self.pop_stack();
                         let a = self.pop_stack();
-                        println!("Push: {:?} * {:?}", a, b);
 
                         match (a, b) {
                             (Value::Number(n1), Value::Number(n2)) => {
@@ -153,7 +149,6 @@ impl VM {
                     Instruction::Divide => {
                         let b = self.pop_stack();
                         let a = self.pop_stack();
-                        println!("Push: {:?} / {:?}", a, b);
 
                         match (a, b) {
                             (Value::Number(n1), Value::Number(n2)) => {
@@ -170,42 +165,36 @@ impl VM {
                     Instruction::Equal => {
                         let b = self.pop_stack();
                         let a = self.pop_stack();
-                        println!("Push: {:?} == {:?}", a, b);
 
                         self.stack.push(Value::Bool(a.is_equal_to(&b)));
                     },
                     Instruction::NotEqual => {
                         let b = self.pop_stack();
                         let a = self.pop_stack();
-                        println!("Push: {:?} == {:?}", a, b);
 
                         self.stack.push(Value::Bool(!a.is_equal_to(&b)));
                     },
                     Instruction::GreaterEqual => {
                         let b = self.pop_stack();
                         let a = self.pop_stack();
-                        println!("Push: {:?} == {:?}", a, b);
 
                         self.stack.push(Value::Bool(a.is_equal_to(&b) || a.is_greater_than(&b)));
                     },
                     Instruction::LessEqual => {
                         let b = self.pop_stack();
                         let a = self.pop_stack();
-                        println!("Push: {:?} == {:?}", a, b);
 
                         self.stack.push(Value::Bool(a.is_equal_to(&b) || b.is_greater_than(&a)));
                     },
                     Instruction::Greater => {
                         let b = self.pop_stack();
                         let a = self.pop_stack();
-                        println!("Push: {:?} == {:?}", a, b);
 
                         self.stack.push(Value::Bool(a.is_greater_than(&b)));
                     },
                     Instruction::Less => {
                         let b = self.pop_stack();
                         let a = self.pop_stack();
-                        println!("Push: {:?} == {:?}", a, b);
 
                         self.stack.push(Value::Bool(b.is_greater_than(&a)));
                     },
