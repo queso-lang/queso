@@ -1,5 +1,5 @@
 [package]
-name = "rsqueso"
+name = "queso"
 version = "0.1.0"
 authors = ["Mateusz Sowiński-Smętny <matisowagm@gmail.com>"]
 edition = "2018"
