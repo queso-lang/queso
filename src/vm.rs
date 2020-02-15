@@ -5,17 +5,42 @@ type Stack = Vec<Value>;
 pub struct VM {
     chk: Chunk,
     cur_instr: usize,
-    stack: Stack
+    stack: Stack,
+
+    debug: bool
 }
 
 impl VM {
-    pub fn new() -> VM {
+    pub fn new(debug: bool) -> VM {
         VM {
             chk: Chunk::new(),
             cur_instr: 0,
-            stack: Stack::new()
+            stack: Stack::new(),
+            debug
         }
     }
+        
+    fn next_instr(&mut self) -> Option<&Instruction> {
+        self.cur_instr += 1;
+        self.chk.try_get_instr(self.cur_instr - 1)
+    }
+
+    fn pop_stack(&mut self) -> Value {
+        self.stack.pop()
+            .expect("Failed to pop a value of the stack. This might be a problem with the interpreter itself.")
+    }
+
+    fn print_stack(&self) {
+        print!("stack ");
+        if self.stack.len() == 0 {
+            print!("<empty>");
+        }
+        for val in self.stack.iter() {
+            print!("| {:?} ", val);
+        }
+        println!();
+    }
+
     pub fn execute(&mut self, chk: Chunk) -> Result<(), &'static str> {
         self.chk = chk;
         self.cur_instr = 0;
@@ -23,37 +48,39 @@ impl VM {
     }
 
     fn run(&mut self) -> Result<(), &'static str> {
-        println!("===========\nrun:");
+        if self.debug {
+            println!("\nINSTRUCTIONS:");
+        }
 
         loop {
-            println!();
-            self.chk.print_instr(self.cur_instr, false);
 
-            self.print_stack();
+            if self.debug {
+                self.chk.print_instr(self.cur_instr, false);
+            
+                self.print_stack();
+
+                println!();
+            }
 
             if let Some(next) = self.next_instr() {
                 match next {
                     Instruction::Return => {
-                        println!("Return: {:?}", self.pop_stack());
+                        self.pop_stack();
 
                         break;
                     },
                     Instruction::PushConstant(id) => {
                         let id = *id;
                         let constant: &Value = self.chk.get_const(id);
-                        println!("Push constant to stack: {:?}", constant);
                         self.stack.push(constant.clone());
                     },
                     Instruction::PushTrue => {
-                        println!("Push true to stack");
                         self.stack.push(Value::Bool(true));
                     },
                     Instruction::PushFalse => {
-                        println!("Push false to stack");
                         self.stack.push(Value::Bool(false));
                     },
                     Instruction::PushNull => {
-                        println!("Push null to stack");
                         self.stack.push(Value::Null);
                     },
                     Instruction::Negate => {
@@ -184,7 +211,6 @@ impl VM {
                     },
                     Instruction::Trace => {
                         let a = self.pop_stack();
-                        println!("Trace: {:?}", a);
 
                         let val = a.to_string().unwrap_or("".to_string());
                         //add filename
@@ -205,26 +231,6 @@ impl VM {
         Ok(())
     }
 
-    fn next_instr(&mut self) -> Option<&Instruction> {
-        self.cur_instr += 1;
-        self.chk.try_get_instr(self.cur_instr - 1)
-    }
-
-    fn pop_stack(&mut self) -> Value {
-        self.stack.pop()
-            .expect("Failed to pop a value of the stack. This might be a problem with the interpreter itself.")
-    }
-
-    fn print_stack(&self) {
-        print!("stack ");
-        if self.stack.len() == 0 {
-            print!("<empty>");
-        }
-        for val in self.stack.iter() {
-            print!("| {:?} ", val);
-        }
-        println!();
-    }
 }
 
 #[cfg(test)]
@@ -240,7 +246,7 @@ mod tests {
         chk.add_instr(Instruction::Negate, 0);
         chk.add_instr(Instruction::Return, 0);
 
-        let mut vm = VM::new();
+        let mut vm = VM::new(true);
 
         assert_eq!(vm.execute(chk), Ok(()));
     }
@@ -285,7 +291,7 @@ mod tests {
 
         chk.add_instr(Instruction::Return, 0);
 
-        let mut vm = VM::new();
+        let mut vm = VM::new(true);
 
         assert_eq!(vm.execute(chk), Ok(()));
     }
@@ -302,7 +308,7 @@ mod tests {
 
         chk.add_instr(Instruction::Return, 0);
 
-        let mut vm = VM::new();
+        let mut vm = VM::new(true);
 
         assert_eq!(vm.execute(chk), Ok(()));
     }

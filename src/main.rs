@@ -112,7 +112,7 @@ fn run(opts: QuesoOpts, src: String) -> bool {
     let mut toks = TokenStream::new(lexer);
     if opts.debug.tokens {
         let mut toks = toks.clone();
-        println!("== TOKENS ==");
+        println!("\nTOKENS:");
         while toks.peek().t != TokenType::EOF {
             println!("{}", toks.next());
         }
@@ -125,7 +125,7 @@ fn run(opts: QuesoOpts, src: String) -> bool {
 
         if opts.debug.ast {
             let mut stmts = stmts.clone();
-            println!("== AST ==");
+            println!("\nAST:");
             stmts.iter().for_each(|stmt| {
                 println!("{}", stmt);
             });
@@ -137,7 +137,7 @@ fn run(opts: QuesoOpts, src: String) -> bool {
         let compiler = Compiler {};
         compiler.compile(&mut chk, stmt);
 
-        let mut vm = VM::new();
+        let mut vm = VM::new(opts.debug.instrs);
         let res = vm.execute(chk);
         match res {
             Err(err) => println!("{}", err),
