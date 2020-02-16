@@ -221,12 +221,11 @@ impl Parser {
 
     fn block(&mut self) -> Expr {
         self.toks.next();
-        // println!("{}", self.toks.peek());
         let mut stmts = Vec::<Stmt>::new();
-        while self.toks.peek().t != TokenType::RightBrace {
+        let curt = self.toks.peek().t;
+        while curt != TokenType::RightBrace && curt != TokenType::EOF {
             stmts.push(self.stmt());
         }
-        // println!("{}", stmts.last().expect(""));
         self.toks.next();
         Expr::Block(stmts)
     }
