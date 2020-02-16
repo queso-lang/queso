@@ -207,6 +207,10 @@ impl VM {
 
                         self.stack.push(a);
                     },
+                    Instruction::MutDecl(id) => {
+                        let id = id.clone();
+                        let name = self.chk.get_const(id);
+                    }
                     Instruction::Pop => {
                         self.pop_stack();
                     }

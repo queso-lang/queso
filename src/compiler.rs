@@ -61,6 +61,10 @@ impl Compile for Stmt {
                 expr.compile(chk);
                 chk.add_instr(Instruction::Pop, chk.get_last_line());
             },
+            Stmt::MutDecl(name, val) => {
+                let const_id = chk.add_const(Value::from(name));
+                chk.add_instr(Instruction::MutDecl(const_id), name.pos.line);
+            }
             _ => unimplemented!()
         }
     }
