@@ -47,11 +47,44 @@ impl Compile for Expr {
             Expr::Block(stmts) => {
                 env.open();
                 stmts.iter().for_each(|stmt| {stmt.compile(chk, env)});
-                chk.pop_instr();
+                // chk.pop_instr();
                 env.close(chk);
+            },
+            Expr::Access(name) => {
+                self.access(chk, env, name, false);
+            },
+            Expr::Assign(name, val) => {
+                val.compile(chk, env);
+                self.access(chk, env, name, true);
             }
             _ => unimplemented!()
         }
+    }
+}
+
+impl Expr {
+    fn access(&self, chk: &mut Chunk, env: &Env, name: &Token, is_assign: bool){
+        let id = self.resolve_local(env, name);
+        if id < 0 {
+            error(name.clone(), "Usage of an undefined variable");
+            chk.add_instr(Instruction::PushNull, name.pos.line);
+            return;
+        }
+        if is_assign {
+            chk.add_instr(Instruction::Assign(id as u16), name.pos.line);
+        }
+        else {
+            chk.add_instr(Instruction::Access(id as u16), name.pos.line);
+        }
+    }
+    fn resolve_local(&self, env: &Env, name: &Token) -> i32 {
+        for i in (0..env.locals.len()).rev() {
+            let local = env.get(i);
+            if local.name.val == name.val {
+                return i as i32;
+            }
+        }
+        return -1 as i32;
     }
 }
 
@@ -61,12 +94,12 @@ impl Compile for Stmt {
             Stmt::Program(exprs) => {
                 exprs.iter().for_each(|expr| {
                     expr.compile(chk, env);
-                })
+                });
             }
             Stmt::Expr(expr) => {
                 expr.compile(chk, env);
 
-                chk.add_instr(Instruction::Pop, chk.get_last_line());
+                chk.add_instr(Instruction::Pop, 0);
             },
             Stmt::MutDecl(name, val) => {
                 val.compile(chk, env);
@@ -76,20 +109,6 @@ impl Compile for Stmt {
                 }
 
                 env.add(name.clone());
-
-                match val {
-                    Expr::NullLiteral(_) => {
-                        chk.add_instr(Instruction::Pop, chk.get_last_line());
-                    },
-                    _ => {
-                        chk.add_instr(Instruction::Pop, chk.get_last_line());
-                        chk.add_instr(Instruction::PushNull, chk.get_last_line());
-                        chk.add_instr(Instruction::Pop, chk.get_last_line());
-                    }
-                }
-
-                // let const_id = chk.add_const(Value::from(name));
-                // chk.add_instr(Instruction::MutDecl(const_id), name.pos.line);
             }
             _ => unimplemented!()
         }

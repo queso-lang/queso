@@ -30,6 +30,18 @@ impl VM {
             .expect("Failed to pop a value of the stack. This might be a problem with the interpreter itself.")
     }
 
+    fn get_stack(&self, id: u16) -> &Value {
+        self.stack.get(id as usize).expect("This is a problem with the interpreter itself")
+    }
+
+    fn get_stack_top(&self) -> &Value {
+        self.get_stack(self.stack.len() as u16 - 1)
+    }
+
+    fn set_stack(&mut self, id: u16, val: Value) {
+        self.stack[id as usize] = val;
+    }
+
     fn print_stack(&self) {
         print!("stack ");
         if self.stack.len() == 0 {
@@ -206,12 +218,18 @@ impl VM {
 
                         self.stack.push(a);
                     },
-                    Instruction::MutDecl(id) => {
-                        let id = id.clone();
-                        let name = self.chk.get_const(id);
-                    }
                     Instruction::Pop => {
                         self.pop_stack();
+                    },
+                    Instruction::Access(id) => {
+                        let id = *id;
+                        let var = self.get_stack(id).clone();
+                        self.stack.push(var);
+                    },
+                    Instruction::Assign(id) => {
+                        let id = *id;
+                        let val = self.get_stack_top().clone();
+                        self.set_stack(id, val);
                     }
 
                     #[allow(unreachable_patterns)]

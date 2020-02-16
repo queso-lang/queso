@@ -1,7 +1,7 @@
 use crate::*;
 
 pub struct Env {
-    locals: Vec<Local>,
+    pub locals: Vec<Local>,
     scope_depth: u8
 }
 
@@ -14,6 +14,9 @@ impl Env {
     }
     pub fn add(&mut self, name: Token) {
         self.locals.push(Local {name, depth: self.scope_depth as u8});
+    }
+    pub fn get(&self, id: usize) -> &Local {
+        self.locals.get(id).expect("This is a problem with the compiler itself")
     }
     pub fn open(&mut self) {
         self.scope_depth+=1
@@ -32,18 +35,23 @@ impl Env {
 
     pub fn is_redefined(&self, other: &Token) -> bool {
         if self.locals.len() == 0 {return false}
-        for i in (self.locals.len() - 1)..0{
+        let mut i = self.locals.len() - 1;
+        loop {
             let local = self.locals.get(i).expect("This is a problem with the compiler itself");
             if local.depth < self.scope_depth {break;}
 
             if local.name.val == other.val {
                 return true;
             }
+
+            if i <= 0 {break;}
+            i -= 1;
         }
         return false
     }
 }
 
+#[derive(Debug)]
 pub struct Local {
     pub name: Token,
     pub depth: u8

@@ -24,7 +24,8 @@ pub enum Instruction {
 
     Trace,
 
-    MutDecl(u16),
+    Access(u16),
+    Assign(u16),
 
     Pop, Return
 }

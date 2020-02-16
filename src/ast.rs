@@ -10,6 +10,9 @@ pub enum Expr {
 
     Block(Vec<Stmt>),
 
+    Access(Token),
+    Assign(Token, Box<Expr>),
+
     Error
 }
 

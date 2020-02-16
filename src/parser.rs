@@ -106,6 +106,9 @@ impl Parser {
         parser.rules.insert(TokenType::LeftBrace,
             ParserRule {prefix: Some(Parser::block),    infix: None,                    bp: BP::Zero as u8});
 
+        parser.rules.insert(TokenType::Identifier,
+            ParserRule {prefix: Some(Parser::access),   infix: None,                    bp: BP::Zero as u8});
+
         parser
     }
     
@@ -134,7 +137,6 @@ impl Parser {
     fn sync(&mut self) {
         if self.panic {
             self.panic = false;
-            println!("sync: {:?}", self.toks.peek().t);
             while self.toks.peek().t != TokenType::EOF {
                 match self.toks.next().t {
                     TokenType::Semi
@@ -227,6 +229,11 @@ impl Parser {
         }
         self.consume(TokenType::RightBrace, "Unexpected unmatched {");
         Expr::Block(stmts)
+    }
+
+    fn access(&mut self) -> Expr {
+        let cur = self.toks.next();
+        Expr::Access(cur.clone())
     }
 }
 
