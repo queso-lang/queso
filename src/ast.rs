@@ -11,7 +11,6 @@ pub enum Expr {
     Block(Vec<Stmt>),
 
     Access(Token),
-    Assign(Token, Box<Expr>),
 
     Error
 }
@@ -25,6 +24,7 @@ impl std::fmt::Display for Expr {
             Expr::Unary(tok, right) => write!(f, "{}{}", tok.val, **right),
             Expr::NullLiteral(tok) => write!(f, "null"),
             Expr::Block(stmts) => write!(f, "{{ {:#?} }}", stmts),
+            Expr::Access(tok) => write!(f, "{}", tok),
             _ => panic!("display trait not defined")
         }
     }

@@ -12,6 +12,16 @@ impl Compile for Expr {
                 chk.add_instr(Instruction::PushConstant(const_id), tok.pos.line);
             },
             Expr::Binary(left, op, right) => {
+                if op.t == TokenType::Equal {
+                    right.compile(chk, env);
+                    if let Expr::Access(l) = *(left.clone()) {
+                        self.access(chk, env, &l, true);
+                    }
+                    else {
+                        error(op.clone(), "Invalid assignment target. Expected an identifier");
+                    }
+                    return;
+                }
                 left.compile(chk, env);
                 right.compile(chk, env);
                 match op.t {
@@ -27,6 +37,7 @@ impl Compile for Expr {
                     TokenType::LessEqual    => chk.add_instr(Instruction::LessEqual, op.pos.line),
                     TokenType::Greater      => chk.add_instr(Instruction::Greater, op.pos.line),
                     TokenType::Less         => chk.add_instr(Instruction::Less, op.pos.line),
+                    
 
                     _ => unimplemented!()
                 }
@@ -53,10 +64,6 @@ impl Compile for Expr {
             Expr::Access(name) => {
                 self.access(chk, env, name, false);
             },
-            Expr::Assign(name, val) => {
-                val.compile(chk, env);
-                self.access(chk, env, name, true);
-            }
             _ => unimplemented!()
         }
     }

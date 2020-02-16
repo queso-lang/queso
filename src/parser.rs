@@ -109,6 +109,9 @@ impl Parser {
         parser.rules.insert(TokenType::Identifier,
             ParserRule {prefix: Some(Parser::access),   infix: None,                    bp: BP::Zero as u8});
 
+        parser.rules.insert(TokenType::Equal,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Assignment as u8});
+
         parser
     }
     
