@@ -111,14 +111,14 @@ impl Parser {
         self.rules.get(&t).unwrap_or(&default).clone()
     }
 
-    fn consume(&mut self, t: TokenType, msg: &'static str) -> TokenType {
+    fn consume(&mut self, t: TokenType, msg: &'static str) -> bool {
         let cur = self.toks.peek().clone();
         if cur.t == t {
             self.toks.next();
-            return cur.t;
+            return true;
         }
         self.error(cur.clone(), msg);
-        cur.t
+        false
     }
 
     // fn consume_and_sync(&mut self, t: TokenType, msg: &'static str) {
@@ -232,7 +232,7 @@ impl Parser {
     }
     fn stmt(&mut self) -> Stmt {
         let stmt = self.expr_stmt();
-        if self.consume(TokenType::Semi, "Expected a SEMI after expression") == TokenType::Semi {
+        if self.consume(TokenType::Semi, "Expected a SEMI after expression") {
             self.panic = false;
         }
         else {self.sync()};
