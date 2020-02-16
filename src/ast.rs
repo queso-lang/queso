@@ -7,7 +7,9 @@ pub enum Expr {
     Binary(Box<Expr>, Token, Box<Expr>),
     Unary(Token, Box<Expr>),
 
-    TrueLiteral(Token), FalseLiteral(Token), NullLiteral(Token), 
+    TrueLiteral(Token), FalseLiteral(Token), NullLiteral(Token),
+
+    Block(Vec<Stmt>),
 
     Error
 }
@@ -21,6 +23,7 @@ impl std::fmt::Display for Expr {
                 write!(f, "({} {} {})", op.val, **left, **right),
             Expr::Unary(tok, right) => write!(f, "{}{}", tok.val, **right),
             Expr::NullLiteral(tok) => write!(f, "null"),
+            Expr::Block(stmts) => write!(f, "{{ {:#?} }}", stmts),
             _ => panic!("display trait not defined")
         }
     }

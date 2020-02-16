@@ -103,6 +103,9 @@ impl Parser {
         parser.rules.insert(TokenType::Trace,
             ParserRule {prefix: Some(Parser::unarykw),  infix: None,                    bp: BP::Zero as u8});
 
+        parser.rules.insert(TokenType::LeftBrace,
+            ParserRule {prefix: Some(Parser::block),    infix: None,                    bp: BP::Zero as u8});
+
         parser
     }
     
@@ -214,6 +217,18 @@ impl Parser {
         let expr = self.expr();
         self.consume(TokenType::RightParen, "Unmatched (");
         expr
+    }
+
+    fn block(&mut self) -> Expr {
+        self.toks.next();
+        // println!("{}", self.toks.peek());
+        let mut stmts = Vec::<Stmt>::new();
+        while self.toks.peek().t != TokenType::RightBrace {
+            stmts.push(self.stmt());
+        }
+        // println!("{}", stmts.last().expect(""));
+        self.toks.next();
+        Expr::Block(stmts)
     }
 }
 
