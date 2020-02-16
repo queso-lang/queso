@@ -60,6 +60,9 @@ impl Chunk {
         
         panic!("The VM failed to access a line. This might be a problem with the interpreter itself.")
     }
+    pub fn get_last_line(&self) -> u32 {
+        self.get_line_no(self.instrs.len() as u32-1)
+    }
 
     // pretty print
     pub fn print(&self, name: &'static str) {

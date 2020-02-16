@@ -24,5 +24,5 @@ pub enum Instruction {
 
     Trace,
 
-    Return
+    Pop, Return
 }

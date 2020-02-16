@@ -65,8 +65,6 @@ impl VM {
             if let Some(next) = self.next_instr() {
                 match next {
                     Instruction::Return => {
-                        self.pop_stack();
-
                         break;
                     },
                     Instruction::PushConstant(id) => {
@@ -209,6 +207,9 @@ impl VM {
 
                         self.stack.push(a);
                     },
+                    Instruction::Pop => {
+                        self.pop_stack();
+                    }
 
                     #[allow(unreachable_patterns)]
                     _ => unimplemented!()

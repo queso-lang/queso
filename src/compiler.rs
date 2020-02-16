@@ -52,7 +52,10 @@ impl Compile for Expr {
 impl Compile for Stmt {
     fn compile(&self, chk: &mut Chunk) {
         match self {
-            Stmt::Expr(expr) => expr.compile(chk),
+            Stmt::Expr(expr) => {
+                expr.compile(chk);
+                chk.add_instr(Instruction::Pop, chk.get_last_line());
+            },
             _ => unimplemented!()
         }
     }
@@ -117,6 +120,7 @@ mod tests {
         assert_eq!(chk.get_instr(0).clone(), Instruction::PushConstant(0));
         assert_eq!(chk.get_instr(1).clone(), Instruction::PushConstant(1));
         assert_eq!(chk.get_instr(2).clone(), Instruction::Multiply);
-        assert_eq!(chk.get_instr(3).clone(), Instruction::Return);
+        assert_eq!(chk.get_instr(3).clone(), Instruction::Pop);
+        assert_eq!(chk.get_instr(4).clone(), Instruction::Return);
     }
 }
