@@ -55,9 +55,8 @@ impl VM {
         loop {
 
             if self.debug {
-                self.chk.print_instr(self.cur_instr, false);
-            
                 self.print_stack();
+                self.chk.print_instr(self.cur_instr, false);
 
                 println!();
             }

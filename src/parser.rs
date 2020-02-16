@@ -134,7 +134,7 @@ impl Parser {
     fn sync(&mut self) {
         if self.panic {
             self.panic = false;
-            println!("{:?}", self.toks.peek().t);
+            println!("sync: {:?}", self.toks.peek().t);
             while self.toks.peek().t != TokenType::EOF {
                 match self.toks.next().t {
                     TokenType::Semi
@@ -222,8 +222,7 @@ impl Parser {
     fn block(&mut self) -> Expr {
         self.toks.next();
         let mut stmts = Vec::<Stmt>::new();
-        let curt = self.toks.peek().t;
-        while curt != TokenType::RightBrace && curt != TokenType::EOF {
+        while self.toks.peek().t != TokenType::RightBrace && self.toks.peek().t != TokenType::EOF {
             stmts.push(self.stmt());
         }
         self.consume(TokenType::RightBrace, "Unexpected unmatched {");

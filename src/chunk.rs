@@ -46,6 +46,10 @@ impl Chunk {
         self.instrs.get(instr_id)
             .expect("The VM failed to access an instruction. This might be a problem with the interpreter itself.")
     }
+    pub fn pop_instr(&mut self) -> Instruction {
+        self.instrs.pop()
+            .expect("The VM failed to pop an instruction. This might be a problem with the interpreter itself.")
+    }
     pub fn try_get_instr(&self, instr_id: usize) -> Option<&Instruction> {
         self.instrs.get(instr_id)
     }

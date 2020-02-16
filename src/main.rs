@@ -137,7 +137,7 @@ fn run(opts: QuesoOpts, src: String) -> bool {
         }
 
         let mut chk = Chunk::new();
-        let compiler = Compiler {};
+        let mut compiler = Compiler::new();
         compiler.compile(&mut chk, stmt);
 
         let mut vm = VM::new(opts.debug.instrs);
