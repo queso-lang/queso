@@ -52,6 +52,11 @@ impl Compile for Expr {
 impl Compile for Stmt {
     fn compile(&self, chk: &mut Chunk) {
         match self {
+            Stmt::Program(exprs) => {
+                exprs.iter().for_each(|expr| {
+                    expr.compile(chk);
+                })
+            }
             Stmt::Expr(expr) => {
                 expr.compile(chk);
                 chk.add_instr(Instruction::Pop, chk.get_last_line());

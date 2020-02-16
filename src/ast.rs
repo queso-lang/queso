@@ -27,6 +27,7 @@ impl std::fmt::Display for Expr {
 
 #[derive(Debug, Clone)]
 pub enum Stmt {
+    Program(Vec<Stmt>),
     Expr(Expr),
     // FnDecl(Token, )
 }

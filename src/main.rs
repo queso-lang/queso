@@ -119,20 +119,20 @@ fn run(opts: QuesoOpts, src: String) -> bool {
     }
 
     let mut parser = Parser::new(toks);
-    let stmts = parser.program();
+    let stmt = parser.program();
 
     if !parser.had_error {
 
         if opts.debug.ast {
-            let mut stmts = stmts.clone();
+            let mut stmt = stmt.clone();
             println!("\nAST:");
-            stmts.iter().for_each(|stmt| {
-                println!("{}", stmt);
-            });
+            if let Stmt::Program(stmts) = stmt {
+                stmts.iter().for_each(|stmt| {
+                    println!("{}", stmt);
+                });
+            }
         }
 
-        let stmt = stmts.get(0).expect("yeet");
-        let stmt = stmt.clone();
         let mut chk = Chunk::new();
         let compiler = Compiler {};
         compiler.compile(&mut chk, stmt);

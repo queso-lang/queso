@@ -34,6 +34,7 @@ type InfixFn = fn(&mut Parser, Expr) -> Expr;
 pub struct Parser {
     toks: TokenStream,
     pub had_error: bool,
+    panic: bool,
     rules: HashMap<TokenType, ParserRule>
 }
 
@@ -44,7 +45,8 @@ impl Parser {
         let mut parser = Parser {
             toks,
             had_error: false,
-            rules
+            rules,
+            panic: false
         };
 
         parser.rules.insert(TokenType::LeftParen,
@@ -99,7 +101,7 @@ impl Parser {
             ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
 
         parser.rules.insert(TokenType::Trace,
-            ParserRule {prefix: Some(Parser::unarykw),  infix: None,                    bp: BP::KeywordExpr as u8});
+            ParserRule {prefix: Some(Parser::unarykw),  infix: None,                    bp: BP::Zero as u8});
 
         parser
     }
@@ -109,17 +111,45 @@ impl Parser {
         self.rules.get(&t).unwrap_or(&default).clone()
     }
 
-    fn consume(&mut self, t: TokenType, msg: &'static str) {
-        if self.toks.peek().t == t {
+    fn consume(&mut self, t: TokenType, msg: &'static str) -> TokenType {
+        let cur = self.toks.peek().clone();
+        if cur.t == t {
             self.toks.next();
-            return;
+            return cur.t;
         }
-        self.error(self.toks.peek().clone(), msg);
+        self.error(cur.clone(), msg);
+        cur.t
     }
 
+    // fn consume_and_sync(&mut self, t: TokenType, msg: &'static str) {
+    //     self.consume(t, msg);
+    // }
+
     fn error(&mut self, t: Token, msg: &'static str) {
+        if (self.panic) {return};
         self.had_error = true;
+        self.panic = true;
         error(t, msg);
+    }
+
+    fn sync(&mut self) {
+        if self.panic {
+            self.panic = false;
+            println!("{:?}", self.toks.peek().t);
+            while self.toks.peek().t != TokenType::EOF {
+                match self.toks.next().t {
+                    TokenType::Semi
+                    | TokenType::Class
+                    | TokenType::Fn
+                    | TokenType::Return
+                    | TokenType::Let
+                    | TokenType::Mut
+                    => return,
+
+                    _ => {}
+                }
+            }
+        }
     }
 }
 
@@ -193,19 +223,24 @@ impl Parser {
 
 // STMT
 impl Parser {
-    pub fn program(&mut self) -> Vec<Stmt> {
+    pub fn program(&mut self) -> Stmt {
         let mut stmts = Vec::<Stmt>::new();
         while self.toks.peek().t != TokenType::EOF {
             stmts.push(self.stmt());
         }
-        stmts
+        Stmt::Program(stmts)
     }
     fn stmt(&mut self) -> Stmt {
-        self.expr_stmt()
+        let stmt = self.expr_stmt();
+        if self.consume(TokenType::Semi, "Expected a SEMI after expression") == TokenType::Semi {
+            self.panic = false;
+        }
+        else {self.sync()};
+        stmt
     }
     fn expr_stmt(&mut self) -> Stmt {
         let stmt = Stmt::Expr(self.expr());
-        self.consume(TokenType::Semi, "Expected a SEMI after expression");
+        //self.consume_and_sync(TokenType::Semi, "Expected a SEMI after expression");
         stmt
     }
 }
