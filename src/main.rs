@@ -32,6 +32,9 @@ use instruction::*;
 mod value;
 use value::*;
 
+mod env;
+use env::*;
+
 extern crate clap; 
 use clap::{App, Arg, crate_version};
 
