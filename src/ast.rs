@@ -20,6 +20,7 @@ impl std::fmt::Display for Expr {
             Expr::Binary(left, op, right) => 
                 write!(f, "({} {} {})", op.val, **left, **right),
             Expr::Unary(tok, right) => write!(f, "{}{}", tok.val, **right),
+            Expr::NullLiteral(tok) => write!(f, "null"),
             _ => panic!("display trait not defined")
         }
     }
@@ -29,13 +30,16 @@ impl std::fmt::Display for Expr {
 pub enum Stmt {
     Program(Vec<Stmt>),
     Expr(Expr),
-    // FnDecl(Token, )
+    MutDecl(Token, Expr)
 }
 
 impl std::fmt::Display for Stmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Stmt::Expr(expr) => write!(f, "{};", expr),
+            Stmt::MutDecl(name, val) => {
+                write!(f, "mut {} = {};", name.val, val)
+            },
             _ => panic!("display trait not defined")
         }
     }

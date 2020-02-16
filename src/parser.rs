@@ -121,10 +121,6 @@ impl Parser {
         false
     }
 
-    // fn consume_and_sync(&mut self, t: TokenType, msg: &'static str) {
-    //     self.consume(t, msg);
-    // }
-
     fn error(&mut self, t: Token, msg: &'static str) {
         if (self.panic) {return};
         self.had_error = true;
@@ -231,7 +227,12 @@ impl Parser {
         Stmt::Program(stmts)
     }
     fn stmt(&mut self) -> Stmt {
-        let stmt = self.expr_stmt();
+        let stmt: Stmt;
+        match self.toks.peek().t {
+            TokenType::Mut => stmt = self.mut_decl(),
+            _ => stmt = self.expr_stmt()
+        }
+
         if self.consume(TokenType::Semi, "Expected a SEMI after expression") {
             self.panic = false;
         }
@@ -240,8 +241,19 @@ impl Parser {
     }
     fn expr_stmt(&mut self) -> Stmt {
         let stmt = Stmt::Expr(self.expr());
-        //self.consume_and_sync(TokenType::Semi, "Expected a SEMI after expression");
         stmt
+    }
+    fn mut_decl(&mut self) -> Stmt {
+        self.toks.next();
+        let name = self.toks.peek().clone();
+        self.consume(TokenType::Identifier, "Expected an identifier");
+
+        let mut val = Expr::NullLiteral(name.clone());
+        if self.toks.nextif(TokenType::Equal) {
+            val = self.expr();
+        }
+
+        Stmt::MutDecl(name, val)
     }
 }
 
