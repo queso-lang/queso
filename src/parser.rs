@@ -226,7 +226,7 @@ impl Parser {
         while curt != TokenType::RightBrace && curt != TokenType::EOF {
             stmts.push(self.stmt());
         }
-        self.toks.next();
+        self.consume(TokenType::RightBrace, "Unexpected unmatched {");
         Expr::Block(stmts)
     }
 }
