@@ -58,8 +58,8 @@ impl Compile for Expr {
             Expr::Block(stmts) => {
                 env.open();
                 stmts.iter().for_each(|stmt| {stmt.compile(chk, env)});
-                // chk.pop_instr();
                 env.close(chk);
+                chk.add_instr(Instruction::PushNull, 16);
             },
             Expr::Access(name) => {
                 self.access(chk, env, name, false);
@@ -81,13 +81,13 @@ impl Expr {
             chk.add_instr(Instruction::Assign(id as u16), name.pos.line);
         }
         else {
-            chk.add_instr(Instruction::Access(id as u16), name.pos.line);
+            chk.add_instr(Instruction::PushVariable(id as u16), name.pos.line);
         }
     }
     fn resolve_local(&self, env: &Env, name: &Token) -> i32 {
         for i in (0..env.locals.len()).rev() {
             let local = env.get(i);
-            if local.name.val == name.val {
+            if local.name.val == name.val/* && local.depth <= env.scope_depth */{
                 return i as i32;
             }
         }

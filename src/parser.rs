@@ -213,7 +213,7 @@ impl Parser {
             TokenType::True   => Expr::TrueLiteral(tok),
             TokenType::False  => Expr::FalseLiteral(tok),
             TokenType::Null   => Expr::NullLiteral(tok),
-            _ => panic!("This is a problem with the interpreter itself.")
+            _ => panic!("This is a problem with the parser itself.")
         }
     }
 

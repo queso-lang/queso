@@ -24,7 +24,7 @@ pub enum Instruction {
 
     Trace,
 
-    Access(u16),
+    PushVariable(u16),
     Assign(u16),
 
     Pop, Return

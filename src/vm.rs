@@ -31,7 +31,7 @@ impl VM {
     }
 
     fn get_stack(&self, id: u16) -> &Value {
-        self.stack.get(id as usize).expect("This is a problem with the interpreter itself")
+        self.stack.get(id as usize).expect("Couldn't access a value on the stack. This is a problem with the interpreter itself")
     }
 
     fn get_stack_top(&self) -> &Value {
@@ -221,7 +221,7 @@ impl VM {
                     Instruction::Pop => {
                         self.pop_stack();
                     },
-                    Instruction::Access(id) => {
+                    Instruction::PushVariable(id) => {
                         let id = *id;
                         let var = self.get_stack(id).clone();
                         self.stack.push(var);

@@ -2,7 +2,7 @@ use crate::*;
 
 pub struct Env {
     pub locals: Vec<Local>,
-    scope_depth: u8
+    pub scope_depth: u8
 }
 
 impl Env {
@@ -22,15 +22,16 @@ impl Env {
         self.scope_depth+=1
     }
     pub fn close(&mut self, chk: &mut Chunk) {
-        self.scope_depth-=1;
         while self.locals.len()!=0 {
+            println!("{:?}", self.locals.last());
             if self.locals.last().expect("This is a problem with the compiler itself").depth == self.scope_depth {
                 self.locals.pop();
                 println!("pop!");
-                chk.add_instr(Instruction::Pop, chk.get_last_line());
+                chk.add_instr(Instruction::Pop, 5);
             }
             else {break;}
         }
+        self.scope_depth-=1;
     }
 
     pub fn is_redefined(&self, other: &Token) -> bool {
