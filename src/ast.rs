@@ -29,19 +29,20 @@ impl std::fmt::Display for Expr {
                 write!(f, "({} {} {})", op.val, **left, **right),
             Expr::Unary(tok, right) => {
                 write!(f, "{} ", tok.val);
-                std::fmt::Display::fmt(&**right, f);
-                writeln!(f, "")
+                std::fmt::Display::fmt(&**right, f)
             },
             Expr::NullLiteral(tok) => write!(f, "null"),
             Expr::ResolvedBlock(stmts, pop_count) => {
+                writeln!(f, "{{");
                 for stmt in stmts {
                     std::fmt::Display::fmt(&stmt, f);
-                    write!(f, ";");
+                    writeln!(f, ";");
                 }
+                writeln!(f, "}}");
                 writeln!(f, "variables popped: {}", pop_count)
             },
-            Expr::ResolvedAccess(tok, id) => write!(f, "#{} = {}", id, tok),
-            Expr::ResolvedAssign(tok, id, val) => write!(f, "#{} = {}", id, tok),
+            Expr::ResolvedAccess(tok, id) => write!(f, "#{} ({})", id, tok),
+            Expr::ResolvedAssign(tok, id, val) => write!(f, "#{} ({}) = {}", id, tok, val),
             _ => panic!("display trait not defined")
         }
     }
@@ -58,7 +59,7 @@ impl std::fmt::Display for Stmt {
         match self {
             Stmt::Expr(expr) => write!(f, "{}", expr),
             Stmt::MutDecl(name, val) => {
-                write!(f, "mut {} = {};", name.val, val)
+                write!(f, "mut {} = {}", name.val, val)
             },
             _ => panic!("display trait not defined")
         }

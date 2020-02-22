@@ -60,6 +60,7 @@ impl<'a> Compiler<'a> {
                 }
                 for _ in 0..pop_count {
                     self.chk.add_instr(Instruction::Pop, 1000); //fix this
+                    println!("POP");
                 }
                 self.chk.add_instr(Instruction::PushNull, 1000); //fix this
             },

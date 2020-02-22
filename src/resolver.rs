@@ -13,12 +13,14 @@ impl Resolver {
 
     fn access(&mut self, name: &Token) -> Result<u32, &'static str> {
         let mut id = -1;
-        for i in (0..self.env.locals.len()).rev() {
+        for i in (0..self.env.locals.len()) {
+            // println!("{} {} {}", i, self.env.get(i).name, name);
             let local = self.env.get(i);
             if local.name.val == name.val{
                 id = i as i32;
             }
         }
+        // println!("ACCESS: {}", id);
         if id < 0 {
             return Err("Usage of an undefined variable");
         }
