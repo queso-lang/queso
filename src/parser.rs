@@ -242,12 +242,12 @@ impl Parser {
 
 // STMT
 impl Parser {
-    pub fn program(&mut self) -> Stmt {
+    pub fn program(&mut self) -> Program {
         let mut stmts = Vec::<Stmt>::new();
         while self.toks.peek().t != TokenType::EOF {
             stmts.push(self.stmt());
         }
-        Stmt::Program(stmts)
+        stmts
     }
     fn stmt(&mut self) -> Stmt {
         let stmt: Stmt;
@@ -263,7 +263,7 @@ impl Parser {
         stmt
     }
     fn expr_stmt(&mut self) -> Stmt {
-        let stmt = Stmt::Expr(self.expr());
+        let stmt = Stmt::Expr(Box::new(self.expr()));
         stmt
     }
     fn mut_decl(&mut self) -> Stmt {
@@ -276,7 +276,7 @@ impl Parser {
             val = self.expr();
         }
 
-        Stmt::MutDecl(name, val)
+        Stmt::MutDecl(name, Box::new(val))
     }
 }
 

@@ -1,5 +1,7 @@
 use crate::*;
 
+pub type Program = Vec<Stmt>;
+
 #[derive(Debug, Clone)]
 pub enum Expr {
     Constant(Token),
@@ -12,6 +14,10 @@ pub enum Expr {
 
     Access(Token),
 
+    ResolvedAccess(Token, u32),
+    ResolvedAssign(Token, u32, Box<Expr>),
+    ResolvedBlock(Vec<Stmt>, u32),
+
     Error
 }
 
@@ -21,10 +27,21 @@ impl std::fmt::Display for Expr {
             Expr::Constant(tok) => write!(f, "{}", tok.val),
             Expr::Binary(left, op, right) => 
                 write!(f, "({} {} {})", op.val, **left, **right),
-            Expr::Unary(tok, right) => write!(f, "{}{}", tok.val, **right),
+            Expr::Unary(tok, right) => {
+                write!(f, "{} ", tok.val);
+                std::fmt::Display::fmt(&**right, f);
+                writeln!(f, "")
+            },
             Expr::NullLiteral(tok) => write!(f, "null"),
-            Expr::Block(stmts) => write!(f, "{{ {:#?} }}", stmts),
-            Expr::Access(tok) => write!(f, "{}", tok),
+            Expr::ResolvedBlock(stmts, pop_count) => {
+                for stmt in stmts {
+                    std::fmt::Display::fmt(&stmt, f);
+                    write!(f, ";");
+                }
+                writeln!(f, "variables popped: {}", pop_count)
+            },
+            Expr::ResolvedAccess(tok, id) => write!(f, "#{} = {}", id, tok),
+            Expr::ResolvedAssign(tok, id, val) => write!(f, "#{} = {}", id, tok),
             _ => panic!("display trait not defined")
         }
     }
@@ -32,15 +49,14 @@ impl std::fmt::Display for Expr {
 
 #[derive(Debug, Clone)]
 pub enum Stmt {
-    Program(Vec<Stmt>),
-    Expr(Expr),
-    MutDecl(Token, Expr)
+    Expr(Box<Expr>),
+    MutDecl(Token, Box<Expr>)
 }
 
 impl std::fmt::Display for Stmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Stmt::Expr(expr) => write!(f, "{};", expr),
+            Stmt::Expr(expr) => write!(f, "{}", expr),
             Stmt::MutDecl(name, val) => {
                 write!(f, "mut {} = {};", name.val, val)
             },

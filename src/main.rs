@@ -35,6 +35,9 @@ use value::*;
 mod env;
 use env::*;
 
+mod resolver;
+use resolver::*;
+
 extern crate clap; 
 use clap::{App, Arg, crate_version};
 
@@ -122,23 +125,25 @@ fn run(opts: QuesoOpts, src: String) -> bool {
     }
 
     let mut parser = Parser::new(toks);
-    let stmt = parser.program();
+    let program = parser.program();
 
     if !parser.had_error {
-
+        
+        let mut resolver = Resolver::new();
+        let program = resolver.resolve(program).expect("");
+        
         if opts.debug.ast {
-            let mut stmt = stmt.clone();
+            let mut program = program.clone();
             println!("\nAST:");
-            if let Stmt::Program(stmts) = stmt {
-                stmts.iter().for_each(|stmt| {
-                    println!("{}", stmt);
-                });
-            }
+            program.iter().for_each(|stmt| {
+                println!("{}", stmt);
+            })
         }
 
         let mut chk = Chunk::new();
-        let mut compiler = Compiler::new();
-        compiler.compile(&mut chk, stmt);
+        let mut compiler = Compiler::new(&mut chk);
+        compiler.compile(program);
+
 
         let mut vm = VM::new(opts.debug.instrs);
         let res = vm.execute(chk);
