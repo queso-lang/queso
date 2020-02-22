@@ -14,6 +14,7 @@ impl<'a> Compiler<'a> {
         for stmt in program {
             self.compile_stmt(stmt);
         };
+        self.chk.add_instr(Instruction::Return, 0);
     }
     fn compile_expr(&mut self, expr: Expr) {
         match expr {
@@ -59,13 +60,15 @@ impl<'a> Compiler<'a> {
                     self.compile_stmt(stmt);
                 }
                 for _ in 0..pop_count {
-                    self.chk.add_instr(Instruction::Pop, 1000); //fix this
-                    println!("POP");
+                    self.chk.add_instr(Instruction::Pop, 0); //fix this
                 }
-                self.chk.add_instr(Instruction::PushNull, 1000); //fix this
+                self.chk.add_instr(Instruction::PushNull, 0); //fix this
             },
             Expr::ResolvedAccess(name, id) => self.chk.add_instr(Instruction::PushVariable(id as u16), name.pos.line),
-            Expr::ResolvedAssign(name, id, val) => self.chk.add_instr(Instruction::Assign(id as u16), name.pos.line),
+            Expr::ResolvedAssign(name, id, val) => {
+                self.compile_expr(*val);
+                self.chk.add_instr(Instruction::Assign(id as u16), name.pos.line)
+            },
             _ => panic!("This is a problem with the compiler itself")
         }
 
@@ -83,58 +86,60 @@ impl<'a> Compiler<'a> {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     #[test]
-//     fn test_constant() {
-//         let mut chk = Chunk::new();
-//         let token = Token {
-//             pos: TokenPos {from_col: 0, to_col: 1, line: 1},
-//             t: TokenType::Number,
-//             val: "1.23".to_string()
-//         };
-//         let expr = Expr::Constant(token);
-//         let expr_stmt = Stmt::Expr(expr);
+    #[test]
+    fn test_constant() {
+        let mut chk = Chunk::new();
+        let token = Token {
+            pos: TokenPos {from_col: 0, to_col: 1, line: 1},
+            t: TokenType::Number,
+            val: "1.23".to_string()
+        };
+        let expr = Expr::Constant(token);
+        let expr_stmt = Stmt::Expr(Box::new(expr));
+        let program = vec![expr_stmt];
 
-//         let mut compiler = Compiler::new();
-//         compiler.compile(&mut chk, expr_stmt);
+        let mut compiler = Compiler::new(&mut chk);
+        compiler.compile(program);
 
-//         assert_eq!(chk.get_const(0).clone(), Value::Number(1.23));
-//         assert_eq!(chk.get_line_no(0), 1);
-//     }
+        assert_eq!(chk.get_const(0).clone(), Value::Number(1.23));
+        assert_eq!(chk.get_line_no(0), 1);
+    }
 
-//     #[test]
-//     fn test_arithmetic() {
-//         let mut chk = Chunk::new();
-//         let left = Token {
-//             pos: TokenPos {from_col: 0, to_col: 1, line: 1},
-//             t: TokenType::Number,
-//             val: "5".to_string()
-//         };
-//         let op = Token {
-//             pos: TokenPos {from_col: 1, to_col: 2, line: 1},
-//             t: TokenType::Star,
-//             val: "*".to_string()
-//         };
-//         let right = Token {
-//             pos: TokenPos {from_col: 2, to_col: 3, line: 1},
-//             t: TokenType::Number,
-//             val: "2".to_string()
-//         };
-//         let left = Expr::Constant(left);
-//         let right = Expr::Constant(right);
-//         let expr = Expr::Binary(Box::new(left), op, Box::new(right));
-//         let expr_stmt = Stmt::Expr(expr);
+    #[test]
+    fn test_arithmetic() {
+        let mut chk = Chunk::new();
+        let left = Token {
+            pos: TokenPos {from_col: 0, to_col: 1, line: 1},
+            t: TokenType::Number,
+            val: "5".to_string()
+        };
+        let op = Token {
+            pos: TokenPos {from_col: 1, to_col: 2, line: 1},
+            t: TokenType::Star,
+            val: "*".to_string()
+        };
+        let right = Token {
+            pos: TokenPos {from_col: 2, to_col: 3, line: 1},
+            t: TokenType::Number,
+            val: "2".to_string()
+        };
+        let left = Expr::Constant(left);
+        let right = Expr::Constant(right);
+        let expr = Expr::Binary(Box::new(left), op, Box::new(right));
+        let expr_stmt = Stmt::Expr(Box::new(expr));
+        let program = vec![expr_stmt];
 
-//         let mut compiler = Compiler::new();
-//         compiler.compile(&mut chk, expr_stmt);
+        let mut compiler = Compiler::new(&mut chk);
+        compiler.compile(program);
 
-//         assert_eq!(chk.get_instr(0).clone(), Instruction::PushConstant(0));
-//         assert_eq!(chk.get_instr(1).clone(), Instruction::PushConstant(1));
-//         assert_eq!(chk.get_instr(2).clone(), Instruction::Multiply);
-//         assert_eq!(chk.get_instr(3).clone(), Instruction::Pop);
-//         assert_eq!(chk.get_instr(4).clone(), Instruction::Return);
-//     }
-// }
+        assert_eq!(chk.get_instr(0).clone(), Instruction::PushConstant(0));
+        assert_eq!(chk.get_instr(1).clone(), Instruction::PushConstant(1));
+        assert_eq!(chk.get_instr(2).clone(), Instruction::Multiply);
+        assert_eq!(chk.get_instr(3).clone(), Instruction::Pop);
+        assert_eq!(chk.get_instr(4).clone(), Instruction::Return);
+    }
+}

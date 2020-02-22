@@ -24,7 +24,6 @@ impl Env {
     pub fn close(&mut self) -> u32 {
         let mut pop_count = 0;
         while self.locals.len()!=0 {
-            // println!("{:?}", self.locals.last());
             if self.locals.last().expect("This is a problem with the compiler itself").depth == self.scope_depth {
                 self.locals.pop();
                 pop_count +=1;

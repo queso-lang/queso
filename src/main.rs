@@ -144,7 +144,6 @@ fn run(opts: QuesoOpts, src: String) -> bool {
         let mut compiler = Compiler::new(&mut chk);
         compiler.compile(program);
 
-
         let mut vm = VM::new(opts.debug.instrs);
         let res = vm.execute(chk);
         match res {
