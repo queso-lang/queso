@@ -28,6 +28,7 @@ pub enum Instruction {
     Assign(u16),
 
     JumpIfFalse(u16),
+    PopAndJumpIfFalse(u16),
     Jump(u16),
     JumpPlaceholder,
     Pop, Return

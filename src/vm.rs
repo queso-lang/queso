@@ -233,6 +233,13 @@ impl VM {
                     },
                     Instruction::JumpIfFalse(jump_count) => {
                         let jump_count = *jump_count as usize;
+                        let val = self.get_stack_top();
+                        if !val.is_truthy() {
+                            self.cur_instr += jump_count;
+                        }
+                    },
+                    Instruction::PopAndJumpIfFalse(jump_count) => {
+                        let jump_count = *jump_count as usize;
                         let val = self.pop_stack();
                         if !val.is_truthy() {
                             self.cur_instr += jump_count;

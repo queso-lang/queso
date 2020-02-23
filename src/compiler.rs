@@ -14,6 +14,9 @@ impl<'a> Compiler<'a> {
         self.chk.add_instr(Instruction::JumpPlaceholder, 1);
         self.chk.instrs.len() - 1
     }
+    fn label_pop_and_jump_if_false(&mut self, jump_id: usize) {
+        self.chk.set_instr(jump_id, Instruction::PopAndJumpIfFalse((self.chk.instrs.len() - 1 - jump_id) as u16));
+    }
     fn label_jump_if_false(&mut self, jump_id: usize) {
         self.chk.set_instr(jump_id, Instruction::JumpIfFalse((self.chk.instrs.len() - 1 - jump_id) as u16));
     }
@@ -77,7 +80,7 @@ impl<'a> Compiler<'a> {
 
                 let jump_b = self.make_jump();
                 
-                self.label_jump_if_false(jump_a);
+                self.label_pop_and_jump_if_false(jump_a);
 
                 if let Some(eb) = eb {
                     self.compile_expr(*eb);
@@ -89,6 +92,7 @@ impl<'a> Compiler<'a> {
                 self.label_jump(jump_b);
 
             },
+
             Expr::ResolvedBlock(stmts, pop_count) => {
                 for stmt in stmts {
                     self.compile_stmt(stmt);
