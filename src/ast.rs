@@ -34,14 +34,23 @@ impl std::fmt::Display for Expr {
                 std::fmt::Display::fmt(&**right, f)
             },
             Expr::NullLiteral(tok) => write!(f, "null"),
+            Expr::TrueLiteral(tok) => write!(f, "true"),
+            Expr::FalseLiteral(tok) => write!(f, "false"),
+            Expr::IfElse(cond, if_branch, else_branch) => {
+                write!(f, "if {} -> {}", **cond, **if_branch);
+                if let Some(else_branch) = else_branch {
+                    write!(f, " else {}", **else_branch);
+                }
+                Ok(())
+            },
             Expr::ResolvedBlock(stmts, pop_count) => {
                 writeln!(f, "{{");
                 for stmt in stmts {
                     std::fmt::Display::fmt(&stmt, f);
                     writeln!(f, ";");
                 }
-                writeln!(f, "}}");
-                writeln!(f, "variables popped: {}", pop_count)
+                writeln!(f, "}}")
+                // writeln!(f, "variables popped: {}", pop_count)
             },
             Expr::ResolvedAccess(tok, id) => write!(f, "#{} ({})", id, tok),
             Expr::ResolvedAssign(tok, id, val) => write!(f, "#{} ({}) = {}", id, tok, val),
