@@ -231,10 +231,24 @@ impl VM {
                         let val = self.get_stack_top().clone();
                         self.set_stack(id, val);
                     },
-                    Instruction::JumpIfFalse(jump_count) => {
+                    Instruction::JumpIfFalsy(jump_count) => {
+                        let jump_count = *jump_count as usize;
+                        let val = self.get_stack_top();
+                        if !val.is_truthy() {
+                            self.cur_instr += jump_count;
+                        }
+                    },
+                    Instruction::PopAndJumpIfFalsy(jump_count) => {
                         let jump_count = *jump_count as usize;
                         let val = self.pop_stack();
                         if !val.is_truthy() {
+                            self.cur_instr += jump_count;
+                        }
+                    },
+                    Instruction::JumpIfTruthy(jump_count) => {
+                        let jump_count = *jump_count as usize;
+                        let val = self.get_stack_top();
+                        if val.is_truthy() {
                             self.cur_instr += jump_count;
                         }
                     },
