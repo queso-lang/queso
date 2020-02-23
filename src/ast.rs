@@ -12,6 +12,8 @@ pub enum Expr {
 
     Block(Vec<Stmt>),
 
+    IfElse(Box<Expr>, Box<Expr>, Option<Box<Expr>>),
+
     Access(Token),
 
     ResolvedAccess(Token, u32),
