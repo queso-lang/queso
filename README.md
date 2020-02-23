@@ -1,11 +1,12 @@
 # 🧀 **queso**
 
 ![license](https://img.shields.io/github/license/queso-lang/queso)
-![size](https://img.shields.io/github/repo-size/queso-lang/queso)
+![size](https://img.shields.io/github/languages/code-size/queso-lang/queso)
 ![maintained](https://img.shields.io/maintenance/yes/2020)
 ![issues](https://img.shields.io/github/issues-closed/queso-lang/queso)
 ![helpwanted](https://img.shields.io/github/labels/queso-lang/queso/help%20wanted)
 
+Checkout [develop](../../tree/develop) and feature branches for latest commits!
 ### What is **queso**?
 
 **queso** is a functional dynamically-typed scripting language that builds on the foundation of existing languages with many **unique** convenience and quality of life features and tweaks. In fact, the driving force behind it was bad design choices in other langs.
@@ -33,7 +34,7 @@ trace salsas |> filterSpicySalsas();
 ```
 So, what's going on here? this looks a little different than other langs
 
-**First**, function declaration has a colon `:`. That's because the function body doesn't have to be a block. It just has to be an expression. The salsas.filter(...) is immediately returned. Lambdas are similar, in fact salsa: salsa.isSpicy is an example of one.
+**First**, function declaration has a colon `:`. That's because the function body doesn't have to be a block. It just has to be an expression. The `salsas.filter(...)` is immediately returned. Lambdas are similar, in fact `salsa: salsa.isSpicy` is an example of one.
 
 When invoked with an array, filterSpicySalsas returns a subarray containining only the salsas that have a field `isSpicy = true`
 
@@ -54,7 +55,7 @@ Look at these beautiful event-driven capabilities of queso:
 // OOP with event-driven capabilities
 class DataLoader {
   mut evtLoaded = new Event();
-  let endpoint = ~; // null or rather simply nothingness
+  let endpoint = null;
   static fn :@new(init endpoint): this;
   fn load(): emit evtLoaded -> ..fetch(endpoint);
 }
@@ -119,6 +120,27 @@ And guess what! There's a heck of a lot more. It's getting a little long for the
 ### Contributing
 
 All help is welcome! Let's make this delicious language a reality.
+
+You can get started by cloning the repo:
+```shell
+git clone https://github.com/queso-lang/queso.git
+```
+and then running `cargo run` to execute it and `cargo test` to run unit tests.
+
+#### Debugging tools
+
+You may run the binary with the following debugging flags:
+
+`--#tokens` - shows tokens upon lexing
+
+`--#ast` - shows the ast upon parsing; will visualise the ast using graphviz in the future (#14)
+
+`--#instrs` - shows instructions and the stack during execution
+
+Example using `cargo` to execute queso:
+```shell
+cargo run -- --#tokens --#ast --#instrs
+```
 
 #### License
 

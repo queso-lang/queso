@@ -1,4 +1,4 @@
-use crate::Lexer;
+use crate::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TokenType {
@@ -14,7 +14,7 @@ pub enum TokenType {
     Less, LessEqual,
 
     Identifier, String, Number,
-    Tilde,
+    Null,
 
     Let, Mut, Class, Fn,
     If, Else, For, While, Match,
@@ -67,6 +67,7 @@ enum Nullable<T: Clone> {
     Null
 }
 
+#[derive(Clone)]
 pub struct TokenStream {
     lexer: Lexer,
 
@@ -90,5 +91,13 @@ impl TokenStream {
     }
     pub fn peek(&self) -> &Token {
         &self.cur
+    }
+
+    pub fn nextif(&mut self, t: TokenType) -> bool {
+        if self.peek().t == t {
+            self.next();
+            return true;
+        }
+        return false;
     }
 }

@@ -11,6 +11,7 @@ static KEYWORDS: phf::Map<&'static str, TokenType> = phf_map! {
      "true" => TokenType::True, "false" => TokenType::False
 };
 
+#[derive(Clone)]
 pub struct Lexer {
     src: Vec<char>,
 
@@ -73,7 +74,7 @@ impl Lexer {
             '}' => self.new_token(TokenType::RightBrace),
 
             ';' => self.new_token(TokenType::Semi),
-            '~' => self.new_token(TokenType::Tilde),
+            '~' => self.new_token(TokenType::Null),
             '+' => self.new_token(TokenType::Plus),
             ',' => self.new_token(TokenType::Comma),
             '.' => self.new_token(TokenType::Dot),
@@ -101,7 +102,7 @@ impl Lexer {
                 self.new_token(t)
             },
             '=' => {
-                let t = if self.match_token('=') {TokenType::EqualEqual} else {TokenType::EqualEqualEqual};
+                let t = if self.match_token('=') {TokenType::EqualEqual} else {TokenType::Equal};
                 self.new_token(t)
             },
             '<' => {
@@ -160,7 +161,6 @@ impl Lexer {
 
     fn make_string(&mut self, quote_type: char) -> Token {
         while self.peek(0) != &quote_type && !self.is_eof() {
-            println!("{:?}", self.peek(0));
             self.next();
         }
         if self.is_eof() {
