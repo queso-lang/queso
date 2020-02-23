@@ -50,6 +50,7 @@ impl<'a> Compiler<'a> {
                 if op.t == TokenType::Or {
                     self.compile_expr(*left);
                     let jump = self.make_jump();
+                    self.chk.add_instr(Instruction::Pop, 0);
                     self.compile_expr(*right);
                     self.label_jump_if_truthy(jump);
                     return;
