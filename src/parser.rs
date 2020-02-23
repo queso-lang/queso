@@ -34,6 +34,7 @@ type InfixFn = fn(&mut Parser, Expr) -> Expr;
 pub struct Parser {
     toks: TokenStream,
     pub had_error: bool,
+    panic: bool,
     rules: HashMap<TokenType, ParserRule>
 }
 
@@ -44,7 +45,8 @@ impl Parser {
         let mut parser = Parser {
             toks,
             had_error: false,
-            rules
+            rules,
+            panic: false
         };
 
         parser.rules.insert(TokenType::LeftParen,
@@ -99,7 +101,16 @@ impl Parser {
             ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Comparison as u8});
 
         parser.rules.insert(TokenType::Trace,
-            ParserRule {prefix: Some(Parser::unarykw),  infix: None,                    bp: BP::KeywordExpr as u8});
+            ParserRule {prefix: Some(Parser::unarykw),  infix: None,                    bp: BP::Zero as u8});
+
+        parser.rules.insert(TokenType::LeftBrace,
+            ParserRule {prefix: Some(Parser::block),    infix: None,                    bp: BP::Zero as u8});
+
+        parser.rules.insert(TokenType::Identifier,
+            ParserRule {prefix: Some(Parser::access),   infix: None,                    bp: BP::Zero as u8});
+
+        parser.rules.insert(TokenType::Equal,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Assignment as u8});
 
         parser
     }
@@ -109,17 +120,40 @@ impl Parser {
         self.rules.get(&t).unwrap_or(&default).clone()
     }
 
-    fn consume(&mut self, t: TokenType, msg: &'static str) {
-        if self.toks.peek().t == t {
+    fn consume(&mut self, t: TokenType, msg: &'static str) -> bool {
+        let cur = self.toks.peek().clone();
+        if cur.t == t {
             self.toks.next();
-            return;
+            return true;
         }
-        self.error(self.toks.peek().clone(), msg);
+        self.error(cur.clone(), msg);
+        false
     }
 
     fn error(&mut self, t: Token, msg: &'static str) {
+        if (self.panic) {return};
         self.had_error = true;
+        self.panic = true;
         error(t, msg);
+    }
+
+    fn sync(&mut self) {
+        if self.panic {
+            self.panic = false;
+            while self.toks.peek().t != TokenType::EOF {
+                match self.toks.next().t {
+                    TokenType::Semi
+                    | TokenType::Class
+                    | TokenType::Fn
+                    | TokenType::Return
+                    | TokenType::Let
+                    | TokenType::Mut
+                    => return,
+
+                    _ => {}
+                }
+            }
+        }
     }
 }
 
@@ -179,7 +213,7 @@ impl Parser {
             TokenType::True   => Expr::TrueLiteral(tok),
             TokenType::False  => Expr::FalseLiteral(tok),
             TokenType::Null   => Expr::NullLiteral(tok),
-            _ => panic!("This is a problem with the interpreter itself.")
+            _ => panic!("This is a problem with the parser itself.")
         }
     }
 
@@ -189,11 +223,26 @@ impl Parser {
         self.consume(TokenType::RightParen, "Unmatched (");
         expr
     }
+
+    fn block(&mut self) -> Expr {
+        self.toks.next();
+        let mut stmts = Vec::<Stmt>::new();
+        while self.toks.peek().t != TokenType::RightBrace && self.toks.peek().t != TokenType::EOF {
+            stmts.push(self.stmt());
+        }
+        self.consume(TokenType::RightBrace, "Unexpected unmatched {");
+        Expr::Block(stmts)
+    }
+
+    fn access(&mut self) -> Expr {
+        let cur = self.toks.next();
+        Expr::Access(cur.clone())
+    }
 }
 
 // STMT
 impl Parser {
-    pub fn program(&mut self) -> Vec<Stmt> {
+    pub fn program(&mut self) -> Program {
         let mut stmts = Vec::<Stmt>::new();
         while self.toks.peek().t != TokenType::EOF {
             stmts.push(self.stmt());
@@ -201,12 +250,33 @@ impl Parser {
         stmts
     }
     fn stmt(&mut self) -> Stmt {
-        self.expr_stmt()
+        let stmt: Stmt;
+        match self.toks.peek().t {
+            TokenType::Mut => stmt = self.mut_decl(),
+            _ => stmt = self.expr_stmt()
+        }
+
+        if self.consume(TokenType::Semi, "Expected a SEMI after expression") {
+            self.panic = false;
+        }
+        else {self.sync()};
+        stmt
     }
     fn expr_stmt(&mut self) -> Stmt {
-        let stmt = Stmt::Expr(self.expr());
-        self.consume(TokenType::Semi, "Expected a SEMI after expression");
+        let stmt = Stmt::Expr(Box::new(self.expr()));
         stmt
+    }
+    fn mut_decl(&mut self) -> Stmt {
+        self.toks.next();
+        let name = self.toks.peek().clone();
+        self.consume(TokenType::Identifier, "Expected an identifier");
+
+        let mut val = Expr::NullLiteral(name.clone());
+        if self.toks.nextif(TokenType::Equal) {
+            val = self.expr();
+        }
+
+        Stmt::MutDecl(name, Box::new(val))
     }
 }
 

@@ -60,6 +60,10 @@ impl From<&Token> for Value {
                 let s = tok.val.clone();
                 Value::String(s[1..s.len()-1].to_string())
             },
+            TokenType::Identifier => {
+                let s = tok.val.clone();
+                Value::String(s)
+            },
             TokenType::True   => Value::Bool(true),
             TokenType::False  => Value::Bool(false),
             TokenType::Null   => Value::Null,

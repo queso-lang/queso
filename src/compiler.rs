@@ -1,68 +1,88 @@
 use crate::*;
 
-pub trait Compile {
-    fn compile(&self, chk: &mut Chunk);
+pub struct Compiler<'a> {
+    chk: &'a mut Chunk
 }
 
-impl Compile for Expr {
-    fn compile(&self, chk: &mut Chunk) {
-        match self {
+impl<'a> Compiler<'a> {
+    pub fn new(chk: &'a mut Chunk) -> Compiler<'a> {
+        Compiler {
+            chk
+        }
+    }
+    pub fn compile(&mut self, program: Program) {
+        for stmt in program {
+            self.compile_stmt(stmt);
+        };
+        self.chk.add_instr(Instruction::Return, 0);
+    }
+    fn compile_expr(&mut self, expr: Expr) {
+        match expr {
             Expr::Constant(tok) => {
-                let const_id = chk.add_const(Value::from(tok));
-                chk.add_instr(Instruction::PushConstant(const_id), tok.pos.line);
+                let const_id = self.chk.add_const(Value::from(&tok));
+                self.chk.add_instr(Instruction::PushConstant(const_id), tok.pos.line);
             },
             Expr::Binary(left, op, right) => {
-                left.compile(chk);
-                right.compile(chk);
+                self.compile_expr(*left);
+                self.compile_expr(*right);
                 match op.t {
-                    TokenType::Plus  => chk.add_instr(Instruction::Add, op.pos.line),
-                    TokenType::Minus => chk.add_instr(Instruction::Subtract, op.pos.line),
-                    TokenType::Star  => chk.add_instr(Instruction::Multiply, op.pos.line),
-                    TokenType::Slash => chk.add_instr(Instruction::Divide, op.pos.line),
-                    TokenType::Slash => chk.add_instr(Instruction::Divide, op.pos.line),
+                    TokenType::Plus  => self.chk.add_instr(Instruction::Add, op.pos.line),
+                    TokenType::Minus => self.chk.add_instr(Instruction::Subtract, op.pos.line),
+                    TokenType::Star  => self.chk.add_instr(Instruction::Multiply, op.pos.line),
+                    TokenType::Slash => self.chk.add_instr(Instruction::Divide, op.pos.line),
+                    TokenType::Slash => self.chk.add_instr(Instruction::Divide, op.pos.line),
 
-                    TokenType::EqualEqual   => chk.add_instr(Instruction::Equal, op.pos.line),
-                    TokenType::BangEqual    => chk.add_instr(Instruction::NotEqual, op.pos.line),
-                    TokenType::GreaterEqual => chk.add_instr(Instruction::GreaterEqual, op.pos.line),
-                    TokenType::LessEqual    => chk.add_instr(Instruction::LessEqual, op.pos.line),
-                    TokenType::Greater      => chk.add_instr(Instruction::Greater, op.pos.line),
-                    TokenType::Less         => chk.add_instr(Instruction::Less, op.pos.line),
+                    TokenType::EqualEqual   => self.chk.add_instr(Instruction::Equal, op.pos.line),
+                    TokenType::BangEqual    => self.chk.add_instr(Instruction::NotEqual, op.pos.line),
+                    TokenType::GreaterEqual => self.chk.add_instr(Instruction::GreaterEqual, op.pos.line),
+                    TokenType::LessEqual    => self.chk.add_instr(Instruction::LessEqual, op.pos.line),
+                    TokenType::Greater      => self.chk.add_instr(Instruction::Greater, op.pos.line),
+                    TokenType::Less         => self.chk.add_instr(Instruction::Less, op.pos.line),
 
                     _ => unimplemented!()
                 }
             },
             Expr::Unary(op, right) => {
-                right.compile(chk);
+                self.compile_expr(*right);
                 match op.t {
-                    TokenType::Minus => chk.add_instr(Instruction::Negate, op.pos.line),
-                    TokenType::Plus  => chk.add_instr(Instruction::ToNumber, op.pos.line),
-                    TokenType::Bang  => chk.add_instr(Instruction::Not, op.pos.line),
-                    TokenType::Trace => chk.add_instr(Instruction::Trace, op.pos.line),
+                    TokenType::Minus => self.chk.add_instr(Instruction::Negate, op.pos.line),
+                    TokenType::Plus  => self.chk.add_instr(Instruction::ToNumber, op.pos.line),
+                    TokenType::Bang  => self.chk.add_instr(Instruction::Not, op.pos.line),
+                    TokenType::Trace => self.chk.add_instr(Instruction::Trace, op.pos.line),
                     _ => unimplemented!()
                 }
             }
-            Expr::TrueLiteral(tok) => chk.add_instr(Instruction::PushTrue, tok.pos.line),
-            Expr::FalseLiteral(tok) => chk.add_instr(Instruction::PushFalse, tok.pos.line),
-            Expr::NullLiteral(tok) => chk.add_instr(Instruction::PushNull, tok.pos.line),
-            _ => unimplemented!()
+            Expr::TrueLiteral(tok) => self.chk.add_instr(Instruction::PushTrue, tok.pos.line),
+            Expr::FalseLiteral(tok) => self.chk.add_instr(Instruction::PushFalse, tok.pos.line),
+            Expr::NullLiteral(tok) => self.chk.add_instr(Instruction::PushNull, tok.pos.line),
+            Expr::ResolvedBlock(stmts, pop_count) => {
+                for stmt in stmts {
+                    self.compile_stmt(stmt);
+                }
+                for _ in 0..pop_count {
+                    self.chk.add_instr(Instruction::Pop, 0); //fix this
+                }
+                self.chk.add_instr(Instruction::PushNull, 0); //fix this
+            },
+            Expr::ResolvedAccess(name, id) => self.chk.add_instr(Instruction::PushVariable(id as u16), name.pos.line),
+            Expr::ResolvedAssign(name, id, val) => {
+                self.compile_expr(*val);
+                self.chk.add_instr(Instruction::Assign(id as u16), name.pos.line)
+            },
+            _ => panic!("This is a problem with the compiler itself")
         }
-    }
-}
 
-impl Compile for Stmt {
-    fn compile(&self, chk: &mut Chunk) {
-        match self {
-            Stmt::Expr(expr) => expr.compile(chk),
-            _ => unimplemented!()
+    }
+    fn compile_stmt(&mut self, stmt: Stmt) {
+        match stmt {
+            Stmt::Expr(expr) => {
+                self.compile_expr(*expr);
+                self.chk.add_instr(Instruction::Pop, 0);
+            },
+            Stmt::MutDecl(name, val) => {
+                self.compile_expr(*val);
+            }
         }
-    }
-}
-
-pub struct Compiler;
-impl Compiler {
-    pub fn compile<T: Compile>(&self, chk: &mut Chunk, ast: T) {
-        ast.compile(chk);
-        chk.add_instr(Instruction::Return, 0);
     }
 }
 
@@ -79,10 +99,11 @@ mod tests {
             val: "1.23".to_string()
         };
         let expr = Expr::Constant(token);
-        let expr_stmt = Stmt::Expr(expr);
+        let expr_stmt = Stmt::Expr(Box::new(expr));
+        let program = vec![expr_stmt];
 
-        let compiler = Compiler {};
-        compiler.compile(&mut chk, expr_stmt);
+        let mut compiler = Compiler::new(&mut chk);
+        compiler.compile(program);
 
         assert_eq!(chk.get_const(0).clone(), Value::Number(1.23));
         assert_eq!(chk.get_line_no(0), 1);
@@ -109,14 +130,16 @@ mod tests {
         let left = Expr::Constant(left);
         let right = Expr::Constant(right);
         let expr = Expr::Binary(Box::new(left), op, Box::new(right));
-        let expr_stmt = Stmt::Expr(expr);
+        let expr_stmt = Stmt::Expr(Box::new(expr));
+        let program = vec![expr_stmt];
 
-        let compiler = Compiler {};
-        compiler.compile(&mut chk, expr_stmt);
+        let mut compiler = Compiler::new(&mut chk);
+        compiler.compile(program);
 
         assert_eq!(chk.get_instr(0).clone(), Instruction::PushConstant(0));
         assert_eq!(chk.get_instr(1).clone(), Instruction::PushConstant(1));
         assert_eq!(chk.get_instr(2).clone(), Instruction::Multiply);
-        assert_eq!(chk.get_instr(3).clone(), Instruction::Return);
+        assert_eq!(chk.get_instr(3).clone(), Instruction::Pop);
+        assert_eq!(chk.get_instr(4).clone(), Instruction::Return);
     }
 }

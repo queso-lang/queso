@@ -1,13 +1,22 @@
 use crate::*;
 
+pub type Program = Vec<Stmt>;
+
 #[derive(Debug, Clone)]
 pub enum Expr {
     Constant(Token),
-    Grouping(Box<Expr>),
     Binary(Box<Expr>, Token, Box<Expr>),
     Unary(Token, Box<Expr>),
 
-    TrueLiteral(Token), FalseLiteral(Token), NullLiteral(Token), 
+    TrueLiteral(Token), FalseLiteral(Token), NullLiteral(Token),
+
+    Block(Vec<Stmt>),
+
+    Access(Token),
+
+    ResolvedAccess(Token, u32),
+    ResolvedAssign(Token, u32, Box<Expr>),
+    ResolvedBlock(Vec<Stmt>, u32),
 
     Error
 }
@@ -16,10 +25,24 @@ impl std::fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Expr::Constant(tok) => write!(f, "{}", tok.val),
-            Expr::Grouping(expr) => write!(f, "{}", **expr),
             Expr::Binary(left, op, right) => 
                 write!(f, "({} {} {})", op.val, **left, **right),
-            Expr::Unary(tok, right) => write!(f, "{}{}", tok.val, **right),
+            Expr::Unary(tok, right) => {
+                write!(f, "{} ", tok.val);
+                std::fmt::Display::fmt(&**right, f)
+            },
+            Expr::NullLiteral(tok) => write!(f, "null"),
+            Expr::ResolvedBlock(stmts, pop_count) => {
+                writeln!(f, "{{");
+                for stmt in stmts {
+                    std::fmt::Display::fmt(&stmt, f);
+                    writeln!(f, ";");
+                }
+                writeln!(f, "}}");
+                writeln!(f, "variables popped: {}", pop_count)
+            },
+            Expr::ResolvedAccess(tok, id) => write!(f, "#{} ({})", id, tok),
+            Expr::ResolvedAssign(tok, id, val) => write!(f, "#{} ({}) = {}", id, tok, val),
             _ => panic!("display trait not defined")
         }
     }
@@ -27,14 +50,17 @@ impl std::fmt::Display for Expr {
 
 #[derive(Debug, Clone)]
 pub enum Stmt {
-    Expr(Expr),
-    // FnDecl(Token, )
+    Expr(Box<Expr>),
+    MutDecl(Token, Box<Expr>)
 }
 
 impl std::fmt::Display for Stmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Stmt::Expr(expr) => write!(f, "{};", expr),
+            Stmt::Expr(expr) => write!(f, "{}", expr),
+            Stmt::MutDecl(name, val) => {
+                write!(f, "mut {} = {}", name.val, val)
+            },
             _ => panic!("display trait not defined")
         }
     }

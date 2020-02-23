@@ -102,7 +102,7 @@ impl Lexer {
                 self.new_token(t)
             },
             '=' => {
-                let t = if self.match_token('=') {TokenType::EqualEqual} else {TokenType::EqualEqualEqual};
+                let t = if self.match_token('=') {TokenType::EqualEqual} else {TokenType::Equal};
                 self.new_token(t)
             },
             '<' => {

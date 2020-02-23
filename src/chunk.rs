@@ -46,6 +46,10 @@ impl Chunk {
         self.instrs.get(instr_id)
             .expect("The VM failed to access an instruction. This might be a problem with the interpreter itself.")
     }
+    pub fn pop_instr(&mut self) -> Instruction {
+        self.instrs.pop()
+            .expect("The VM failed to pop an instruction. This might be a problem with the interpreter itself.")
+    }
     pub fn try_get_instr(&self, instr_id: usize) -> Option<&Instruction> {
         self.instrs.get(instr_id)
     }
@@ -59,6 +63,9 @@ impl Chunk {
         }
         
         panic!("The VM failed to access a line. This might be a problem with the interpreter itself.")
+    }
+    pub fn get_last_line(&self) -> u32 {
+        self.get_line_no(self.instrs.len() as u32-1)
     }
 
     // pretty print

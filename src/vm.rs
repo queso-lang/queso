@@ -30,6 +30,18 @@ impl VM {
             .expect("Failed to pop a value of the stack. This might be a problem with the interpreter itself.")
     }
 
+    fn get_stack(&self, id: u16) -> &Value {
+        self.stack.get(id as usize).expect("Couldn't access a value on the stack. This is a problem with the interpreter itself")
+    }
+
+    fn get_stack_top(&self) -> &Value {
+        self.get_stack(self.stack.len() as u16 - 1)
+    }
+
+    fn set_stack(&mut self, id: u16, val: Value) {
+        self.stack[id as usize] = val;
+    }
+
     fn print_stack(&self) {
         print!("stack ");
         if self.stack.len() == 0 {
@@ -55,9 +67,8 @@ impl VM {
         loop {
 
             if self.debug {
-                self.chk.print_instr(self.cur_instr, false);
-            
                 self.print_stack();
+                self.chk.print_instr(self.cur_instr, false);
 
                 println!();
             }
@@ -65,8 +76,6 @@ impl VM {
             if let Some(next) = self.next_instr() {
                 match next {
                     Instruction::Return => {
-                        self.pop_stack();
-
                         break;
                     },
                     Instruction::PushConstant(id) => {
@@ -209,6 +218,19 @@ impl VM {
 
                         self.stack.push(a);
                     },
+                    Instruction::Pop => {
+                        self.pop_stack();
+                    },
+                    Instruction::PushVariable(id) => {
+                        let id = *id;
+                        let var = self.get_stack(id).clone();
+                        self.stack.push(var);
+                    },
+                    Instruction::Assign(id) => {
+                        let id = *id;
+                        let val = self.get_stack_top().clone();
+                        self.set_stack(id, val);
+                    }
 
                     #[allow(unreachable_patterns)]
                     _ => unimplemented!()
