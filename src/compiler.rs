@@ -14,11 +14,14 @@ impl<'a> Compiler<'a> {
         self.chk.add_instr(Instruction::JumpPlaceholder, 1);
         self.chk.instrs.len() - 1
     }
-    fn label_pop_and_jump_if_false(&mut self, jump_id: usize) {
-        self.chk.set_instr(jump_id, Instruction::PopAndJumpIfFalse((self.chk.instrs.len() - 1 - jump_id) as u16));
+    fn label_jump_if_truthy(&mut self, jump_id: usize) {
+        self.chk.set_instr(jump_id, Instruction::JumpIfTruthy((self.chk.instrs.len() - 1 - jump_id) as u16));
     }
-    fn label_jump_if_false(&mut self, jump_id: usize) {
-        self.chk.set_instr(jump_id, Instruction::JumpIfFalse((self.chk.instrs.len() - 1 - jump_id) as u16));
+    fn label_pop_and_jump_if_false(&mut self, jump_id: usize) {
+        self.chk.set_instr(jump_id, Instruction::PopAndJumpIfFalsy((self.chk.instrs.len() - 1 - jump_id) as u16));
+    }
+    fn label_jump_if_falsy(&mut self, jump_id: usize) {
+        self.chk.set_instr(jump_id, Instruction::JumpIfFalsy((self.chk.instrs.len() - 1 - jump_id) as u16));
     }
     fn label_jump(&mut self, jump_id: usize) {
         self.chk.set_instr(jump_id, Instruction::Jump((self.chk.instrs.len() - 1 - jump_id) as u16));
@@ -36,6 +39,22 @@ impl<'a> Compiler<'a> {
                 self.chk.add_instr(Instruction::PushConstant(const_id), tok.pos.line);
             },
             Expr::Binary(left, op, right) => {
+                if op.t == TokenType::And {
+                    self.compile_expr(*left);
+                    let jump = self.make_jump();
+                    self.chk.add_instr(Instruction::Pop, 0);
+                    self.compile_expr(*right);
+                    self.label_jump_if_falsy(jump);
+                    return;
+                }
+                if op.t == TokenType::Or {
+                    self.compile_expr(*left);
+                    let jump = self.make_jump();
+                    self.compile_expr(*right);
+                    self.label_jump_if_truthy(jump);
+                    return;
+                }
+
                 self.compile_expr(*left);
                 self.compile_expr(*right);
                 match op.t {

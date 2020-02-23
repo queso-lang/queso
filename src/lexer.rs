@@ -121,7 +121,7 @@ impl Lexer {
                 self.new_token(t)
             },
             '&' => {
-                let t = if self.match_token('&') {TokenType::BitAnd} else {TokenType::And};
+                let t = if self.match_token('&') {TokenType::And} else {TokenType::BitAnd};
                 self.new_token(t)
             },
             '/' => {
