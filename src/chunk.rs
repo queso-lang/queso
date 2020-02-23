@@ -6,7 +6,7 @@ type LineVec = Vec<LineRL>;
 
 #[derive(Clone)]
 pub struct Chunk {
-    instrs: Vec<Instruction>,
+    pub instrs: Vec<Instruction>,
     consts: Vec<Value>,
     lines: LineVec
 }
@@ -38,13 +38,16 @@ impl Chunk {
         self.consts.get(const_id as usize)
             .expect("The VM failed to access a constant. This might be a problem with the interpreter itself.")
     }
-    pub fn add_instr(&mut self, instr: Instruction, line_no: u32) {
+    pub fn add_instr(&mut self, instr: Instruction, line_no: u32){
         self.instrs.push(instr);
         self.add_line(line_no);
     }
     pub fn get_instr(&self, instr_id: usize) -> &Instruction {
         self.instrs.get(instr_id)
             .expect("The VM failed to access an instruction. This might be a problem with the interpreter itself.")
+    }
+    pub fn set_instr(&mut self, instr_id: usize, set_to: Instruction){
+        self.instrs[instr_id] = set_to;
     }
     pub fn pop_instr(&mut self) -> Instruction {
         self.instrs.pop()

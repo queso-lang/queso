@@ -5,7 +5,7 @@ use std::collections::HashMap;
 #[derive(Clone)]
 pub enum BP {
     Zero,
-    KeywordExpr, //trace, return, throw,
+    KeywordExpr, //trace, return, throw, if, etc.
     Assignment,
     Or,
     And,
@@ -112,6 +112,9 @@ impl Parser {
         parser.rules.insert(TokenType::Equal,
             ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Assignment as u8});
 
+        parser.rules.insert(TokenType::If,
+            ParserRule {prefix: Some(Parser::if_else),  infix: None,                    bp: BP::Assignment as u8});
+
         parser
     }
     
@@ -175,7 +178,8 @@ impl Parser {
             return left;
         }
 
-        let cur = self.toks.peek().clone();
+        let cur = cur.clone();
+        // if there is no prefix rule for the current token, emit this error
         self.error(cur, "Expected an expression");
         return Expr::Error;
     }
@@ -230,13 +234,25 @@ impl Parser {
         while self.toks.peek().t != TokenType::RightBrace && self.toks.peek().t != TokenType::EOF {
             stmts.push(self.stmt());
         }
-        self.consume(TokenType::RightBrace, "Unexpected unmatched {");
+        self.consume(TokenType::RightBrace, "Unmatched {");
         Expr::Block(stmts)
     }
 
     fn access(&mut self) -> Expr {
         let cur = self.toks.next();
         Expr::Access(cur.clone())
+    }
+
+    fn if_else(&mut self) -> Expr {
+        self.toks.next();
+        let cond = self.expr();
+        self.consume(TokenType::Arrow, "Expected an arrow after the condition");
+        let if_branch = self.expr();
+        let mut else_branch = None;
+        if self.toks.nextif(TokenType::Else) {
+            else_branch = Some(Box::new(self.expr()));
+        }
+        Expr::IfElse(Box::new(cond), Box::new(if_branch), else_branch)
     }
 }
 
