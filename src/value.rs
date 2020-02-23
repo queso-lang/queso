@@ -34,7 +34,7 @@ impl Value {
             Value::String(s) => return Ok(s.clone()),
             Value::Bool(b) => return Ok((if *b {"true"} else {"false"}).to_string()),
             Value::Number(num) => return Ok(num.to_string()),
-            Value::Null => return Ok("".to_string()),
+            Value::Null => return Ok("null".to_string()),
             _ => return Err("This operand cannot be converted to a string")
         }
     }
