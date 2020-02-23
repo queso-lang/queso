@@ -10,6 +10,16 @@ impl<'a> Compiler<'a> {
             chk
         }
     }
+    fn make_jump(&mut self) -> usize {
+        self.chk.add_instr(Instruction::JumpPlaceholder, 1);
+        self.chk.instrs.len() - 1
+    }
+    fn label_jump_if_false(&mut self, jump_id: usize) {
+        self.chk.set_instr(jump_id, Instruction::JumpIfFalse((self.chk.instrs.len() - 1 - jump_id) as u16));
+    }
+    fn label_jump(&mut self, jump_id: usize) {
+        self.chk.set_instr(jump_id, Instruction::Jump((self.chk.instrs.len() - 1 - jump_id) as u16));
+    }
     pub fn compile(&mut self, program: Program) {
         for stmt in program {
             self.compile_stmt(stmt);
@@ -55,6 +65,30 @@ impl<'a> Compiler<'a> {
             Expr::TrueLiteral(tok) => self.chk.add_instr(Instruction::PushTrue, tok.pos.line),
             Expr::FalseLiteral(tok) => self.chk.add_instr(Instruction::PushFalse, tok.pos.line),
             Expr::NullLiteral(tok) => self.chk.add_instr(Instruction::PushNull, tok.pos.line),
+            Expr::IfElse(cond, ib, eb) => {
+                //jump_a -> omit if branch - jump to else or outside
+                //jump_b -> omit else branch - jump from if branch to outside
+
+                self.compile_expr(*cond);
+                //emit jump
+                let jump_a = self.make_jump();
+
+                self.compile_expr(*ib);
+
+                let jump_b = self.make_jump();
+                
+                self.label_jump_if_false(jump_a);
+
+                if let Some(eb) = eb {
+                    self.compile_expr(*eb);
+                }
+                else {
+                    self.chk.add_instr(Instruction::PushNull, 1);
+                }
+
+                self.label_jump(jump_b);
+
+            },
             Expr::ResolvedBlock(stmts, pop_count) => {
                 for stmt in stmts {
                     self.compile_stmt(stmt);

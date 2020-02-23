@@ -90,14 +90,14 @@ impl Resolver {
                 let right = self.resolve_expr(*right)?;
                 Ok(Expr::Unary(op, Box::new(right)))
             },
-            Expr::IfElse(cond, if_branch, else_branch) => {
+            Expr::IfElse(cond, ib, eb) => {
                 let cond = self.resolve_expr(*cond)?;
-                let ifb = self.resolve_expr(*if_branch)?;
-                let mut eb = else_branch;
-                if let Some(else_branch_expr) = eb {
-                    eb = Some(Box::new(self.resolve_expr(*else_branch_expr)?));
+                let ib = self.resolve_expr(*ib)?;
+                let mut eb = eb;
+                if let Some(eb_expr) = eb {
+                    eb = Some(Box::new(self.resolve_expr(*eb_expr)?));
                 }
-                Ok(Expr::IfElse(Box::new(cond), Box::new(ifb), eb))
+                Ok(Expr::IfElse(Box::new(cond), Box::new(ib), eb))
             },
             _ => Ok(expr)
         }
