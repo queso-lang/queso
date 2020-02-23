@@ -115,6 +115,12 @@ impl Parser {
         parser.rules.insert(TokenType::If,
             ParserRule {prefix: Some(Parser::if_else),  infix: None,                    bp: BP::Zero as u8});
 
+        parser.rules.insert(TokenType::And,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::And as u8});
+
+        parser.rules.insert(TokenType::Or,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Or as u8});
+
         parser
     }
     
