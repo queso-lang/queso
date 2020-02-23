@@ -113,7 +113,7 @@ impl Parser {
             ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Assignment as u8});
 
         parser.rules.insert(TokenType::If,
-            ParserRule {prefix: Some(Parser::if_else),  infix: None,                    bp: BP::Assignment as u8});
+            ParserRule {prefix: Some(Parser::if_else),  infix: None,                    bp: BP::Zero as u8});
 
         parser
     }
