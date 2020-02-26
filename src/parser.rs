@@ -237,8 +237,10 @@ impl Parser {
     fn block(&mut self) -> Expr {
         self.toks.next();
         let mut stmts = Vec::<Stmt>::new();
+        let mut is_first = true;
         while self.toks.peek().t != TokenType::RightBrace && self.toks.peek().t != TokenType::EOF {
-            stmts.push(self.stmt());
+            stmts.push(self.stmt(is_first));
+            is_first = false;
         }
         self.consume(TokenType::RightBrace, "Unmatched {");
         Expr::Block(stmts)
@@ -266,22 +268,27 @@ impl Parser {
 impl Parser {
     pub fn program(&mut self) -> Program {
         let mut stmts = Vec::<Stmt>::new();
+        let mut is_first = true;
         while self.toks.peek().t != TokenType::EOF {
-            stmts.push(self.stmt());
+            stmts.push(self.stmt(is_first));
+            is_first = false;
         }
         stmts
     }
-    fn stmt(&mut self) -> Stmt {
+    fn stmt(&mut self, is_first: bool) -> Stmt {
+        if !is_first {
+            if self.consume(TokenType::Semi, "Expected a SEMI after expression") {
+                self.panic = false;
+            }
+            else {self.sync()};
+        }
+        
         let stmt: Stmt;
         match self.toks.peek().t {
             TokenType::Mut => stmt = self.mut_decl(),
             _ => stmt = self.expr_stmt()
         }
 
-        if self.consume(TokenType::Semi, "Expected a SEMI after expression") {
-            self.panic = false;
-        }
-        else {self.sync()};
         stmt
     }
     fn expr_stmt(&mut self) -> Stmt {

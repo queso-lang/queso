@@ -139,7 +139,8 @@ impl<'a> Compiler<'a> {
             },
             Stmt::MutDecl(name, val) => {
                 self.compile_expr(*val);
-            }
+            },
+            _ => panic!("This is a problem with the compiler itself")
         }
     }
 }
