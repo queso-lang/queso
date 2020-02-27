@@ -23,7 +23,7 @@ impl VM {
         
     fn next_instr(&mut self) -> Option<&Instruction> {
         self.frame.cur_instr += 1;
-        self.frame.chk.try_get_instr(self.frame.cur_instr - 1)
+        self.frame.func.chk.try_get_instr(self.frame.cur_instr - 1)
     }
 
     fn pop_stack(&mut self) -> Value {
@@ -68,7 +68,7 @@ impl VM {
 
             if self.debug {
                 self.print_stack();
-                self.frame.chk.print_instr(self.frame.cur_instr, false);
+                self.frame.func.chk.print_instr(self.frame.cur_instr, false);
 
                 println!();
             }
@@ -85,7 +85,7 @@ impl VM {
                     },
                     Instruction::PushConstant(id) => {
                         let id = *id;
-                        let constant: &Value = self.frame.chk.get_const(id);
+                        let constant: &Value = self.frame.func.chk.get_const(id);
                         self.stack.push(constant.clone());
                     },
                     Instruction::PushTrue => {
@@ -217,7 +217,7 @@ impl VM {
 
                         let val = a.to_string().unwrap_or("".to_string());
                         //add filename
-                        let line_no = self.frame.chk.get_line_no(self.frame.cur_instr as u32);
+                        let line_no = self.frame.func.chk.get_line_no(self.frame.cur_instr as u32);
                         println!("[{}] {}", line_no, val);
                         //maybe don't pop at all?
 
