@@ -63,7 +63,7 @@ impl std::fmt::Display for Expr {
 pub enum Stmt {
     Expr(Box<Expr>),
     MutDecl(Token, Box<Expr>),
-    FnDecl(Token, Box<Expr>),
+    FnDecl(Token, Vec<Token>, Box<Expr>),
 
     Error
 }

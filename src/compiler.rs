@@ -148,7 +148,7 @@ impl<'a> Compiler<'a> {
             Stmt::MutDecl(name, val) => {
                 self.compile_expr(*val);
             },
-            Stmt::FnDecl(name, body) => {
+            Stmt::FnDecl(name, params, body) => {
                 let mut chk = Chunk::new();
                 let mut compiler = Compiler::new(&mut chk);
 

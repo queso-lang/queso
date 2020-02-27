@@ -53,13 +53,23 @@ impl Resolver {
             Stmt::Expr(expr) => {
                 Ok(Stmt::Expr(Box::new(self.resolve_expr(*expr)?)))
             },
-            Stmt::FnDecl(name, body) => {
+            Stmt::FnDecl(name, params, body) => {
                 if self.env.is_redefined(&name) {
                     return Err("Tried to redeclare a variable in the same scope");
                 }
                 self.env.add(name.clone());
+
+                self.env.open();
+
+                for param in params.clone() {
+                    self.env.add(param);
+                }
+                
                 let body = self.resolve_expr(*body)?;
-                Ok(Stmt::FnDecl(name, Box::new(body)))
+
+                self.env.close();
+
+                Ok(Stmt::FnDecl(name, params, Box::new(body)))
             },
             _ => panic!()
         }

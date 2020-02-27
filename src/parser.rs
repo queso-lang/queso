@@ -311,12 +311,23 @@ impl Parser {
         self.consume(TokenType::Identifier, "Expected function name");
 
         self.consume(TokenType::LeftParen, "Expected ( after function name");
+
+        let mut params = Vec::<Token>::new();
+        if self.toks.peek().t != TokenType::RightParen {
+            loop {
+                params.push(self.toks.peek().clone());
+                self.consume(TokenType::Identifier, "Expected parameter name");
+
+                if !self.toks.nextif(TokenType::Comma) {break;}
+            }
+        }
+
         self.consume(TokenType::RightParen, "Expected ) after parameters");
 
         self.consume(TokenType::Colon, "Expected :");
 
         let body = self.expr();
-        Stmt::FnDecl(name, Box::new(body))
+        Stmt::FnDecl(name, params, Box::new(body))
     }
 }
 
