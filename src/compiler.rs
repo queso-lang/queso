@@ -112,6 +112,13 @@ impl<'a> Compiler<'a> {
                 self.label_jump(jump_b);
 
             },
+            Expr::FnCall(left, args, pop_count) => {
+                self.compile_expr(*left);
+                for arg in args {
+                    self.compile_expr(arg);
+                }
+                self.chk.add_instr(Instruction::FnCall(pop_count), 0);
+            },
 
             Expr::ResolvedBlock(stmts, pop_count) => {
                 self.compile_stmts_with_return(stmts);
@@ -148,11 +155,13 @@ impl<'a> Compiler<'a> {
             Stmt::MutDecl(name, val) => {
                 self.compile_expr(*val);
             },
-            Stmt::FnDecl(name, params, body) => {
+            Stmt::FnDecl(name, _, body) => {
                 let mut chk = Chunk::new();
                 let mut compiler = Compiler::new(&mut chk);
 
                 compiler.compile_expr(*body);
+                chk.add_instr(Instruction::Return, 0);
+
                 let func = Function {
                     chk,
                     name: name.val

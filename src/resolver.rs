@@ -117,6 +117,15 @@ impl Resolver {
                 }
                 Ok(Expr::IfElse(Box::new(cond), Box::new(ib), eb))
             },
+            Expr::FnCall(name, args, pop_count) => {
+                let name = self.resolve_expr(*name)?;
+                let mut rargs = Vec::<Expr>::new();
+                for arg in args {
+                    rargs.push(self.resolve_expr(arg)?)
+                }
+
+                Ok(Expr::FnCall(Box::new(name), rargs, pop_count))
+            }
             _ => Ok(expr)
         }
     }

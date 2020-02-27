@@ -12,6 +12,8 @@ pub enum Expr {
 
     Block(Vec<Stmt>),
 
+    FnCall(Box<Expr>, Vec<Expr>, u16),
+
     IfElse(Box<Expr>, Box<Expr>, Option<Box<Expr>>),
 
     Access(Token),

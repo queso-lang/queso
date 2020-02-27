@@ -1,11 +1,12 @@
 use crate::*;
 
-pub 
-enum FunctionType {
+#[derive(Debug, Clone)]
+pub enum FunctionType {
     Program,
     Function
 }
 
+#[derive(Debug, Clone)]
 pub struct CallFrame {
     pub func: Function,
     pub funct: FunctionType,
@@ -25,15 +26,12 @@ impl CallFrame {
             stack_base
         }
     }
-}
-
-impl From<Function> for CallFrame {
-    fn from(func: Function) -> CallFrame {
+    pub fn from_function(func: Function, stack_base: usize) -> CallFrame {
         CallFrame {
-            func: func,
+            func,
             funct: FunctionType::Function,
             cur_instr: 0,
-            stack_base: 0
+            stack_base
         }
     }
 }

@@ -79,15 +79,15 @@ impl Chunk {
         }
     }
     pub fn print_instr(&self, instr_id: usize, hide_repeating_lines: bool) {
-        print!("{:<4} ", 
-            if instr_id >= 1
-            && self.get_line_no(instr_id as u32) == self.get_line_no((instr_id-1) as u32)
-            && hide_repeating_lines {
-                "".to_string()
-            } else {
-                self.get_line_no(instr_id as u32).to_string()
-            }
-        );
+        // print!("{:<4} ", 
+        //     if instr_id >= 1
+        //     && self.get_line_no(instr_id as u32) == self.get_line_no((instr_id-1) as u32)
+        //     && hide_repeating_lines {
+        //         "".to_string()
+        //     } else {
+        //         self.get_line_no(instr_id as u32).to_string()
+        //     }
+        // );
         self.print_instr_info(&self.get_instr(instr_id));
     }
     pub fn print_instr_info(&self, instr: &Instruction) {

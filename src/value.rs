@@ -1,6 +1,6 @@
 use crate::*;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(PartialEq, Clone)]
 pub enum Value {
     Bool(bool),
     Number(f64),
@@ -72,6 +72,19 @@ impl From<&Token> for Value {
             TokenType::False  => Value::Bool(false),
             TokenType::Null   => Value::Null,
             _ => unimplemented!()
+        }
+    }
+}
+
+impl std::fmt::Debug for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Value::String(s) => write!(f, "{}", s.clone()),
+            Value::Bool(b) => write!(f, "{}", (if *b {"true"} else {"false"}).to_string()),
+            Value::Number(num) => write!(f, "{}", num.to_string()),
+            Value::Function(func) => write!(f, "func {}", func.name),
+            Value::Null => write!(f, "null"),
+            _ => panic!()
         }
     }
 }

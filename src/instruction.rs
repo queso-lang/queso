@@ -26,6 +26,7 @@ pub enum Instruction {
 
     PushVariable(u16),
     Assign(u16),
+    FnCall(u16),
 
     EndBlock(u16),
     JumpIfFalsy(u16),

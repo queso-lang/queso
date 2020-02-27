@@ -50,7 +50,7 @@ impl Parser {
         };
 
         parser.rules.insert(TokenType::LeftParen,
-            ParserRule {prefix: Some(Parser::grouping), infix: None,                    bp: BP::Zero as u8});
+            ParserRule {prefix: Some(Parser::grouping), infix: Some(Parser::fn_call),   bp: BP::FnCall as u8});
 
         parser.rules.insert(TokenType::Minus,
             ParserRule {prefix: Some(Parser::unary),    infix: Some(Parser::binary),    bp: BP::Addition as u8});
@@ -261,6 +261,22 @@ impl Parser {
             else_branch = Some(Box::new(self.expr()));
         }
         Expr::IfElse(Box::new(cond), Box::new(if_branch), else_branch)
+    }
+
+    fn fn_call(&mut self, left: Expr) -> Expr {
+        let mut args = Vec::<Expr>::new();
+        self.toks.next();
+        if self.toks.peek().t != TokenType::RightParen {
+            loop {
+                args.push(self.expr());
+
+                if !self.toks.nextif(TokenType::Comma) {break;}
+            }
+        }
+        self.consume(TokenType::RightParen, "Expected ) after arguments");
+
+        let argslen = args.len();
+        Expr::FnCall(Box::new(left), args, argslen as u16)
     }
 }
 

@@ -77,7 +77,10 @@ impl VM {
                 match next {
                     Instruction::Return => {
                         if let Some(frame) = self.callstack.pop() {
+                            let val = self.pop_stack();
+                            self.stack.truncate(self.frame.stack_base);
                             self.frame = frame;
+                            self.stack.push(val);
                         }
                         else {
                             break;
@@ -268,7 +271,31 @@ impl VM {
                             self.pop_stack();
                         }
                         self.stack.push(hangon);
-                    }
+                    },
+                    Instruction::FnCall(arg_count) => {
+                        let arg_count = arg_count.clone();
+                        let funcpos = self.stack.len() as u16 as u16 - 1 - arg_count;
+                        // println!("{}", funcpos+1);
+                        let func = self.get_stack(funcpos);
+                        if let Value::Function(func) = func {
+                            let mut new_frame = CallFrame::from_function((**func).clone(), funcpos as usize);
+                            let test = new_frame.clone();
+
+                            let parent_frame = std::mem::replace(&mut self.frame, new_frame);
+
+                            self.callstack.push(parent_frame);
+
+                            // println!("CALLSTACK ---------");
+                        //     for frame in self.callstack.clone() {
+                        //         println!("{:?}", Value::Function(Box::new(frame.func)));
+                        //     }
+                        //     println!("{:?}", Value::Function(Box::new(test.func)));
+                        //     println!("---------");
+                        }
+                        else {
+                            return Err("Tried to call a value which isn't a function");
+                        }
+                    },
 
                     #[allow(unreachable_patterns)]
                     _ => unimplemented!()
