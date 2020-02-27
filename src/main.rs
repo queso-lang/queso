@@ -38,6 +38,9 @@ use env::*;
 mod resolver;
 use resolver::*;
 
+mod fn;
+use fn::*;
+
 extern crate clap; 
 use clap::{App, Arg, crate_version};
 
