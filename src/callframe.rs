@@ -1,6 +1,7 @@
 use crate::*;
 
-pub enum FunctionType {
+pub 
+enum FunctionType {
     Program,
     Function
 }

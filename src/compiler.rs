@@ -32,7 +32,7 @@ impl<'a> Compiler<'a> {
         };
         self.chk.add_instr(Instruction::Return, 0);
     }
-    fn compile_expr(&mut self, expr: Expr) {
+    pub fn compile_expr(&mut self, expr: Expr) {
         match expr {
             Expr::Constant(tok) => {
                 let const_id = self.chk.add_const(Value::from(&tok));
@@ -148,6 +148,18 @@ impl<'a> Compiler<'a> {
             Stmt::MutDecl(name, val) => {
                 self.compile_expr(*val);
             },
+            Stmt::FnDecl(name, body) => {
+                let mut chk = Chunk::new();
+                let mut compiler = Compiler::new(&mut chk);
+
+                compiler.compile_expr(*body);
+                let func = Function {
+                    chk,
+                    name: name.val
+                };
+                let const_id = self.chk.add_const(Value::Function(Box::new(func)));
+                self.chk.add_instr(Instruction::PushConstant(const_id), 0);
+            }
             _ => panic!("This is a problem with the compiler itself")
         }
     }

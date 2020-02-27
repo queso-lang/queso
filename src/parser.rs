@@ -283,13 +283,11 @@ impl Parser {
             else {self.sync()};
         }
         
-        let stmt: Stmt;
         match self.toks.peek().t {
-            TokenType::Mut => stmt = self.mut_decl(),
-            _ => stmt = self.expr_stmt()
+            TokenType::Mut => self.mut_decl(),
+            TokenType::Fn => self.fn_decl(),
+            _ => self.expr_stmt()
         }
-
-        stmt
     }
     fn expr_stmt(&mut self) -> Stmt {
         let stmt = Stmt::Expr(Box::new(self.expr()));
@@ -306,6 +304,19 @@ impl Parser {
         }
 
         Stmt::MutDecl(name, Box::new(val))
+    }
+    fn fn_decl(&mut self) -> Stmt {
+        self.toks.next();
+        let name = self.toks.peek().clone();
+        self.consume(TokenType::Identifier, "Expected function name");
+
+        self.consume(TokenType::LeftParen, "Expected ( after function name");
+        self.consume(TokenType::RightParen, "Expected ) after parameters");
+
+        self.consume(TokenType::Colon, "Expected :");
+
+        let body = self.expr();
+        Stmt::FnDecl(name, Box::new(body))
     }
 }
 

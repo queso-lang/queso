@@ -295,9 +295,9 @@ mod tests {
         chk.add_instr(Instruction::Negate, 0);
         chk.add_instr(Instruction::Return, 0);
 
-        let mut vm = VM::new(true);
+        let mut vm = VM::new(chk, true);
 
-        assert_eq!(vm.execute(chk), Ok(()));
+        assert_eq!(vm.execute(), Ok(()));
     }
 
     #[test]
@@ -340,9 +340,9 @@ mod tests {
 
         chk.add_instr(Instruction::Return, 0);
 
-        let mut vm = VM::new(true);
+        let mut vm = VM::new(chk, true);
 
-        assert_eq!(vm.execute(chk), Ok(()));
+        assert_eq!(vm.execute(), Ok(()));
     }
 
     #[test]
@@ -357,8 +357,8 @@ mod tests {
 
         chk.add_instr(Instruction::Return, 0);
 
-        let mut vm = VM::new(true);
+        let mut vm = VM::new(chk, true);
 
-        assert_eq!(vm.execute(chk), Ok(()));
+        assert_eq!(vm.execute(), Ok(()));
     }
 }
