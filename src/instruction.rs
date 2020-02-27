@@ -27,6 +27,7 @@ pub enum Instruction {
     PushVariable(u16),
     Assign(u16),
 
+    EndBlock(u16),
     JumpIfFalsy(u16),
     PopAndJumpIfFalsy(u16), //always pop, that is
     JumpIfTruthy(u16),

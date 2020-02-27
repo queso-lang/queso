@@ -18,7 +18,7 @@ pub enum Expr {
 
     ResolvedAccess(Token, u32),
     ResolvedAssign(Token, u32, Box<Expr>),
-    ResolvedBlock(Vec<Stmt>, u32),
+    ResolvedBlock(Vec<Stmt>, u16),
 
     Error
 }

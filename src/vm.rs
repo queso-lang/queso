@@ -255,6 +255,14 @@ impl VM {
                     Instruction::Jump(jump_count) => {
                         let jump_count = *jump_count as usize;
                         self.cur_instr += jump_count;
+                    },
+                    Instruction::EndBlock(pop_count) => {
+                        let pop_count = pop_count.clone();
+                        let hangon = self.pop_stack();
+                        for _ in 0..pop_count {
+                            self.pop_stack();
+                        }
+                        self.stack.push(hangon);
                     }
 
                     #[allow(unreachable_patterns)]

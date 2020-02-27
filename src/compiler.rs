@@ -17,7 +17,7 @@ impl<'a> Compiler<'a> {
     fn label_jump_if_truthy(&mut self, jump_id: usize) {
         self.chk.set_instr(jump_id, Instruction::JumpIfTruthy((self.chk.instrs.len() - 1 - jump_id) as u16));
     }
-    fn label_pop_and_jump_if_false(&mut self, jump_id: usize) {
+    fn label_pop_and_jump_if_falsy(&mut self, jump_id: usize) {
         self.chk.set_instr(jump_id, Instruction::PopAndJumpIfFalsy((self.chk.instrs.len() - 1 - jump_id) as u16));
     }
     fn label_jump_if_falsy(&mut self, jump_id: usize) {
@@ -28,7 +28,7 @@ impl<'a> Compiler<'a> {
     }
     pub fn compile(&mut self, program: Program) {
         for stmt in program {
-            self.compile_stmt(stmt);
+            self.compile_stmt(stmt, false);
         };
         self.chk.add_instr(Instruction::Return, 0);
     }
@@ -100,7 +100,7 @@ impl<'a> Compiler<'a> {
 
                 let jump_b = self.make_jump();
                 
-                self.label_pop_and_jump_if_false(jump_a);
+                self.label_pop_and_jump_if_falsy(jump_a);
 
                 if let Some(eb) = eb {
                     self.compile_expr(*eb);
@@ -114,13 +114,8 @@ impl<'a> Compiler<'a> {
             },
 
             Expr::ResolvedBlock(stmts, pop_count) => {
-                for stmt in stmts {
-                    self.compile_stmt(stmt);
-                }
-                for _ in 0..pop_count {
-                    self.chk.add_instr(Instruction::Pop, 0); //fix this
-                }
-                self.chk.add_instr(Instruction::PushNull, 0); //fix this
+                self.compile_stmts_with_return(stmts);
+                self.chk.add_instr(Instruction::EndBlock(pop_count), 0);
             },
             Expr::ResolvedAccess(name, id) => self.chk.add_instr(Instruction::PushVariable(id as u16), name.pos.line),
             Expr::ResolvedAssign(name, id, val) => {
@@ -131,11 +126,24 @@ impl<'a> Compiler<'a> {
         }
 
     }
-    fn compile_stmt(&mut self, stmt: Stmt) {
+    fn compile_stmts_with_return(&mut self, stmts: Vec<Stmt>) {
+        if let Some((last, rest)) = stmts.split_last() {
+            for stmt in rest {
+                self.compile_stmt(stmt.to_owned(), false);
+            };
+            self.compile_stmt(last.to_owned(), true);
+        }
+        else {
+            self.chk.add_instr(Instruction::PushNull, 0);
+        }
+    }
+    fn compile_stmt(&mut self, stmt: Stmt, is_last: bool) {
         match stmt {
             Stmt::Expr(expr) => {
                 self.compile_expr(*expr);
-                self.chk.add_instr(Instruction::Pop, 0);
+                if !is_last {
+                    self.chk.add_instr(Instruction::Pop, 0);
+                }
             },
             Stmt::MutDecl(name, val) => {
                 self.compile_expr(*val);

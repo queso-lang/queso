@@ -21,7 +21,7 @@ impl Env {
     pub fn open(&mut self) {
         self.scope_depth+=1
     }
-    pub fn close(&mut self) -> u32 {
+    pub fn close(&mut self) -> u16 {
         let mut pop_count = 0;
         while self.locals.len()!=0 {
             if self.locals.last().expect("This is a problem with the compiler itself").depth == self.scope_depth {
