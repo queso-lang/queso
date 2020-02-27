@@ -54,11 +54,11 @@ impl Resolver {
                 Ok(Stmt::Expr(Box::new(self.resolve_expr(*expr)?)))
             },
             Stmt::FnDecl(name, body) => {
-                let body = self.resolve_expr(*body)?;
                 if self.env.is_redefined(&name) {
                     return Err("Tried to redeclare a variable in the same scope");
                 }
                 self.env.add(name.clone());
+                let body = self.resolve_expr(*body)?;
                 Ok(Stmt::FnDecl(name, Box::new(body)))
             },
             _ => panic!()
