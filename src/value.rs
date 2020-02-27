@@ -5,7 +5,7 @@ pub enum Value {
     Bool(bool),
     Number(f64),
     String(String),
-    Function(Box<Fn>),
+    Function(Box<Function>),
     Null
 }
 
@@ -15,6 +15,7 @@ impl Value {
             Value::Bool(b) => *b,
             Value::Number(n) => *n!=0.,
             Value::String(s) => s.len() > 0,
+            Value::Function(_) => true,
             Value::Null => false
         }
     }
@@ -26,6 +27,7 @@ impl Value {
                 Ok(num) => return Ok(num),
                 _ => return Err("Could not convert the string to a number")
             },
+            Value::Function(_) => Err("Can't convert a function to a number"),
             Value::Null => return Ok(0.),
             _ => return Err("This operand cannot be converted to a number")
         }
@@ -35,6 +37,7 @@ impl Value {
             Value::String(s) => return Ok(s.clone()),
             Value::Bool(b) => return Ok((if *b {"true"} else {"false"}).to_string()),
             Value::Number(num) => return Ok(num.to_string()),
+            Value::Function(_) => Err("Can't convert a function to a string"),
             Value::Null => return Ok("null".to_string()),
             _ => return Err("This operand cannot be converted to a string")
         }

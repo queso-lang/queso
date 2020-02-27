@@ -3,31 +3,32 @@ use crate::*;
 type Stack = Vec<Value>;
 
 pub struct VM {
-    chk: Chunk,
-    cur_instr: usize,
+    frame: CallFrame,
+    callstack: Vec<CallFrame>,
+
     stack: Stack,
 
     debug: bool
 }
 
 impl VM {
-    pub fn new(debug: bool) -> VM {
+    pub fn new(chk: Chunk, debug: bool) -> VM {
         VM {
-            chk: Chunk::new(),
-            cur_instr: 0,
+            frame: CallFrame::new(chk, 0),
+            callstack: Vec::<CallFrame>::new(),
             stack: Stack::new(),
             debug
         }
     }
         
     fn next_instr(&mut self) -> Option<&Instruction> {
-        self.cur_instr += 1;
-        self.chk.try_get_instr(self.cur_instr - 1)
+        self.frame.cur_instr += 1;
+        self.frame.chk.try_get_instr(self.frame.cur_instr - 1)
     }
 
     fn pop_stack(&mut self) -> Value {
         self.stack.pop()
-            .expect("Failed to pop a value of the stack. This might be a problem with the interpreter itself.")
+            .expect("Failed to pop a value off the stack. This might be a problem with the interpreter itself.")
     }
 
     fn get_stack(&self, id: u16) -> &Value {
@@ -53,9 +54,8 @@ impl VM {
         println!();
     }
 
-    pub fn execute(&mut self, chk: Chunk) -> Result<(), &'static str> {
-        self.chk = chk;
-        self.cur_instr = 0;
+    pub fn execute(&mut self) -> Result<(), &'static str> {
+        self.frame.cur_instr = 0;
         self.run()
     }
 
@@ -68,7 +68,7 @@ impl VM {
 
             if self.debug {
                 self.print_stack();
-                self.chk.print_instr(self.cur_instr, false);
+                self.frame.chk.print_instr(self.frame.cur_instr, false);
 
                 println!();
             }
@@ -76,11 +76,16 @@ impl VM {
             if let Some(next) = self.next_instr() {
                 match next {
                     Instruction::Return => {
-                        break;
+                        if let Some(frame) = self.callstack.pop() {
+                            self.frame = frame;
+                        }
+                        else {
+                            break;
+                        }
                     },
                     Instruction::PushConstant(id) => {
                         let id = *id;
-                        let constant: &Value = self.chk.get_const(id);
+                        let constant: &Value = self.frame.chk.get_const(id);
                         self.stack.push(constant.clone());
                     },
                     Instruction::PushTrue => {
@@ -212,7 +217,7 @@ impl VM {
 
                         let val = a.to_string().unwrap_or("".to_string());
                         //add filename
-                        let line_no = self.chk.get_line_no(self.cur_instr as u32);
+                        let line_no = self.frame.chk.get_line_no(self.frame.cur_instr as u32);
                         println!("[{}] {}", line_no, val);
                         //maybe don't pop at all?
 
@@ -222,7 +227,7 @@ impl VM {
                         self.pop_stack();
                     },
                     Instruction::PushVariable(id) => {
-                        let id = *id;
+                        let id = *id + self.frame.stack_base as u16;
                         let var = self.get_stack(id).clone();
                         self.stack.push(var);
                     },
@@ -235,26 +240,26 @@ impl VM {
                         let jump_count = *jump_count as usize;
                         let val = self.get_stack_top();
                         if !val.is_truthy() {
-                            self.cur_instr += jump_count;
+                            self.frame.cur_instr += jump_count;
                         }
                     },
                     Instruction::PopAndJumpIfFalsy(jump_count) => {
                         let jump_count = *jump_count as usize;
                         let val = self.pop_stack();
                         if !val.is_truthy() {
-                            self.cur_instr += jump_count;
+                            self.frame.cur_instr += jump_count;
                         }
                     },
                     Instruction::JumpIfTruthy(jump_count) => {
                         let jump_count = *jump_count as usize;
                         let val = self.get_stack_top();
                         if val.is_truthy() {
-                            self.cur_instr += jump_count;
+                            self.frame.cur_instr += jump_count;
                         }
                     },
                     Instruction::Jump(jump_count) => {
                         let jump_count = *jump_count as usize;
-                        self.cur_instr += jump_count;
+                        self.frame.cur_instr += jump_count;
                     },
                     Instruction::EndBlock(pop_count) => {
                         let pop_count = pop_count.clone();

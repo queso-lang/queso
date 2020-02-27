@@ -38,8 +38,11 @@ use env::*;
 mod resolver;
 use resolver::*;
 
-mod fn;
-use fn::*;
+mod function;
+use function::*;
+
+mod callframe;
+use callframe::*;
 
 extern crate clap; 
 use clap::{App, Arg, crate_version};
@@ -147,8 +150,8 @@ fn run(opts: QuesoOpts, src: String) -> bool {
         let mut compiler = Compiler::new(&mut chk);
         compiler.compile(program);
 
-        let mut vm = VM::new(opts.debug.instrs);
-        let res = vm.execute(chk);
+        let mut vm = VM::new(chk, opts.debug.instrs);
+        let res = vm.execute();
         match res {
             Err(err) => println!("{}", err),
             _ => {}

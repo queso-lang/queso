@@ -1,10 +1,10 @@
 use crate::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LineRL {pub line: u32, pub repeat: u16}
 type LineVec = Vec<LineRL>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Chunk {
     pub instrs: Vec<Instruction>,
     consts: Vec<Value>,
