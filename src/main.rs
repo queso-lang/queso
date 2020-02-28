@@ -1,9 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused)]
 
-// extern crate time;
-// use time::PreciseTime;
-
 use std::io::{self, Read};
 use std::rc::Rc;
 
@@ -64,7 +61,6 @@ struct QuesoOpts {
 
 
 fn main() {
-    println!("test {}", std::mem::size_of::<Instruction>());
     let matches = App::new("queso")
        .version(crate_version!())
        .about("The interpreter for the queso language")
@@ -159,12 +155,11 @@ fn run(opts: QuesoOpts, src: String) -> bool {
         let mut vm = VM::new(chk, opts.debug.instrs);
 
 
-        use std::time::{Instant};
+        use std::time::Instant;
         let now = Instant::now();
         let res = vm.execute();
         let new_now = Instant::now();
         println!("{:?}", new_now.duration_since(now));
-        println!("{:?}", vm.time);
         
         
         match res {
