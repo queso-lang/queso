@@ -1,4 +1,5 @@
 use crate::*;
+use std::time::{Instant, Duration};
 
 type Stack = Vec<Value>;
 
@@ -8,7 +9,8 @@ pub struct VM {
 
     stack: Stack,
 
-    debug: bool
+    debug: bool,
+    pub time: Duration
 }
 
 impl VM {
@@ -17,7 +19,8 @@ impl VM {
             frame: CallFrame::new(chk, 0),
             callstack: Vec::<CallFrame>::new(),
             stack: Stack::new(),
-            debug
+            debug,
+            time: Duration::new(0,0)
         }
     }
         
@@ -55,7 +58,6 @@ impl VM {
     }
 
     pub fn execute(&mut self) -> Result<(), &'static str> {
-        self.frame.cur_instr = 0;
         self.run()
     }
 
@@ -76,15 +78,26 @@ impl VM {
             if let Some(next) = self.next_instr() {
                 match next {
                     Instruction::Return => {
+                        
+                        use std::time::{Instant};
+                        let now = Instant::now();
+
                         if let Some(frame) = self.callstack.pop() {
                             let val = self.pop_stack();
                             self.stack.truncate(self.frame.stack_base);
                             self.frame = frame;
                             self.stack.push(val);
+
+                            let new_now = Instant::now();
+                            let time = new_now - now;
+                            self.time += time;
                         }
                         else {
+
                             break;
                         }
+
+                        
                     },
                     Instruction::PushConstant(id) => {
                         let id = *id;
@@ -230,9 +243,16 @@ impl VM {
                         self.pop_stack();
                     },
                     Instruction::PushVariable(id) => {
+                        use std::time::{Instant};
+                        let now = Instant::now();
+
                         let id = *id + self.frame.stack_base as u16;
                         let var = self.get_stack(id).clone();
                         self.stack.push(var);
+
+                        let new_now = Instant::now();
+                        let time = (new_now - now).as_millis();
+                        // self.time += time as f64 / 1000.;
                     },
                     Instruction::Assign(id) => {
                         let id = *id;
@@ -273,28 +293,24 @@ impl VM {
                         self.stack.push(hangon);
                     },
                     Instruction::FnCall(arg_count) => {
+                        use std::time::{Instant};
+                        let now = Instant::now();
                         let arg_count = arg_count.clone();
-                        let funcpos = self.stack.len() as u16 as u16 - 1 - arg_count;
-                        // println!("{}", funcpos+1);
+                        let funcpos = self.stack.len() as u16 - 1 - arg_count;
                         let func = self.get_stack(funcpos);
                         if let Value::Function(func) = func {
-                            let mut new_frame = CallFrame::from_function((**func).clone(), funcpos as usize);
+                            let mut new_frame = CallFrame::from_function(Rc::clone(func), funcpos as usize);
                             let test = new_frame.clone();
 
                             let parent_frame = std::mem::replace(&mut self.frame, new_frame);
 
                             self.callstack.push(parent_frame);
-
-                            // println!("CALLSTACK ---------");
-                        //     for frame in self.callstack.clone() {
-                        //         println!("{:?}", Value::Function(Box::new(frame.func)));
-                        //     }
-                        //     println!("{:?}", Value::Function(Box::new(test.func)));
-                        //     println!("---------");
                         }
                         else {
                             return Err("Tried to call a value which isn't a function");
                         }
+                        let new_now = Instant::now();
+                        // self.time += new_now - now;
                     },
 
                     #[allow(unreachable_patterns)]

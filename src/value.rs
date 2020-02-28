@@ -5,7 +5,7 @@ pub enum Value {
     Bool(bool),
     Number(f64),
     String(String),
-    Function(Box<Function>),
+    Function(Rc<Function>),
     Null
 }
 

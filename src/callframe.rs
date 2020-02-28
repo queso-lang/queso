@@ -8,7 +8,7 @@ pub enum FunctionType {
 
 #[derive(Debug, Clone)]
 pub struct CallFrame {
-    pub func: Function,
+    pub func: Rc<Function>,
     pub funct: FunctionType,
     pub cur_instr: usize,
     pub stack_base: usize
@@ -17,16 +17,16 @@ pub struct CallFrame {
 impl CallFrame {
     pub fn new(chk: Chunk, stack_base: usize) -> CallFrame {
         CallFrame {
-            func: Function {
+            func: Rc::new(Function {
                 chk,
                 name: "".to_string()
-            },
+            }),
             funct: FunctionType::Program,
             cur_instr: 0,
             stack_base
         }
     }
-    pub fn from_function(func: Function, stack_base: usize) -> CallFrame {
+    pub fn from_function(func: Rc<Function>, stack_base: usize) -> CallFrame {
         CallFrame {
             func,
             funct: FunctionType::Function,

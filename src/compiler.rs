@@ -166,7 +166,7 @@ impl<'a> Compiler<'a> {
                     chk,
                     name: name.val
                 };
-                let const_id = self.chk.add_const(Value::Function(Box::new(func)));
+                let const_id = self.chk.add_const(Value::Function(Rc::new(func)));
                 self.chk.add_instr(Instruction::PushConstant(const_id), 0);
             }
             _ => panic!("This is a problem with the compiler itself")
