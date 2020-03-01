@@ -48,7 +48,8 @@ impl Resolver {
                     return Err("Tried to redeclare a variable in the same scope");
                 }
                 self.env.add(name.clone());
-                Ok(Stmt::MutDecl(name, Box::new(val)))
+                let id = self.env.locals.len() as u16 - 1;
+                Ok(Stmt::ResolvedMutDecl(id, Box::new(val)))
             },
             Stmt::Expr(expr) => {
                 Ok(Stmt::Expr(Box::new(self.resolve_expr(*expr)?)))
@@ -68,8 +69,8 @@ impl Resolver {
                 let body = self.resolve_expr(*body)?;
 
                 self.env.close();
-
-                Ok(Stmt::FnDecl(name, params, Box::new(body)))
+                let id = self.env.locals.len() as u16 - 1;
+                Ok(Stmt::ResolvedFnDecl(name, id, params, Box::new(body)))
             },
             _ => panic!()
         }

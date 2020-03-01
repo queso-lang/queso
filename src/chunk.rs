@@ -8,6 +8,7 @@ type LineVec = Vec<LineRL>;
 pub struct Chunk {
     pub instrs: Vec<Instruction>,
     consts: Vec<Value>,
+    pub var_count: u16,
     lines: LineVec
 }
 
@@ -27,6 +28,7 @@ impl Chunk {
         Chunk {
             instrs: Vec::<Instruction>::new(),
             consts: Vec::<Value>::new(),
+            var_count: 0,
             lines: LineVec::new()
         }
     }

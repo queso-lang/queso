@@ -26,10 +26,19 @@ impl<'a> Compiler<'a> {
     fn label_jump(&mut self, jump_id: usize) {
         self.chk.set_instr(jump_id, Instruction::Jump((self.chk.instrs.len() - 1 - jump_id) as u16));
     }
+    fn make_reserve(&mut self) -> usize {
+        self.chk.add_instr(Instruction::ReservePlaceholder, 1);
+        self.chk.instrs.len() - 1
+    }
+    fn patch_reserve(&mut self, instr_id: usize) {
+        self.chk.set_instr(instr_id, Instruction::Reserve(self.chk.var_count));
+    } 
     pub fn compile(&mut self, program: Program) {
+        let reserve_id = self.make_reserve();
         for stmt in program {
             self.compile_stmt(stmt, false);
         };
+        self.patch_reserve(reserve_id);
         self.chk.add_instr(Instruction::Return, 0);
     }
     pub fn compile_expr(&mut self, expr: Expr) {
@@ -122,7 +131,6 @@ impl<'a> Compiler<'a> {
 
             Expr::ResolvedBlock(stmts, pop_count) => {
                 self.compile_stmts_with_return(stmts);
-                self.chk.add_instr(Instruction::EndBlock(pop_count), 0);
             },
             Expr::ResolvedAccess(name, id) => self.chk.add_instr(Instruction::PushVariable(id as u16), name.pos.line),
             Expr::ResolvedAssign(name, id, val) => {
@@ -152,10 +160,13 @@ impl<'a> Compiler<'a> {
                     self.chk.add_instr(Instruction::Pop, 0);
                 }
             },
-            Stmt::MutDecl(name, val) => {
+            Stmt::ResolvedMutDecl(id, val) => {
+                self.chk.var_count += 1;
                 self.compile_expr(*val);
+                self.chk.add_instr(Instruction::DeclareAssign(id), 0)
             },
-            Stmt::FnDecl(name, _, body) => {
+            Stmt::ResolvedFnDecl(name, id, _, body) => {
+                self.chk.var_count += 1;
                 let mut chk = Chunk::new();
                 let mut compiler = Compiler::new(&mut chk);
 
@@ -168,6 +179,8 @@ impl<'a> Compiler<'a> {
                 };
                 let const_id = self.chk.add_const(Value::Function(Rc::new(func)));
                 self.chk.add_instr(Instruction::PushConstant(const_id), 0);
+                self.chk.add_instr(Instruction::DeclareAssign(id), 0);
+                self.chk.add_instr(Instruction::DeclareAssignConstant(id, const_id), 0)
             }
             _ => panic!("This is a problem with the compiler itself")
         }

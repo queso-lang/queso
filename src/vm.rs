@@ -242,6 +242,16 @@ impl VM {
                         let val = self.get_stack_top().clone();
                         self.set_stack(id, val);
                     },
+                    Instruction::DeclareAssign(id) => {
+                        let id = *id;
+                        let val = self.pop_stack();
+                        self.set_stack(id, val);
+                    },
+                    Instruction::DeclareAssignConstant(id, const_id) => {
+                        let id = *id;
+                        let val = self.frame.func.chk.get_const(id).clone();
+                        self.set_stack(id, val);
+                    },
                     Instruction::JumpIfFalsy(jump_count) => {
                         let jump_count = *jump_count as usize;
                         let val = self.get_stack_top();
@@ -267,14 +277,6 @@ impl VM {
                         let jump_count = *jump_count as usize;
                         self.frame.cur_instr += jump_count;
                     },
-                    Instruction::EndBlock(pop_count) => {
-                        let pop_count = pop_count.clone();
-                        let hangon = self.pop_stack();
-                        for _ in 0..pop_count {
-                            self.pop_stack();
-                        }
-                        self.stack.push(hangon);
-                    },
                     Instruction::FnCall(arg_count) => {
                         let arg_count = arg_count.clone();
                         let funcpos = self.stack.len() as u16 - 1 - arg_count;
@@ -290,6 +292,10 @@ impl VM {
                             return Err("Tried to call a value which isn't a function");
                         }
                         
+                    },
+                    Instruction::Reserve(reserve_count) => {
+                        let reserve_count = *reserve_count;
+                        self.stack.resize(self.stack.len() + reserve_count as usize, Value::Uninitialized);
                     },
 
                     #[allow(unreachable_patterns)]

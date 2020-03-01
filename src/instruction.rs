@@ -26,13 +26,17 @@ pub enum Instruction {
 
     PushVariable(u16),
     Assign(u16),
+    DeclareAssign(u16),
+    DeclareAssignConstant(u16, u16), //assignid, constid
     FnCall(u16),
 
-    EndBlock(u16),
     JumpIfFalsy(u16),
     PopAndJumpIfFalsy(u16), //always pop, that is
     JumpIfTruthy(u16),
     Jump(u16),
     JumpPlaceholder,
-    Pop, Return
+    Pop, Return,
+
+    ReservePlaceholder,
+    Reserve(u16)
 }

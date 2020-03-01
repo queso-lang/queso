@@ -6,7 +6,8 @@ pub enum Value {
     Number(f64),
     String(String),
     Function(Rc<Function>),
-    Null
+    Null,
+    Uninitialized
 }
 
 impl Value {
@@ -16,7 +17,8 @@ impl Value {
             Value::Number(n) => *n!=0.,
             Value::String(s) => s.len() > 0,
             Value::Function(_) => true,
-            Value::Null => false
+            Value::Null => false,
+            Value::Uninitialized => panic!()
         }
     }
     pub fn to_number(&self) -> Result<f64, &'static str> {
@@ -84,6 +86,7 @@ impl std::fmt::Debug for Value {
             Value::Number(num) => write!(f, "{}", num.to_string()),
             Value::Function(func) => write!(f, "func {}", func.name),
             Value::Null => write!(f, "null"),
+            Value::Uninitialized => write!(f, "-"),
             _ => panic!()
         }
     }
