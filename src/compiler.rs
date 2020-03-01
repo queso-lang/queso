@@ -41,7 +41,13 @@ impl<'a> Compiler<'a> {
         self.patch_reserve(reserve_id);
         self.chk.add_instr(Instruction::Return, 0);
     }
-    pub fn compile_expr(&mut self, expr: Expr) {
+    pub fn compile_func(&mut self, expr: Expr) {
+        let reserve_id = self.make_reserve();
+        self.compile_expr(expr);
+        self.patch_reserve(reserve_id);
+        self.chk.add_instr(Instruction::Return, 0);
+    }
+    fn compile_expr(&mut self, expr: Expr) {
         match expr {
             Expr::Constant(tok) => {
                 let const_id = self.chk.add_const(Value::from(&tok));
@@ -170,16 +176,14 @@ impl<'a> Compiler<'a> {
                 let mut chk = Chunk::new();
                 let mut compiler = Compiler::new(&mut chk);
 
-                compiler.compile_expr(*body);
-                chk.add_instr(Instruction::Return, 0);
+                compiler.compile_func(*body);
+                chk.print("fn");
 
                 let func = Function {
                     chk,
                     name: name.val
                 };
                 let const_id = self.chk.add_const(Value::Function(Rc::new(func)));
-                self.chk.add_instr(Instruction::PushConstant(const_id), 0);
-                self.chk.add_instr(Instruction::DeclareAssign(id), 0);
                 self.chk.add_instr(Instruction::DeclareAssignConstant(id, const_id), 0)
             }
             _ => panic!("This is a problem with the compiler itself")

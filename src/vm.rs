@@ -238,12 +238,12 @@ impl VM {
                         self.stack.push(var);
                     },
                     Instruction::Assign(id) => {
-                        let id = *id;
+                        let id = *id + self.frame.stack_base as u16;
                         let val = self.get_stack_top().clone();
                         self.set_stack(id, val);
                     },
                     Instruction::DeclareAssign(id) => {
-                        let id = *id;
+                        let id = *id + self.frame.stack_base as u16;
                         let val = self.pop_stack();
                         self.set_stack(id, val);
                     },
