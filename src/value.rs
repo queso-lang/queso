@@ -5,7 +5,7 @@ pub enum Value {
     Bool(bool),
     Number(f64),
     String(String),
-    Function(Box<Function>),
+    Function(Rc<Function>),
     Closure(Closure),
     Null,
     Uninitialized
@@ -87,6 +87,7 @@ impl std::fmt::Debug for Value {
             Value::Bool(b) => write!(f, "{}", (if *b {"true"} else {"false"}).to_string()),
             Value::Number(num) => write!(f, "{}", num.to_string()),
             Value::Function(func) => write!(f, "func {}", func.name),
+            Value::Closure(clsr) => write!(f, "func {}", clsr.func.name),
             Value::Null => write!(f, "null"),
             Value::Uninitialized => write!(f, "-"),
             _ => panic!()

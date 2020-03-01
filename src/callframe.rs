@@ -17,7 +17,7 @@ pub struct CallFrame {
 impl CallFrame {
     pub fn new(chk: Chunk, stack_base: usize) -> CallFrame {
         CallFrame {
-            clsr: Closure::from_function(Box::new(Function {
+            clsr: Closure::from_function(Rc::new(Function {
                 chk,
                 name: "".to_string()
             })),

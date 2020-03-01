@@ -8,7 +8,6 @@ pub struct VM {
     callstack: Vec<CallFrame>,
 
     stack: Stack,
-
     debug: bool
 }
 
@@ -294,7 +293,6 @@ impl VM {
                         else {
                             return Err("Tried to call a value which isn't a function");
                         }
-                        
                     },
                     Instruction::Reserve(reserve_count) => {
                         let reserve_count = *reserve_count;

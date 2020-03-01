@@ -12,9 +12,9 @@ pub struct Closure {
 }
 
 impl Closure {
-    pub fn from_function(func: Box<Function>) -> Closure {
+    pub fn from_function(func: Rc<Function>) -> Closure {
         Closure {
-            func: Rc::from(func)
+            func
         }
     }
 }

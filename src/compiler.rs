@@ -182,7 +182,7 @@ impl<'a> Compiler<'a> {
                     chk,
                     name: name.val
                 };
-                let const_id = self.chk.add_const(Value::Function(Box::new(func)));
+                let const_id = self.chk.add_const(Value::Function(Rc::new(func)));
                 // self.chk.add_instr(Instruction::DeclareAssignConstant(id, const_id), 0)
                 self.chk.add_instr(Instruction::Closure(id, const_id), 0)
             }
