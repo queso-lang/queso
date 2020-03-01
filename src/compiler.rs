@@ -177,14 +177,14 @@ impl<'a> Compiler<'a> {
                 let mut compiler = Compiler::new(&mut chk);
 
                 compiler.compile_func(*body);
-                chk.print("fn");
 
                 let func = Function {
                     chk,
                     name: name.val
                 };
-                let const_id = self.chk.add_const(Value::Function(Rc::new(func)));
-                self.chk.add_instr(Instruction::DeclareAssignConstant(id, const_id), 0)
+                let const_id = self.chk.add_const(Value::Function(Box::new(func)));
+                // self.chk.add_instr(Instruction::DeclareAssignConstant(id, const_id), 0)
+                self.chk.add_instr(Instruction::Closure(id, const_id), 0)
             }
             _ => panic!("This is a problem with the compiler itself")
         }

@@ -5,7 +5,8 @@ pub enum Value {
     Bool(bool),
     Number(f64),
     String(String),
-    Function(Rc<Function>),
+    Function(Box<Function>),
+    Closure(Closure),
     Null,
     Uninitialized
 }
@@ -17,6 +18,7 @@ impl Value {
             Value::Number(n) => *n!=0.,
             Value::String(s) => s.len() > 0,
             Value::Function(_) => true,
+            Value::Closure(_) => true,
             Value::Null => false,
             Value::Uninitialized => panic!()
         }

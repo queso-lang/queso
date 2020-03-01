@@ -29,6 +29,7 @@ pub enum Instruction {
     DeclareAssign(u16),
     DeclareAssignConstant(u16, u16), //assignid, constid
     FnCall(u16),
+    Closure(u16, u16), //assignid, constid
 
     JumpIfFalsy(u16),
     PopAndJumpIfFalsy(u16), //always pop, that is

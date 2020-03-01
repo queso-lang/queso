@@ -24,7 +24,7 @@ impl VM {
         
     fn next_instr(&mut self) -> Option<&Instruction> {
         self.frame.cur_instr += 1;
-        self.frame.func.chk.try_get_instr(self.frame.cur_instr - 1)
+        self.frame.clsr.func.chk.try_get_instr(self.frame.cur_instr - 1)
     }
 
     fn pop_stack(&mut self) -> Value {
@@ -68,7 +68,7 @@ impl VM {
 
             if self.debug {
                 self.print_stack();
-                self.frame.func.chk.print_instr(self.frame.cur_instr, false);
+                self.frame.clsr.func.chk.print_instr(self.frame.cur_instr, false);
 
                 println!();
             }
@@ -91,7 +91,7 @@ impl VM {
                     },
                     Instruction::PushConstant(id) => {
                         let id = *id;
-                        let constant: &Value = self.frame.func.chk.get_const(id);
+                        let constant: &Value = self.frame.clsr.func.chk.get_const(id);
                         self.stack.push(constant.clone());
                     },
                     Instruction::PushTrue => {
@@ -223,7 +223,7 @@ impl VM {
 
                         let val = a.to_string().unwrap_or("".to_string());
                         //add filename
-                        let line_no = self.frame.func.chk.get_line_no(self.frame.cur_instr as u32);
+                        let line_no = self.frame.clsr.func.chk.get_line_no(self.frame.cur_instr as u32);
                         println!("[{}] {}", line_no, val);
                         //maybe don't pop at all?
 
@@ -249,7 +249,7 @@ impl VM {
                     },
                     Instruction::DeclareAssignConstant(id, const_id) => {
                         let id = *id;
-                        let val = self.frame.func.chk.get_const(id).clone();
+                        let val = self.frame.clsr.func.chk.get_const(id).clone();
                         self.set_stack(id, val);
                     },
                     Instruction::JumpIfFalsy(jump_count) => {
@@ -279,10 +279,13 @@ impl VM {
                     },
                     Instruction::FnCall(arg_count) => {
                         let arg_count = arg_count.clone();
+
                         let funcpos = self.stack.len() as u16 - 1 - arg_count;
-                        let func = self.get_stack(funcpos);
-                        if let Value::Function(func) = func {
-                            let mut new_frame = CallFrame::from_function(Rc::clone(func), funcpos as usize);
+
+                        let clsr = self.get_stack(funcpos);
+
+                        if let Value::Closure(clsr) = clsr {
+                            let mut new_frame = CallFrame::from_closure(clsr.clone(), funcpos as usize);
 
                             let parent_frame = std::mem::replace(&mut self.frame, new_frame);
 
@@ -296,6 +299,16 @@ impl VM {
                     Instruction::Reserve(reserve_count) => {
                         let reserve_count = *reserve_count;
                         self.stack.resize(self.stack.len() + reserve_count as usize, Value::Uninitialized);
+                    },
+                    Instruction::Closure(id, const_id) => {
+                        let id = *id;
+                        let closure = match self.frame.clsr.func.chk.get_const(id).clone() {
+                            Value::Function(func) => Closure::from_function(func),
+                            _ => panic!("This is a problem with the Vm itself")
+                        };
+                        let val = Value::Closure(closure);
+                        
+                        self.set_stack(id, val);
                     },
 
                     #[allow(unreachable_patterns)]
