@@ -138,11 +138,11 @@ impl<'a> Compiler<'a> {
             Expr::ResolvedBlock(stmts, pop_count) => {
                 self.compile_stmts_with_return(stmts);
             },
-            Expr::ResolvedAccess(name, id) => self.chk.add_instr(Instruction::PushVariable(id as u16), name.pos.line),
-            Expr::ResolvedAssign(name, id, val) => {
-                self.compile_expr(*val);
-                self.chk.add_instr(Instruction::Assign(id as u16), name.pos.line)
-            },
+            // Expr::ResolvedAccess(name, id) => self.chk.add_instr(Instruction::PushVariable(id as u16), name.pos.line),
+            // Expr::ResolvedAssign(name, id, val) => {
+            //     self.compile_expr(*val);
+            //     self.chk.add_instr(Instruction::Assign(id as u16), name.pos.line)
+            // },
             _ => panic!("This is a problem with the compiler itself")
         }
 
@@ -171,12 +171,19 @@ impl<'a> Compiler<'a> {
                 self.compile_expr(*val);
                 self.chk.add_instr(Instruction::DeclareAssign(id), 0)
             },
-            Stmt::ResolvedFnDecl(name, id, _, body) => {
+            Stmt::ResolvedFnDecl {
+                name,
+                id,
+                upvalues,
+                params,
+                body
+            } => {
                 self.chk.var_count += 1;
                 let mut chk = Chunk::new();
                 let mut compiler = Compiler::new(&mut chk);
 
                 compiler.compile_func(*body);
+                chk.print_debug(&name.val);
 
                 let func = Function {
                     chk,

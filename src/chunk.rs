@@ -80,6 +80,17 @@ impl Chunk {
             self.print_instr(i, true);
         }
     }
+    pub fn print_debug(&self, name: &String) {
+        println!("== {} ==", name);
+        print!("consts ");
+        for c in self.consts.clone() {
+            print!("| {:?}", c);
+        }
+        println!();
+        for i in 0..self.instrs.len() {
+            self.print_instr(i, true);
+        }
+    }
     pub fn print_instr(&self, instr_id: usize, hide_repeating_lines: bool) {
         // print!("{:<4} ", 
         //     if instr_id >= 1

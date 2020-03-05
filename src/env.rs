@@ -2,18 +2,40 @@ use crate::*;
 
 pub struct Env {
     pub locals: Vec<Local>,
-    pub scope_depth: u8
+    pub upvalues: Vec<UpValue>,
+    pub scope_depth: u8,
+    pub is_function: bool
 }
 
 impl Env {
     pub fn new() -> Env {
         Env {
             locals: Vec::<Local>::new(),
-            scope_depth: 0
+            upvalues: Vec::<UpValue>::new(),
+            scope_depth: 0,
+            is_function: false
         }
     }
-    pub fn add(&mut self, name: Token) {
+    pub fn new_function() -> Env {
+        Env {
+            locals: Vec::<Local>::new(),
+            upvalues: Vec::<UpValue>::new(),
+            scope_depth: 0,
+            is_function: true
+        }
+    }
+    pub fn add_local(&mut self, name: Token) -> u16 {
         self.locals.push(Local {name, depth: self.scope_depth as u8});
+        self.locals.len() as u16 - 1 + self.is_function as u16
+    }
+    pub fn add_upvalue(&mut self, upvalue: UpValue) -> u16 {
+        for (i, upv) in self.upvalues.iter().enumerate() {
+            if upv.id == upvalue.id && upv.is_local == upvalue.is_local {
+                return i as u16;
+            }
+        }
+        self.upvalues.push(upvalue);
+        self.upvalues.len() as u16 - 1 + self.is_function as u16
     }
     pub fn get(&self, id: usize) -> &Local {
         self.locals.get(id).expect("This is a problem with the compiler itself")
@@ -56,4 +78,10 @@ impl Env {
 pub struct Local {
     pub name: Token,
     pub depth: u8
+}
+
+#[derive(Debug, Clone)]
+pub struct UpValue {
+    pub id: u16,
+    pub is_local: bool
 }

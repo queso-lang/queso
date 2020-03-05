@@ -1,20 +1,81 @@
 use crate::*;
 
+#[derive(Debug, Clone)]
+pub enum ResolveType {
+    Local {id: u16}, //id = slot in frame
+    UpValue {id: u16} //id = slot in closure's upvalue array
+}
+impl std::fmt::Display for ResolveType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResolveType::Local {id} => write!(f, "#{}", id),
+            ResolveType::UpValue {id} => write!(f, "^{}", id)
+        }
+    }
+}
+
 pub struct Resolver {
-    env: Env
+    pub list: Vec<ResolverNode>,
+    cur: usize
 }
 
 impl Resolver {
     pub fn new() -> Resolver {
-        Resolver {
-            env: Env::new()
-        }
+        let mut res = Resolver {
+            list: vec![],
+            cur: 0
+        };
+        let pos = 0;
+        res.list.push(ResolverNode {
+            env: Env::new(),
+            is_function: false,
+            pos
+        });
+        res
     }
 
-    fn access(&mut self, name: &Token) -> Result<u32, &'static str> {
+    fn parent(&mut self) -> bool {
+        if self.cur == 0 {return false}
+        self.cur -= 1;
+        true
+    }
+
+    fn child(&mut self) -> bool {
+        self.cur += 1;
+        self.cur < self.list.len()
+    }
+
+    fn new_child(&mut self) {
+        self.cur += 1;
+        let pos = self.list.len() - 1;
+        self.list.push(ResolverNode {
+            env: Env::new(),
+            is_function: true,
+            pos
+        });
+    }
+
+    fn pop(&mut self) {
+        self.cur -= 1;
+        self.list.pop();
+    }
+
+    fn this_node(&mut self) -> &mut ResolverNode {
+        self.list.get_mut(self.cur).expect("This is a problem with the resolver itself")
+    }
+} 
+
+pub struct ResolverNode {
+    env: Env,
+    is_function: bool,
+    pos: usize
+}
+
+impl Resolver {
+    fn local(&mut self, name: &Token) -> Result<u16, &'static str> {
         let mut id = -1;
-        for i in (0..self.env.locals.len()).rev() {
-            let local = self.env.get(i);
+        for i in (0..self.this_node().env.locals.len()).rev() {
+            let local = self.this_node().env.get(i);
             if local.name.val == name.val{
                 id = i as i32;
                 break;
@@ -24,11 +85,35 @@ impl Resolver {
             return Err("Usage of an undefined variable");
         }
         else {
-            let mut id: u32 = id as u32;
+            let id = if self.this_node().is_function {id as u16 + 1} else {id as u16};
             return Ok(id)
         }
     }
 
+    fn upvalue(&mut self, name: &Token) -> Result<u16, &'static str> {
+        if self.parent() {
+            let id = self.local(name)?;
+            let id = if self.this_node().is_function {id + 1} else {id};
+            let upv_id = self.this_node().env.add_upvalue(UpValue {
+                is_local: true,
+                id
+            });
+            self.child();
+            return Ok(upv_id)
+        }
+        Err("Usage of an undefined variable")
+    }
+
+    fn access(&mut self, name: &Token) -> Result<ResolveType, &'static str> {
+        if let Ok(id) = self.local(name) {
+            return Ok(ResolveType::Local {id});
+        }
+        let id = self.upvalue(name)?;
+        return Ok(ResolveType::UpValue {id});
+    }
+}
+
+impl Resolver {
     pub fn resolve(&mut self, program: Program) -> Result<Program, &'static str> {
         self.resolve_stmts(program)
     }
@@ -45,33 +130,43 @@ impl Resolver {
         match stmt {
             Stmt::MutDecl(name, val) => {
                 let val = self.resolve_expr(*val)?;
-                if self.env.is_redefined(&name) {
+                if self.this_node().env.is_redefined(&name) {
                     return Err("Tried to redeclare a variable in the same scope");
                 }
-                self.env.add(name.clone());
-                let id = self.env.locals.len() as u16 - 1;
+                self.this_node().env.add_local(name.clone());
+                let id = self.this_node().env.locals.len() as u16 - 1;
                 Ok(Stmt::ResolvedMutDecl(id, Box::new(val)))
             },
             Stmt::Expr(expr) => {
                 Ok(Stmt::Expr(Box::new(self.resolve_expr(*expr)?)))
             },
             Stmt::FnDecl(name, params, body) => {
-                if self.env.is_redefined(&name) {
+                if self.this_node().env.is_redefined(&name) {
+                    println!("{}", name);
                     return Err("Tried to redeclare a variable in the same scope");
                 }
-                self.env.add(name.clone());
+                self.this_node().env.add_local(name.clone());
 
-                self.env.open();
+                let id = self.this_node().env.locals.len() as u16 - 1;
+
+                self.new_child();
 
                 for param in params.clone() {
-                    self.env.add(param);
+                    self.this_node().env.add_local(param);
                 }
                 
                 let body = self.resolve_expr(*body)?;
+                let upvalues = self.this_node().env.upvalues.clone();
 
-                self.env.close();
-                let id = self.env.locals.len() as u16 - 1;
-                Ok(Stmt::ResolvedFnDecl(name, id, params, Box::new(body)))
+                self.pop();
+                
+                Ok(Stmt::ResolvedFnDecl {
+                    name,
+                    id,
+                    params,
+                    upvalues,
+                    body: Box::new(body)
+                })
             },
             _ => panic!()
         }
@@ -84,6 +179,7 @@ impl Resolver {
                     let right = self.resolve_expr(*right)?;
                     if let Expr::Access(l) = *(left.clone()) {
                         let id = self.access(&l)?;
+                        println!("{}", id);
                         return Ok(Expr::ResolvedAssign(l, id, Box::new(right)));
                     }
                     else {
@@ -101,9 +197,9 @@ impl Resolver {
                 Ok(Expr::ResolvedAccess(name, id))
             },
             Expr::Block(stmts) => {
-                self.env.open();
+                self.this_node().env.open();
                 let mut stmts = self.resolve_stmts(stmts)?;
-                let pop_count = self.env.close();
+                let pop_count = self.this_node().env.close();
                 Ok(Expr::ResolvedBlock(stmts, pop_count))
             },
             Expr::Unary(op, right) => {

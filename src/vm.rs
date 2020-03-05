@@ -299,8 +299,10 @@ impl VM {
                         self.stack.resize(self.stack.len() + reserve_count as usize, Value::Uninitialized);
                     },
                     Instruction::Closure(id, const_id) => {
-                        let id = *id;
-                        let closure = match self.frame.clsr.func.chk.get_const(id).clone() {
+                        let const_id = *const_id;
+                        let id = *id + self.frame.stack_base as u16;
+                        
+                        let closure = match self.frame.clsr.func.chk.get_const(const_id).clone() {
                             Value::Function(func) => Closure::from_function(func),
                             _ => panic!("This is a problem with the Vm itself")
                         };
