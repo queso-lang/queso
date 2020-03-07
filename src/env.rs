@@ -70,7 +70,7 @@ pub struct Local {
     pub depth: u8
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct UpValue {
     pub id: u16,
     pub is_local: bool

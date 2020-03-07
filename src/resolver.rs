@@ -89,13 +89,23 @@ impl Resolver {
 
     fn upvalue(&mut self, name: &Token) -> Result<u16, &'static str> {
         if self.parent() {
-            let id = self.local(name)?;
-            let upv_id = self.frame().env.add_upvalue(UpValue {
-                is_local: true,
-                id
-            });
-            self.child();
-            return Ok(upv_id)
+            if let Ok(id) = self.local(name) {
+                self.child();
+                let upv_id = self.frame().env.add_upvalue(UpValue {
+                    is_local: true,
+                    id
+                });
+                return Ok(upv_id)
+            }
+            else {
+                let id = self.upvalue(name)?;
+                self.child();
+                let upv_id = self.frame().env.add_upvalue(UpValue {
+                    is_local: true,
+                    id
+                });
+                return Ok(upv_id)
+            }
         }
         Err("Usage of an undefined variable")
     }

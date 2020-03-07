@@ -24,12 +24,14 @@ pub enum Instruction {
 
     Trace,
 
-    PushVariable(u16),
-    Assign(u16),
-    DeclareAssign(u16),
-    DeclareAssignConstant(u16, u16), //assignid, constid
+    GetLocal(u16),
+    GetCaptured(u16),
+    SetLocal(u16),
+    SetCaptured(u16),
+    Declare(u16),
+    
     FnCall(u16),
-    Closure(u16, u16), //assignid, constid
+    Closure(u16, u16, Vec<UpValue>), //assignid, constid
 
     JumpIfFalsy(u16),
     PopAndJumpIfFalsy(u16), //always pop, that is

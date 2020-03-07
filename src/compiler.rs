@@ -138,11 +138,28 @@ impl<'a> Compiler<'a> {
             Expr::ResolvedBlock(stmts, pop_count) => {
                 self.compile_stmts_with_return(stmts);
             },
-            // Expr::ResolvedAccess(name, id) => self.chk.add_instr(Instruction::PushVariable(id as u16), name.pos.line),
-            // Expr::ResolvedAssign(name, id, val) => {
-            //     self.compile_expr(*val);
-            //     self.chk.add_instr(Instruction::Assign(id as u16), name.pos.line)
-            // },
+            Expr::ResolvedAccess(name, id) => {
+                match id {
+                    ResolveType::Local {id} => {
+                        self.chk.add_instr(Instruction::GetLocal(id as u16), name.pos.line)
+                    },
+                    ResolveType::UpValue {id} => {
+                        self.chk.add_instr(Instruction::GetCaptured(id as u16), name.pos.line)
+                    },
+                }
+            },
+            Expr::ResolvedAssign(name, id, val) => {
+                self.compile_expr(*val);
+
+                match id {
+                    ResolveType::Local {id} => {
+                        self.chk.add_instr(Instruction::SetLocal(id as u16), name.pos.line)
+                    },
+                    ResolveType::UpValue {id} => {
+                        self.chk.add_instr(Instruction::SetCaptured(id as u16), name.pos.line)
+                    },
+                }
+            },
             _ => panic!("This is a problem with the compiler itself")
         }
 
@@ -169,7 +186,7 @@ impl<'a> Compiler<'a> {
             Stmt::ResolvedMutDecl(id, val) => {
                 self.chk.var_count += 1;
                 self.compile_expr(*val);
-                self.chk.add_instr(Instruction::DeclareAssign(id), 0)
+                self.chk.add_instr(Instruction::Declare(id), 0)
             },
             Stmt::ResolvedFnDecl {
                 name,
@@ -183,15 +200,15 @@ impl<'a> Compiler<'a> {
                 let mut compiler = Compiler::new(&mut chk);
 
                 compiler.compile_func(*body);
-                chk.print_debug(&name.val);
+                // chk.print_debug(&name.val);
 
                 let func = Function {
                     chk,
                     name: name.val
                 };
                 let const_id = self.chk.add_const(Value::Function(Rc::new(func)));
-                // self.chk.add_instr(Instruction::DeclareAssignConstant(id, const_id), 0)
-                self.chk.add_instr(Instruction::Closure(id, const_id), 0)
+
+                self.chk.add_instr(Instruction::Closure(id, const_id, upvalues), 0)
             }
             _ => panic!("This is a problem with the compiler itself")
         }

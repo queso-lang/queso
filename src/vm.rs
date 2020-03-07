@@ -35,6 +35,10 @@ impl VM {
         self.stack.get(id as usize).expect("Couldn't access a value on the stack. This is a problem with the interpreter itself")
     }
 
+    fn get_stack_mut(&mut self, id: u16) -> &mut Value {
+        self.stack.get_mut(id as usize).expect("Couldn't access a value on the stack. This is a problem with the interpreter itself")
+    }
+
     fn get_stack_top(&self) -> &Value {
         self.get_stack(self.stack.len() as u16 - 1)
     }
@@ -52,6 +56,15 @@ impl VM {
             print!("| {:?} ", val);
         }
         println!();
+    }
+
+    fn capture_upvalue(&mut self, upvalue: &UpValue) -> *mut Value {
+        if upvalue.is_local {
+            self.get_stack_mut(self.frame.stack_base as u16 + upvalue.id) as *mut Value
+        }
+        else {
+            panic!()
+        }
     }
 
     pub fn execute(&mut self) -> Result<(), &'static str> {
@@ -231,24 +244,28 @@ impl VM {
                     Instruction::Pop => {
                         self.pop_stack();
                     },
-                    Instruction::PushVariable(id) => {
+                    Instruction::GetLocal(id) => {
                         let id = *id + self.frame.stack_base as u16;
                         let var = self.get_stack(id).clone();
                         self.stack.push(var);
                     },
-                    Instruction::Assign(id) => {
+                    Instruction::GetCaptured(id) => {
+                        unsafe {
+                            let id = *id;
+                            let value = self.frame.clsr.captured.get(id as usize).expect("");
+                            let value = value.clone();
+                            let value = (*value).clone();
+                            self.stack.push(value);
+                        }
+                    },
+                    Instruction::SetLocal(id) => {
                         let id = *id + self.frame.stack_base as u16;
                         let val = self.get_stack_top().clone();
                         self.set_stack(id, val);
                     },
-                    Instruction::DeclareAssign(id) => {
+                    Instruction::Declare(id) => {
                         let id = *id + self.frame.stack_base as u16;
                         let val = self.pop_stack();
-                        self.set_stack(id, val);
-                    },
-                    Instruction::DeclareAssignConstant(id, const_id) => {
-                        let id = *id;
-                        let val = self.frame.clsr.func.chk.get_const(id).clone();
                         self.set_stack(id, val);
                     },
                     Instruction::JumpIfFalsy(jump_count) => {
@@ -298,17 +315,32 @@ impl VM {
                         let reserve_count = *reserve_count;
                         self.stack.resize(self.stack.len() + reserve_count as usize, Value::Uninitialized);
                     },
-                    Instruction::Closure(id, const_id) => {
+                    Instruction::Closure(id, const_id, upvalues) => {
+                        let id = *id;
                         let const_id = *const_id;
-                        let id = *id + self.frame.stack_base as u16;
+                        let upvalues = upvalues.clone();
                         
-                        let closure = match self.frame.clsr.func.chk.get_const(const_id).clone() {
-                            Value::Function(func) => Closure::from_function(func),
-                            _ => panic!("This is a problem with the Vm itself")
-                        };
-                        let val = Value::Closure(closure);
+                        let stack_base = self.frame.stack_base.clone() as u16;
+                        let id = id + stack_base;
                         
-                        self.set_stack(id, val);
+                        let func = self.frame.clsr.func.chk.get_const(const_id).clone();
+                        if let Value::Function(func) = func {
+
+                            let mut captured = Vec::<*mut Value>::new();
+
+                            for upvalue in upvalues {
+                                captured.push(self.capture_upvalue(&upvalue))
+                            }
+
+                            let closure = Closure {
+                                func,
+                                captured
+                            };
+
+                            let val = Value::Closure(closure);
+                        
+                            self.set_stack(id, val);
+                        }
                     },
 
                     #[allow(unreachable_patterns)]

@@ -7,20 +7,27 @@ pub enum Value {
     String(String),
     Function(Rc<Function>),
     Closure(Closure),
+    Captured(*mut Value),
     Null,
     Uninitialized
 }
 
 impl Value {
+    pub fn new_captured(slot: &mut Value) -> Value {
+        Value::Captured(slot as *mut Value)
+    }
+
     pub fn is_truthy(&self) -> bool {
         match self {
             Value::Bool(b) => *b,
             Value::Number(n) => *n!=0.,
             Value::String(s) => s.len() > 0,
-            Value::Function(_) => true,
             Value::Closure(_) => true,
             Value::Null => false,
-            Value::Uninitialized => panic!()
+            
+            Value::Uninitialized | 
+            Value::Function(_) |
+            Value::Captured(_) => panic!()
         }
     }
     pub fn to_number(&self) -> Result<f64, &'static str> {
