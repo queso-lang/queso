@@ -31,7 +31,12 @@ impl<'a> Compiler<'a> {
         self.chk.instrs.len() - 1
     }
     fn patch_reserve(&mut self, instr_id: usize) {
-        self.chk.set_instr(instr_id, Instruction::Reserve(self.chk.var_count));
+        if self.chk.var_count > 0 {
+            self.chk.set_instr(instr_id, Instruction::Reserve(self.chk.var_count));
+        }
+        else {
+            self.chk.instrs.remove(instr_id);
+        }
     } 
     pub fn compile(&mut self, program: Program) {
         let reserve_id = self.make_reserve();
