@@ -55,6 +55,7 @@ impl std::fmt::Display for Expr {
             },
             Expr::ResolvedAccess(tok, id) => write!(f, "{}", id),
             Expr::ResolvedAssign(tok, id, val) => write!(f, "{} = {}", id, val),
+            Expr::FnCall(_, _, _) => write!(f, "call"),
             _ => panic!("display trait not defined")
         }
     }
@@ -70,6 +71,7 @@ pub enum Stmt {
         name: Token,
         id: u16,
         upvalues: Vec<UpValue>,
+        captured: Vec<u16>,
         params: Vec<Token>,
         body: Box<Expr>
     },
@@ -88,6 +90,7 @@ impl std::fmt::Display for Stmt {
                 name,
                 id,
                 upvalues,
+                captured,
                 params,
                 body
             } => {

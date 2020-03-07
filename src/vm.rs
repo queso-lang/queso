@@ -63,7 +63,7 @@ impl VM {
             self.get_stack_mut(self.frame.stack_base as u16 + upvalue.id) as *mut Value
         }
         else {
-            panic!()
+            self.frame.clsr.captured.get_mut(upvalue.id as usize).expect("").clone()
         }
     }
 
@@ -253,8 +253,7 @@ impl VM {
                         unsafe {
                             let id = *id;
                             let value = self.frame.clsr.captured.get(id as usize).expect("");
-                            let value = value.clone();
-                            let value = (*value).clone();
+                            let value = (**value).clone();
                             self.stack.push(value);
                         }
                     },
@@ -262,6 +261,14 @@ impl VM {
                         let id = *id + self.frame.stack_base as u16;
                         let val = self.get_stack_top().clone();
                         self.set_stack(id, val);
+                    },
+                    Instruction::SetCaptured(id) => {
+                        unsafe {
+                            let id = *id;
+                            let value = self.frame.clsr.captured.get(id as usize).expect("");
+                            let set_to = self.get_stack_top().clone();
+                            **value = set_to;
+                        }
                     },
                     Instruction::Declare(id) => {
                         let id = *id + self.frame.stack_base as u16;

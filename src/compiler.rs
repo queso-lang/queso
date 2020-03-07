@@ -197,6 +197,7 @@ impl<'a> Compiler<'a> {
                 name,
                 id,
                 upvalues,
+                captured,
                 params,
                 body
             } => {
@@ -209,7 +210,8 @@ impl<'a> Compiler<'a> {
 
                 let func = Function {
                     chk,
-                    name: name.val
+                    name: name.val,
+                    captured
                 };
                 let const_id = self.chk.add_const(Value::Function(Rc::new(func)));
 

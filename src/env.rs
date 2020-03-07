@@ -3,6 +3,7 @@ use crate::*;
 pub struct Env {
     pub locals: Vec<Local>,
     pub upvalues: Vec<UpValue>,
+    pub captured: Vec<u16>,
     pub scope_depth: u8
 }
 
@@ -11,6 +12,7 @@ impl Env {
         Env {
             locals: Vec::<Local>::new(),
             upvalues: Vec::<UpValue>::new(),
+            captured: Vec::<u16>::new(),
             scope_depth: 0,
         }
     }
@@ -61,6 +63,10 @@ impl Env {
             i -= 1;
         }
         return false
+    }
+
+    pub fn capture(&mut self, id: u16) {
+        self.captured.push(id);
     }
 }
 

@@ -90,6 +90,7 @@ impl Resolver {
     fn upvalue(&mut self, name: &Token) -> Result<u16, &'static str> {
         if self.parent() {
             if let Ok(id) = self.local(name) {
+                self.frame().env.capture(id);
                 self.child();
                 let upv_id = self.frame().env.add_upvalue(UpValue {
                     is_local: true,
@@ -101,7 +102,7 @@ impl Resolver {
                 let id = self.upvalue(name)?;
                 self.child();
                 let upv_id = self.frame().env.add_upvalue(UpValue {
-                    is_local: true,
+                    is_local: false,
                     id
                 });
                 return Ok(upv_id)
@@ -139,10 +140,7 @@ impl Resolver {
                 if self.frame().env.is_redefined(&name) {
                     return Err("Tried to redeclare a variable in the same scope");
                 }
-                self.frame().env.add_local(name.clone());
-                
-                let id = self.frame().env.locals.len() as u16 - 1;
-                // let id = self.frame().env.add_func_offset(id);
+                let id = self.frame().env.add_local(name.clone());
 
                 Ok(Stmt::ResolvedMutDecl(id, Box::new(val)))
             },
@@ -151,13 +149,9 @@ impl Resolver {
             },
             Stmt::FnDecl(name, params, body) => {
                 if self.frame().env.is_redefined(&name) {
-                    println!("{}", name);
                     return Err("Tried to redeclare a variable in the same scope");
                 }
-                self.frame().env.add_local(name.clone());
-
-                let id = self.frame().env.locals.len() as u16 - 1;
-                // let id = self.frame().env.add_func_offset(id);
+                let id = self.frame().env.add_local(name.clone());
 
                 self.new_child();
 
@@ -169,6 +163,7 @@ impl Resolver {
                 
                 let body = self.resolve_expr(*body)?;
                 let upvalues = self.frame().env.upvalues.clone();
+                let captured = self.frame().env.captured.clone();
 
                 self.pop();
                 
@@ -177,6 +172,7 @@ impl Resolver {
                     id,
                     params,
                     upvalues,
+                    captured,
                     body: Box::new(body)
                 })
             },
@@ -191,7 +187,6 @@ impl Resolver {
                     let right = self.resolve_expr(*right)?;
                     if let Expr::Access(l) = *(left.clone()) {
                         let id = self.access(&l)?;
-                        println!("{}", id);
                         return Ok(Expr::ResolvedAssign(l, id, Box::new(right)));
                     }
                     else {

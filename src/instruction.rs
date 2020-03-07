@@ -29,7 +29,7 @@ pub enum Instruction {
     SetLocal(u16),
     SetCaptured(u16),
     Declare(u16),
-    
+
     FnCall(u16),
     Closure(u16, u16, Vec<UpValue>), //assignid, constid
 

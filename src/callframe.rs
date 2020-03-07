@@ -19,7 +19,8 @@ impl CallFrame {
         CallFrame {
             clsr: Closure::from_function(Rc::new(Function {
                 chk,
-                name: "".to_string()
+                name: "".to_string(),
+                captured: vec![]
             }), vec![]),
             funct: FunctionType::Program,
             cur_instr: 0,
