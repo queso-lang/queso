@@ -3,8 +3,7 @@ use crate::*;
 pub struct Env {
     pub locals: Vec<Local>,
     pub upvalues: Vec<UpValue>,
-    pub scope_depth: u8,
-    pub is_function: bool
+    pub scope_depth: u8
 }
 
 impl Env {
@@ -13,20 +12,11 @@ impl Env {
             locals: Vec::<Local>::new(),
             upvalues: Vec::<UpValue>::new(),
             scope_depth: 0,
-            is_function: false
-        }
-    }
-    pub fn new_function() -> Env {
-        Env {
-            locals: Vec::<Local>::new(),
-            upvalues: Vec::<UpValue>::new(),
-            scope_depth: 0,
-            is_function: true
         }
     }
     pub fn add_local(&mut self, name: Token) -> u16 {
         self.locals.push(Local {name, depth: self.scope_depth as u8});
-        self.locals.len() as u16 - 1 + self.is_function as u16
+        self.locals.len() as u16 - 1
     }
     pub fn add_upvalue(&mut self, upvalue: UpValue) -> u16 {
         for (i, upv) in self.upvalues.iter().enumerate() {
@@ -71,10 +61,6 @@ impl Env {
             i -= 1;
         }
         return false
-    }
-
-    pub fn add_func_offset<T: From<bool> + std::ops::Add<Output = T>>(&self, id: T) -> T {
-        T::from(self.is_function) + id
     }
 }
 

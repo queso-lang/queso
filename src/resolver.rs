@@ -48,7 +48,7 @@ impl Resolver {
         self.cur += 1;
         let pos = self.list.len() - 1;
         self.list.push(ResolverNode {
-            env: Env::new_function(),
+            env: Env::new(),
             pos
         });
     }
@@ -82,7 +82,7 @@ impl Resolver {
             return Err("Usage of an undefined variable");
         }
         else {
-            let id = self.frame().env.add_func_offset(id as u16);
+            let id = id as u16;
             return Ok(id)
         }
     }
@@ -132,7 +132,7 @@ impl Resolver {
                 self.frame().env.add_local(name.clone());
                 
                 let id = self.frame().env.locals.len() as u16 - 1;
-                let id = self.frame().env.add_func_offset(id);
+                // let id = self.frame().env.add_func_offset(id);
 
                 Ok(Stmt::ResolvedMutDecl(id, Box::new(val)))
             },
@@ -147,9 +147,11 @@ impl Resolver {
                 self.frame().env.add_local(name.clone());
 
                 let id = self.frame().env.locals.len() as u16 - 1;
-                let id = self.frame().env.add_func_offset(id);
+                // let id = self.frame().env.add_func_offset(id);
 
                 self.new_child();
+
+                self.frame().env.add_local(name.clone());
 
                 for param in params.clone() {
                     self.frame().env.add_local(param);
