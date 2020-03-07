@@ -35,7 +35,7 @@ impl Env {
             }
         }
         self.upvalues.push(upvalue);
-        self.upvalues.len() as u16 - 1 + self.is_function as u16
+        self.upvalues.len() as u16 - 1
     }
     pub fn get(&self, id: usize) -> &Local {
         self.locals.get(id).expect("This is a problem with the compiler itself")
@@ -71,6 +71,10 @@ impl Env {
             i -= 1;
         }
         return false
+    }
+
+    pub fn add_func_offset<T: From<bool> + std::ops::Add<Output = T>>(&self, id: T) -> T {
+        T::from(self.is_function) + id
     }
 }
 

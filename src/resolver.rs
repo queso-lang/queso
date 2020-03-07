@@ -28,7 +28,6 @@ impl Resolver {
         let pos = 0;
         res.list.push(ResolverNode {
             env: Env::new(),
-            is_function: false,
             pos
         });
         res
@@ -49,8 +48,7 @@ impl Resolver {
         self.cur += 1;
         let pos = self.list.len() - 1;
         self.list.push(ResolverNode {
-            env: Env::new(),
-            is_function: true,
+            env: Env::new_function(),
             pos
         });
     }
@@ -60,22 +58,21 @@ impl Resolver {
         self.list.pop();
     }
 
-    fn this_node(&mut self) -> &mut ResolverNode {
+    fn frame(&mut self) -> &mut ResolverNode {
         self.list.get_mut(self.cur).expect("This is a problem with the resolver itself")
     }
 } 
 
 pub struct ResolverNode {
     env: Env,
-    is_function: bool,
     pos: usize
 }
 
 impl Resolver {
     fn local(&mut self, name: &Token) -> Result<u16, &'static str> {
         let mut id = -1;
-        for i in (0..self.this_node().env.locals.len()).rev() {
-            let local = self.this_node().env.get(i);
+        for i in (0..self.frame().env.locals.len()).rev() {
+            let local = self.frame().env.get(i);
             if local.name.val == name.val{
                 id = i as i32;
                 break;
@@ -85,7 +82,7 @@ impl Resolver {
             return Err("Usage of an undefined variable");
         }
         else {
-            let id = if self.this_node().is_function {id as u16 + 1} else {id as u16};
+            let id = self.frame().env.add_func_offset(id as u16);
             return Ok(id)
         }
     }
@@ -93,8 +90,7 @@ impl Resolver {
     fn upvalue(&mut self, name: &Token) -> Result<u16, &'static str> {
         if self.parent() {
             let id = self.local(name)?;
-            let id = if self.this_node().is_function {id + 1} else {id};
-            let upv_id = self.this_node().env.add_upvalue(UpValue {
+            let upv_id = self.frame().env.add_upvalue(UpValue {
                 is_local: true,
                 id
             });
@@ -130,33 +126,37 @@ impl Resolver {
         match stmt {
             Stmt::MutDecl(name, val) => {
                 let val = self.resolve_expr(*val)?;
-                if self.this_node().env.is_redefined(&name) {
+                if self.frame().env.is_redefined(&name) {
                     return Err("Tried to redeclare a variable in the same scope");
                 }
-                self.this_node().env.add_local(name.clone());
-                let id = self.this_node().env.locals.len() as u16 - 1;
+                self.frame().env.add_local(name.clone());
+                
+                let id = self.frame().env.locals.len() as u16 - 1;
+                let id = self.frame().env.add_func_offset(id);
+
                 Ok(Stmt::ResolvedMutDecl(id, Box::new(val)))
             },
             Stmt::Expr(expr) => {
                 Ok(Stmt::Expr(Box::new(self.resolve_expr(*expr)?)))
             },
             Stmt::FnDecl(name, params, body) => {
-                if self.this_node().env.is_redefined(&name) {
+                if self.frame().env.is_redefined(&name) {
                     println!("{}", name);
                     return Err("Tried to redeclare a variable in the same scope");
                 }
-                self.this_node().env.add_local(name.clone());
+                self.frame().env.add_local(name.clone());
 
-                let id = self.this_node().env.locals.len() as u16 - 1;
+                let id = self.frame().env.locals.len() as u16 - 1;
+                let id = self.frame().env.add_func_offset(id);
 
                 self.new_child();
 
                 for param in params.clone() {
-                    self.this_node().env.add_local(param);
+                    self.frame().env.add_local(param);
                 }
                 
                 let body = self.resolve_expr(*body)?;
-                let upvalues = self.this_node().env.upvalues.clone();
+                let upvalues = self.frame().env.upvalues.clone();
 
                 self.pop();
                 
@@ -197,9 +197,9 @@ impl Resolver {
                 Ok(Expr::ResolvedAccess(name, id))
             },
             Expr::Block(stmts) => {
-                self.this_node().env.open();
+                self.frame().env.open();
                 let mut stmts = self.resolve_stmts(stmts)?;
-                let pop_count = self.this_node().env.close();
+                let pop_count = self.frame().env.close();
                 Ok(Expr::ResolvedBlock(stmts, pop_count))
             },
             Expr::Unary(op, right) => {
