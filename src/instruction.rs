@@ -25,13 +25,13 @@ pub enum Instruction {
     Trace,
 
     GetLocal(u16),
-    GetCaptured(u16),
+    GetUpValue(u16),
     SetLocal(u16),
-    SetCaptured(u16),
+    SetUpValue(u16),
     Declare(u16),
 
     FnCall(u16),
-    Closure(u16, u16, Vec<UpValue>), //assignid, constid
+    Closure(u16, u16, Vec<UpValueIndex>), //assignid, constid
 
     JumpIfFalsy(u16),
     PopAndJumpIfFalsy(u16), //always pop, that is

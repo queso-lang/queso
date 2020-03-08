@@ -46,6 +46,9 @@ use function::*;
 mod callframe;
 use callframe::*;
 
+mod upvalue;
+use upvalue::*;
+
 extern crate clap; 
 use clap::{App, Arg, crate_version};
 

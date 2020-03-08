@@ -92,7 +92,7 @@ impl Resolver {
             if let Ok(id) = self.local(name) {
                 self.frame().env.capture(id);
                 self.child();
-                let upv_id = self.frame().env.add_upvalue(UpValue {
+                let upv_id = self.frame().env.add_upvalue(UpValueIndex {
                     is_local: true,
                     id
                 });
@@ -101,7 +101,7 @@ impl Resolver {
             else {
                 let id = self.upvalue(name)?;
                 self.child();
-                let upv_id = self.frame().env.add_upvalue(UpValue {
+                let upv_id = self.frame().env.add_upvalue(UpValueIndex {
                     is_local: false,
                     id
                 });

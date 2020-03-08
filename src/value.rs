@@ -1,22 +1,17 @@
 use crate::*;
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum Value {
     Bool(bool),
     Number(f64),
     String(String),
     Function(Rc<Function>),
     Closure(Closure),
-    Captured(*mut Value),
     Null,
     Uninitialized
 }
 
 impl Value {
-    pub fn new_captured(slot: &mut Value) -> Value {
-        Value::Captured(slot as *mut Value)
-    }
-
     pub fn is_truthy(&self) -> bool {
         match self {
             Value::Bool(b) => *b,
@@ -26,8 +21,7 @@ impl Value {
             Value::Null => false,
             
             Value::Uninitialized | 
-            Value::Function(_) |
-            Value::Captured(_) => panic!()
+            Value::Function(_) => panic!()
         }
     }
     pub fn to_number(&self) -> Result<f64, &'static str> {
@@ -87,14 +81,14 @@ impl From<&Token> for Value {
     }
 }
 
-impl std::fmt::Debug for Value {
+impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Value::String(s) => write!(f, "{}", s.clone()),
             Value::Bool(b) => write!(f, "{}", (if *b {"true"} else {"false"}).to_string()),
             Value::Number(num) => write!(f, "{}", num.to_string()),
             Value::Function(func) => write!(f, "func {}", func.name),
-            Value::Closure(clsr) => write!(f, "func {}", clsr.func.name),
+            Value::Closure(clsr) => write!(f, "clsr {}", clsr.func.name),
             Value::Null => write!(f, "null"),
             Value::Uninitialized => write!(f, "-"),
             _ => panic!()

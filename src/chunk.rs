@@ -84,7 +84,7 @@ impl Chunk {
         println!("== {} ==", name);
         print!("consts ");
         for c in self.consts.clone() {
-            print!("| {:?}", c);
+            print!("| {}", c);
         }
         println!();
         for i in 0..self.instrs.len() {
@@ -105,7 +105,7 @@ impl Chunk {
     }
     pub fn print_instr_info(&self, instr: &Instruction) {
         match instr {
-            Instruction::PushConstant (id) => println!("{:?}, value: {:?}", instr, self.get_const(*id)),
+            Instruction::PushConstant (id) => println!("{:?}, value: {}", instr, self.get_const(*id)),
             _ => println!("{:?}", instr)
         };
     }

@@ -70,7 +70,7 @@ pub enum Stmt {
     ResolvedFnDecl {
         name: Token,
         id: u16,
-        upvalues: Vec<UpValue>,
+        upvalues: Vec<UpValueIndex>,
         captured: Vec<u16>,
         params: Vec<Token>,
         body: Box<Expr>

@@ -10,14 +10,14 @@ pub struct Function {
 #[derive(Clone, PartialEq, Debug)]
 pub struct Closure {
     pub func: Rc<Function>,
-    pub captured: Vec<*mut Value>
+    pub upvalues: Vec<UpValue>
 }
 
 impl Closure {
-    pub fn from_function(func: Rc<Function>, captured: Vec<*mut Value>) -> Closure {
+    pub fn from_function(func: Rc<Function>, upvalues: Vec<UpValue>) -> Closure {
         Closure {
             func,
-            captured
+            upvalues
         }
     }
 }

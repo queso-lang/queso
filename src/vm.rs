@@ -7,16 +7,23 @@ pub struct VM {
     frame: CallFrame,
     callstack: Vec<CallFrame>,
 
+    open_upvalues: Vec<*mut UpValue>, 
+
     stack: Stack,
     debug: bool
 }
 
 impl VM {
     pub fn new(chk: Chunk, debug: bool) -> VM {
+        let stack = Vec::<Value>::with_capacity(100);
+        println!("stack address {:?}", &stack as *const Stack);
         VM {
             frame: CallFrame::new(chk, 0),
-            callstack: Vec::<CallFrame>::new(),
-            stack: Stack::new(),
+            callstack: vec![],
+
+            open_upvalues: vec![],
+
+            stack,
             debug
         }
     }
@@ -53,17 +60,61 @@ impl VM {
             print!("<empty>");
         }
         for val in self.stack.iter() {
-            print!("| {:?} ", val);
+            print!("| {} ", val);
         }
         println!();
     }
 
-    fn capture_upvalue(&mut self, upvalue: &UpValue) -> *mut Value {
+    fn capture_upvalue(&mut self, upvalue: &UpValueIndex) -> UpValue {
         if upvalue.is_local {
-            self.get_stack_mut(self.frame.stack_base as u16 + upvalue.id) as *mut Value
+            let slot = self.frame.stack_base as u16 + upvalue.id;
+
+            let value = self.get_stack_mut(slot);
+
+            let mut upv = UpValue::from_ref(value);
+            unsafe {
+                println!("capturing value on the stack at {:?} with value {:?}", upv.loc, *upv.loc) ;
+            }
+
+            self.open_upvalues.push(&mut upv as *mut UpValue);
+
+            return upv;
         }
         else {
-            self.frame.clsr.captured.get_mut(upvalue.id as usize).expect("").clone()
+            self.frame.clsr.upvalues.get_mut(upvalue.id as usize).expect("").clone()
+        }
+    }
+
+    fn close_upvalues(&mut self) {
+        for el in &mut self.stack {
+            println!("{:?}", &mut (*el) as *mut Value);
+        }
+
+        for i in self.frame.clsr.func.captured.clone() {
+            let slot = self.frame.stack_base as u16 + i;
+
+            let cur_value = self.get_stack_mut(slot);
+
+            let cur_address = cur_value as *mut Value;
+
+            let on_heap = Box::new(cur_value.clone());
+            let on_heap_address = Box::into_raw(on_heap);
+            
+            unsafe {
+                println!("captured value");
+                println!("val {:?} at {:?}", cur_value, cur_address);
+
+                // Here I wanted to change the UpValues that match the locations of the elements on the stack
+                // However, none of them match
+                return;
+
+                for upv in &self.open_upvalues {
+                    if (**upv).loc == cur_address {
+                        println!("close");
+                        (**upv).loc = on_heap_address;
+                    }
+                }
+            }
         }
     }
 
@@ -90,16 +141,14 @@ impl VM {
                     Instruction::Return => {
                         if let Some(frame) = self.callstack.pop() {
                             let val = self.pop_stack();
+                            self.close_upvalues();
                             self.stack.truncate(self.frame.stack_base);
                             self.frame = frame;
                             self.stack.push(val);
                         }
                         else {
-
                             break;
                         }
-
-                        
                     },
                     Instruction::PushConstant(id) => {
                         let id = *id;
@@ -249,11 +298,12 @@ impl VM {
                         let var = self.get_stack(id).clone();
                         self.stack.push(var);
                     },
-                    Instruction::GetCaptured(id) => {
+                    Instruction::GetUpValue(id) => {
                         unsafe {
                             let id = *id;
-                            let value = self.frame.clsr.captured.get(id as usize).expect("");
-                            let value = (**value).clone();
+                            let value = self.frame.clsr.upvalues.get(id as usize).expect("");
+                            println!("get value from: {:?}", value.loc);
+                            let value = (*value.loc).clone();
                             self.stack.push(value);
                         }
                     },
@@ -262,12 +312,12 @@ impl VM {
                         let val = self.get_stack_top().clone();
                         self.set_stack(id, val);
                     },
-                    Instruction::SetCaptured(id) => {
+                    Instruction::SetUpValue(id) => {
                         unsafe {
                             let id = *id;
-                            let value = self.frame.clsr.captured.get(id as usize).expect("");
+                            let value = self.frame.clsr.upvalues.get(id as usize).expect("");
                             let set_to = self.get_stack_top().clone();
-                            **value = set_to;
+                            *value.loc = set_to;
                         }
                     },
                     Instruction::Declare(id) => {
@@ -322,10 +372,10 @@ impl VM {
                         let reserve_count = *reserve_count;
                         self.stack.resize(self.stack.len() + reserve_count as usize, Value::Uninitialized);
                     },
-                    Instruction::Closure(id, const_id, upvalues) => {
+                    Instruction::Closure(id, const_id, upvalueids) => {
                         let id = *id;
                         let const_id = *const_id;
-                        let upvalues = upvalues.clone();
+                        let upvalueids = upvalueids.clone();
                         
                         let stack_base = self.frame.stack_base.clone() as u16;
                         let id = id + stack_base;
@@ -333,15 +383,15 @@ impl VM {
                         let func = self.frame.clsr.func.chk.get_const(const_id).clone();
                         if let Value::Function(func) = func {
 
-                            let mut captured = Vec::<*mut Value>::new();
+                            let mut upvalues = Vec::<UpValue>::new();
 
-                            for upvalue in upvalues {
-                                captured.push(self.capture_upvalue(&upvalue))
+                            for upvalueid in upvalueids {
+                                upvalues.push(self.capture_upvalue(&upvalueid))
                             }
 
                             let closure = Closure {
                                 func,
-                                captured
+                                upvalues
                             };
 
                             let val = Value::Closure(closure);
