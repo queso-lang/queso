@@ -11,7 +11,7 @@ pub struct VM {
 
     open_upvalues: Vec<MutRc<UpValue>>, 
 
-    stack: Stack,
+    pub stack: Stack,
 
     stdout_buf: BufWriter<std::io::Stdout>,
 
@@ -38,7 +38,7 @@ impl VM {
         
     fn next_instr(&mut self) -> Option<&Instruction> {
         self.frame.cur_instr += 1;
-        self.frame.clsr.func.chk.try_get_instr(self.frame.cur_instr - 1)
+        self.frame.clsr.get_function().chk.try_get_instr(self.frame.cur_instr - 1)
     }
 
     fn pop_stack(&mut self) -> Value {
@@ -85,7 +85,7 @@ impl VM {
     }
 
     fn close_upvalues(&mut self) {
-        let captured = self.frame.clsr.func.captured.clone();
+        let captured = self.frame.clsr.get_function().captured.clone();
 
         for id in captured.iter() {
             let slot = self.frame.stack_base as u16 + id;
@@ -120,7 +120,7 @@ impl VM {
 
             if self.debug {
                 self.print_stack();
-                self.frame.clsr.func.chk.print_instr(self.frame.cur_instr, false);
+                self.frame.clsr.get_function().chk.print_instr(self.frame.cur_instr, false);
 
                 println!();
             }
@@ -142,7 +142,7 @@ impl VM {
                     },
                     Instruction::PushConstant(id) => {
                         let id = *id;
-                        let constant: &Value = self.frame.clsr.func.chk.get_const(id);
+                        let constant: &Value = self.frame.clsr.get_function().chk.get_const(id);
                         self.stack.push(constant.clone());
                     },
                     Instruction::PushTrue => {
@@ -274,7 +274,7 @@ impl VM {
 
                         let val = a.to_string().unwrap_or("".to_string());
                         //add filename
-                        let line_no = self.frame.clsr.func.chk.get_line_no(self.frame.cur_instr as u32);
+                        let line_no = self.frame.clsr.get_function().chk.get_line_no(self.frame.cur_instr as u32);
                         writeln!(self.stdout_buf, "[{}] {}", line_no, val);
                     },
                     Instruction::Pop => {
@@ -376,7 +376,7 @@ impl VM {
                         let stack_base = self.frame.stack_base.clone() as u16;
                         let id = id + stack_base;
                         
-                        let func = self.frame.clsr.func.chk.get_const(const_id).clone();
+                        let func = self.frame.clsr.get_function().chk.get_const(const_id).clone();
                         if let Value::Function(func) = func {
 
                             let mut upvalues = Vec::<MutRc<UpValue>>::new();

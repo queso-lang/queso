@@ -16,12 +16,14 @@ pub struct CallFrame {
 
 impl CallFrame {
     pub fn new(chk: Chunk, stack_base: usize) -> CallFrame {
+        let func = Box::new(Function {
+            chk,
+            name: "".to_string(),
+            captured: vec![]
+        });
+        let func_ptr = Box::into_raw(func);
         CallFrame {
-            clsr: Closure::from_function(Rc::new(Function {
-                chk,
-                name: "".to_string(),
-                captured: vec![]
-            }), vec![]),
+            clsr: Closure::from_function(func_ptr, vec![]),
             funct: FunctionType::Program,
             cur_instr: 0,
             stack_base

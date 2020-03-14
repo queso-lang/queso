@@ -5,7 +5,7 @@ pub enum Value {
     Bool(bool),
     Number(f64),
     String(String),
-    Function(Rc<Function>),
+    Function(*mut Function),
     Closure(Closure),
     Null,
     Uninitialized
@@ -87,8 +87,8 @@ impl std::fmt::Display for Value {
             Value::String(s) => write!(f, "{}", s.clone()),
             Value::Bool(b) => write!(f, "{}", (if *b {"true"} else {"false"}).to_string()),
             Value::Number(num) => write!(f, "{}", num.to_string()),
-            Value::Function(func) => write!(f, "func {}", func.name),
-            Value::Closure(clsr) => write!(f, "clsr {}", clsr.func.name),
+            Value::Function(func) => write!(f, "func {}", unsafe {(**func).name.clone()}),
+            Value::Closure(clsr) => write!(f, "clsr {}", clsr.get_function().name),
             Value::Null => write!(f, "null"),
             Value::Uninitialized => write!(f, "-"),
             _ => panic!()

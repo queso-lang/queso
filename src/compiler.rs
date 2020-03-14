@@ -208,12 +208,13 @@ impl<'a> Compiler<'a> {
                 compiler.compile_func(*body);
                 // chk.print_debug(&name.val);
 
-                let func = Function {
+                let func = Box::new(Function {
                     chk,
                     name: name.val,
                     captured
-                };
-                let const_id = self.chk.add_const(Value::Function(Rc::new(func)));
+                });
+                let func_ptr = Box::into_raw(func);
+                let const_id = self.chk.add_const(Value::Function(func_ptr));
 
                 self.chk.add_instr(Instruction::Closure(id, const_id, upvalues), 0)
             }
