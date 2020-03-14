@@ -79,7 +79,7 @@ impl VM {
     fn close_upvalues(&mut self) {
         let captured = self.frame.clsr.func.captured.clone();
 
-        for (id, i) in captured.iter().zip(0..captured.len()) {
+        for id in captured.iter() {
             let slot = self.frame.stack_base as u16 + id;
 
             let cur_value = self.get_stack_mut(slot);

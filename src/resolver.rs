@@ -206,8 +206,8 @@ impl Resolver {
             Expr::Block(stmts) => {
                 self.frame().env.open();
                 let mut stmts = self.resolve_stmts(stmts)?;
-                let pop_count = self.frame().env.close();
-                Ok(Expr::ResolvedBlock(stmts, pop_count))
+                self.frame().env.close();
+                Ok(Expr::ResolvedBlock(stmts))
             },
             Expr::Unary(op, right) => {
                 let right = self.resolve_expr(*right)?;

@@ -140,7 +140,7 @@ impl<'a> Compiler<'a> {
                 self.chk.add_instr(Instruction::FnCall(pop_count), 0);
             },
 
-            Expr::ResolvedBlock(stmts, pop_count) => {
+            Expr::ResolvedBlock(stmts) => {
                 self.compile_stmts_with_return(stmts);
             },
             Expr::ResolvedAccess(name, id) => {

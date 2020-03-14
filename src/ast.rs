@@ -20,7 +20,7 @@ pub enum Expr {
 
     ResolvedAccess(Token, ResolveType),
     ResolvedAssign(Token, ResolveType, Box<Expr>),
-    ResolvedBlock(Vec<Stmt>, u16),
+    ResolvedBlock(Vec<Stmt>),
 
     Error
 }
@@ -45,7 +45,7 @@ impl std::fmt::Display for Expr {
                 }
                 Ok(())
             },
-            Expr::ResolvedBlock(stmts, pop_count) => {
+            Expr::ResolvedBlock(stmts) => {
                 writeln!(f, "{{");
                 for stmt in stmts {
                     std::fmt::Display::fmt(&stmt, f);
