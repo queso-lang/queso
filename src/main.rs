@@ -1,6 +1,9 @@
 #![allow(dead_code)]
 #![allow(unused)]
 
+use std::cell::RefCell;
+pub type MutRc<T> = Rc<RefCell<T>>;
+
 use std::io::{self, Read};
 use std::rc::Rc;
 
