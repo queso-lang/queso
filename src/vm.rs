@@ -1,37 +1,49 @@
 use crate::*;
+use std::time::{Instant, Duration};
 
 type Stack = Vec<Value>;
 
 pub struct VM {
-    chk: Chunk,
-    cur_instr: usize,
-    stack: Stack,
+    frame: CallFrame,
+    callstack: Vec<CallFrame>,
 
+    open_upvalues: Vec<MutRc<UpValue>>, 
+
+    stack: Stack,
     debug: bool
 }
 
 impl VM {
-    pub fn new(debug: bool) -> VM {
+    pub fn new(chk: Chunk, debug: bool) -> VM {
+        let stack = Vec::<Value>::with_capacity(100);
+
         VM {
-            chk: Chunk::new(),
-            cur_instr: 0,
-            stack: Stack::new(),
+            frame: CallFrame::new(chk, 0),
+            callstack: vec![],
+
+            open_upvalues: vec![],
+
+            stack,
             debug
         }
     }
         
     fn next_instr(&mut self) -> Option<&Instruction> {
-        self.cur_instr += 1;
-        self.chk.try_get_instr(self.cur_instr - 1)
+        self.frame.cur_instr += 1;
+        self.frame.clsr.func.chk.try_get_instr(self.frame.cur_instr - 1)
     }
 
     fn pop_stack(&mut self) -> Value {
         self.stack.pop()
-            .expect("Failed to pop a value of the stack. This might be a problem with the interpreter itself.")
+            .expect("Failed to pop a value off the stack. This might be a problem with the interpreter itself.")
     }
 
     fn get_stack(&self, id: u16) -> &Value {
         self.stack.get(id as usize).expect("Couldn't access a value on the stack. This is a problem with the interpreter itself")
+    }
+
+    fn get_stack_mut(&mut self, id: u16) -> &mut Value {
+        self.stack.get_mut(id as usize).expect("Couldn't access a value on the stack. This is a problem with the interpreter itself")
     }
 
     fn get_stack_top(&self) -> &Value {
@@ -48,14 +60,46 @@ impl VM {
             print!("<empty>");
         }
         for val in self.stack.iter() {
-            print!("| {:?} ", val);
+            print!("| {} ", val);
         }
         println!();
     }
 
-    pub fn execute(&mut self, chk: Chunk) -> Result<(), &'static str> {
-        self.chk = chk;
-        self.cur_instr = 0;
+    fn capture_upvalue(&mut self, upvalueid: &UpValueIndex) -> MutRc<UpValue> {
+        if upvalueid.is_local {
+            let slot = self.frame.stack_base as u16 + upvalueid.id;
+
+            Rc::new(RefCell::new(UpValue::stack(slot)))
+        }
+        else {
+            Rc::clone(self.frame.clsr.upvalues.get_mut(upvalueid.id as usize).expect(""))
+        }
+    }
+
+    fn close_upvalues(&mut self) {
+        let captured = self.frame.clsr.func.captured.clone();
+
+        for id in captured.iter() {
+            let slot = self.frame.stack_base as u16 + id;
+
+            let cur_value = self.get_stack_mut(slot);
+
+            let on_heap = Box::new(cur_value.clone());
+            let on_heap_address = Box::into_raw(on_heap);
+
+            for upv in &self.open_upvalues {
+                let mut upv = upv.borrow_mut();
+                let loc = &mut upv.loc;
+                if let UpValueLocation::Stack(l) = loc {
+                    if *l == slot {
+                        upv.close(on_heap_address);
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn execute(&mut self) -> Result<(), &'static str> {
         self.run()
     }
 
@@ -68,7 +112,7 @@ impl VM {
 
             if self.debug {
                 self.print_stack();
-                self.chk.print_instr(self.cur_instr, false);
+                self.frame.clsr.func.chk.print_instr(self.frame.cur_instr, false);
 
                 println!();
             }
@@ -76,11 +120,21 @@ impl VM {
             if let Some(next) = self.next_instr() {
                 match next {
                     Instruction::Return => {
-                        break;
+                        if let Some(frame) = self.callstack.pop() {
+                            let val = self.pop_stack();
+                            self.close_upvalues();
+                            self.stack.truncate(self.frame.stack_base);
+                            self.open_upvalues.truncate(0);
+                            self.frame = frame;
+                            self.stack.push(val);
+                        }
+                        else {
+                            break;
+                        }
                     },
                     Instruction::PushConstant(id) => {
                         let id = *id;
-                        let constant: &Value = self.chk.get_const(id);
+                        let constant: &Value = self.frame.clsr.func.chk.get_const(id);
                         self.stack.push(constant.clone());
                     },
                     Instruction::PushTrue => {
@@ -212,7 +266,7 @@ impl VM {
 
                         let val = a.to_string().unwrap_or("".to_string());
                         //add filename
-                        let line_no = self.chk.get_line_no(self.cur_instr as u32);
+                        let line_no = self.frame.clsr.func.chk.get_line_no(self.frame.cur_instr as u32);
                         println!("[{}] {}", line_no, val);
                         //maybe don't pop at all?
 
@@ -221,41 +275,127 @@ impl VM {
                     Instruction::Pop => {
                         self.pop_stack();
                     },
-                    Instruction::PushVariable(id) => {
-                        let id = *id;
+                    Instruction::GetLocal(id) => {
+                        let id = *id + self.frame.stack_base as u16;
                         let var = self.get_stack(id).clone();
                         self.stack.push(var);
                     },
-                    Instruction::Assign(id) => {
-                        let id = *id;
+                    Instruction::GetUpValue(id) => {
+                        unsafe {
+                            let id = *id;
+                            
+                            let upvalue = self.frame.clsr.upvalues.get(id as usize).expect("");
+
+                            let value = match upvalue.borrow().loc {
+                                UpValueLocation::Stack(id) => self.get_stack(id).clone(),
+                                UpValueLocation::Heap(ptr) => (*ptr).clone()
+                            };
+                            
+                            self.stack.push(value);
+                        }
+                    },
+                    Instruction::SetLocal(id) => {
+                        let id = *id + self.frame.stack_base as u16;
                         let val = self.get_stack_top().clone();
+                        self.set_stack(id, val);
+                    },
+                    Instruction::SetUpValue(id) => {
+                        let id = *id;
+                        let set_to = self.get_stack_top().clone();
+                        let mut upvalue = self.frame.clsr.upvalues.get_mut(id as usize).expect("").clone();
+
+                        unsafe {
+                            match upvalue.borrow_mut().loc {
+                                UpValueLocation::Stack(id) => self.set_stack(id, set_to),
+                                UpValueLocation::Heap(ptr) => (*ptr) = set_to
+                            }
+                        };
+                    },
+                    Instruction::Declare(id) => {
+                        let id = *id + self.frame.stack_base as u16;
+                        let val = self.pop_stack();
                         self.set_stack(id, val);
                     },
                     Instruction::JumpIfFalsy(jump_count) => {
                         let jump_count = *jump_count as usize;
                         let val = self.get_stack_top();
                         if !val.is_truthy() {
-                            self.cur_instr += jump_count;
+                            self.frame.cur_instr += jump_count;
                         }
                     },
                     Instruction::PopAndJumpIfFalsy(jump_count) => {
                         let jump_count = *jump_count as usize;
                         let val = self.pop_stack();
                         if !val.is_truthy() {
-                            self.cur_instr += jump_count;
+                            self.frame.cur_instr += jump_count;
                         }
                     },
                     Instruction::JumpIfTruthy(jump_count) => {
                         let jump_count = *jump_count as usize;
                         let val = self.get_stack_top();
                         if val.is_truthy() {
-                            self.cur_instr += jump_count;
+                            self.frame.cur_instr += jump_count;
                         }
                     },
                     Instruction::Jump(jump_count) => {
                         let jump_count = *jump_count as usize;
-                        self.cur_instr += jump_count;
-                    }
+                        self.frame.cur_instr += jump_count;
+                    },
+                    Instruction::FnCall(arg_count) => {
+                        let arg_count = arg_count.clone();
+
+                        let funcpos = self.stack.len() as u16 - 1 - arg_count;
+
+                        let clsr = self.get_stack(funcpos);
+
+                        if let Value::Closure(clsr) = clsr {
+                            let mut new_frame = CallFrame::from_closure(clsr.clone(), funcpos as usize);
+
+                            let parent_frame = std::mem::replace(&mut self.frame, new_frame);
+
+                            self.callstack.push(parent_frame);
+                        }
+                        else {
+                            return Err("Tried to call a value which isn't a function");
+                        }
+                    },
+                    Instruction::Reserve(reserve_count) => {
+                        let reserve_count = *reserve_count;
+                        self.stack.resize(self.stack.len() + reserve_count as usize, Value::Uninitialized);
+                    },
+                    Instruction::Closure(id, const_id, upvalueids) => {
+                        let id = *id;
+                        let const_id = *const_id;
+                        let upvalueids = upvalueids.clone();
+                        
+                        let stack_base = self.frame.stack_base.clone() as u16;
+                        let id = id + stack_base;
+                        
+                        let func = self.frame.clsr.func.chk.get_const(const_id).clone();
+                        if let Value::Function(func) = func {
+
+                            let mut upvalues = Vec::<MutRc<UpValue>>::new();
+
+                            for upvalueid in upvalueids {
+                                let mut upv = self.capture_upvalue(&upvalueid);
+
+                                upvalues.push(upv);
+
+                                let mut r = Rc::clone(upvalues.last_mut().expect(""));
+
+                                self.open_upvalues.push(r)
+                            }
+
+                            let closure = Closure {
+                                func,
+                                upvalues
+                            };
+
+                            let val = Value::Closure(closure);
+                        
+                            self.set_stack(id, val);
+                        }
+                    },
 
                     #[allow(unreachable_patterns)]
                     _ => unimplemented!()
@@ -282,9 +422,9 @@ mod tests {
         chk.add_instr(Instruction::Negate, 0);
         chk.add_instr(Instruction::Return, 0);
 
-        let mut vm = VM::new(true);
+        let mut vm = VM::new(chk, true);
 
-        assert_eq!(vm.execute(chk), Ok(()));
+        assert_eq!(vm.execute(), Ok(()));
     }
 
     #[test]
@@ -327,9 +467,9 @@ mod tests {
 
         chk.add_instr(Instruction::Return, 0);
 
-        let mut vm = VM::new(true);
+        let mut vm = VM::new(chk, true);
 
-        assert_eq!(vm.execute(chk), Ok(()));
+        assert_eq!(vm.execute(), Ok(()));
     }
 
     #[test]
@@ -344,8 +484,8 @@ mod tests {
 
         chk.add_instr(Instruction::Return, 0);
 
-        let mut vm = VM::new(true);
+        let mut vm = VM::new(chk, true);
 
-        assert_eq!(vm.execute(chk), Ok(()));
+        assert_eq!(vm.execute(), Ok(()));
     }
 }

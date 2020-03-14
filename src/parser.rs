@@ -50,7 +50,7 @@ impl Parser {
         };
 
         parser.rules.insert(TokenType::LeftParen,
-            ParserRule {prefix: Some(Parser::grouping), infix: None,                    bp: BP::Zero as u8});
+            ParserRule {prefix: Some(Parser::grouping), infix: Some(Parser::fn_call),   bp: BP::FnCall as u8});
 
         parser.rules.insert(TokenType::Minus,
             ParserRule {prefix: Some(Parser::unary),    infix: Some(Parser::binary),    bp: BP::Addition as u8});
@@ -262,6 +262,22 @@ impl Parser {
         }
         Expr::IfElse(Box::new(cond), Box::new(if_branch), else_branch)
     }
+
+    fn fn_call(&mut self, left: Expr) -> Expr {
+        let mut args = Vec::<Expr>::new();
+        self.toks.next();
+        if self.toks.peek().t != TokenType::RightParen {
+            loop {
+                args.push(self.expr());
+
+                if !self.toks.nextif(TokenType::Comma) {break;}
+            }
+        }
+        self.consume(TokenType::RightParen, "Expected ) after arguments");
+
+        let argslen = args.len();
+        Expr::FnCall(Box::new(left), args, argslen as u16)
+    }
 }
 
 // STMT
@@ -283,13 +299,11 @@ impl Parser {
             else {self.sync()};
         }
         
-        let stmt: Stmt;
         match self.toks.peek().t {
-            TokenType::Mut => stmt = self.mut_decl(),
-            _ => stmt = self.expr_stmt()
+            TokenType::Mut => self.mut_decl(),
+            TokenType::Fn => self.fn_decl(),
+            _ => self.expr_stmt()
         }
-
-        stmt
     }
     fn expr_stmt(&mut self) -> Stmt {
         let stmt = Stmt::Expr(Box::new(self.expr()));
@@ -306,6 +320,30 @@ impl Parser {
         }
 
         Stmt::MutDecl(name, Box::new(val))
+    }
+    fn fn_decl(&mut self) -> Stmt {
+        self.toks.next();
+        let name = self.toks.peek().clone();
+        self.consume(TokenType::Identifier, "Expected function name");
+
+        self.consume(TokenType::LeftParen, "Expected ( after function name");
+
+        let mut params = Vec::<Token>::new();
+        if self.toks.peek().t != TokenType::RightParen {
+            loop {
+                params.push(self.toks.peek().clone());
+                self.consume(TokenType::Identifier, "Expected parameter name");
+
+                if !self.toks.nextif(TokenType::Comma) {break;}
+            }
+        }
+
+        self.consume(TokenType::RightParen, "Expected ) after parameters");
+
+        self.consume(TokenType::Colon, "Expected :");
+
+        let body = self.expr();
+        Stmt::FnDecl(name, params, Box::new(body))
     }
 }
 

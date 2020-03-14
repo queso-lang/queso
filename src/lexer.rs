@@ -8,7 +8,7 @@ static KEYWORDS: phf::Map<&'static str, TokenType> = phf_map! {
      "trace" => TokenType::Trace, "return" => TokenType::Return, "in" => TokenType::In, "catch" => TokenType::Catch,
      "this" => TokenType::This, "prv" => TokenType::Prv, "static" => TokenType::Static, "new" => TokenType::New, "base" => TokenType::Base,
      "emit" => TokenType::Emit, "on" => TokenType::On,
-     "true" => TokenType::True, "false" => TokenType::False
+     "true" => TokenType::True, "false" => TokenType::False, "null" => TokenType::Null
 };
 
 #[derive(Clone)]
@@ -74,7 +74,6 @@ impl Lexer {
             '}' => self.new_token(TokenType::RightBrace),
 
             ';' => self.new_token(TokenType::Semi),
-            '~' => self.new_token(TokenType::Null),
             '+' => self.new_token(TokenType::Plus),
             ',' => self.new_token(TokenType::Comma),
             '.' => self.new_token(TokenType::Dot),

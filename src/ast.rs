@@ -12,13 +12,15 @@ pub enum Expr {
 
     Block(Vec<Stmt>),
 
+    FnCall(Box<Expr>, Vec<Expr>, u16),
+
     IfElse(Box<Expr>, Box<Expr>, Option<Box<Expr>>),
 
     Access(Token),
 
-    ResolvedAccess(Token, u32),
-    ResolvedAssign(Token, u32, Box<Expr>),
-    ResolvedBlock(Vec<Stmt>, u32),
+    ResolvedAccess(Token, ResolveType),
+    ResolvedAssign(Token, ResolveType, Box<Expr>),
+    ResolvedBlock(Vec<Stmt>),
 
     Error
 }
@@ -43,17 +45,17 @@ impl std::fmt::Display for Expr {
                 }
                 Ok(())
             },
-            Expr::ResolvedBlock(stmts, pop_count) => {
+            Expr::ResolvedBlock(stmts) => {
                 writeln!(f, "{{");
                 for stmt in stmts {
                     std::fmt::Display::fmt(&stmt, f);
                     writeln!(f, ";");
                 }
                 writeln!(f, "}}")
-                // writeln!(f, "variables popped: {}", pop_count)
             },
-            Expr::ResolvedAccess(tok, id) => write!(f, "#{} ({})", id, tok),
-            Expr::ResolvedAssign(tok, id, val) => write!(f, "#{} ({}) = {}", id, tok, val),
+            Expr::ResolvedAccess(tok, id) => write!(f, "{}", id),
+            Expr::ResolvedAssign(tok, id, val) => write!(f, "{} = {}", id, val),
+            Expr::FnCall(_, _, _) => write!(f, "call"),
             _ => panic!("display trait not defined")
         }
     }
@@ -63,6 +65,16 @@ impl std::fmt::Display for Expr {
 pub enum Stmt {
     Expr(Box<Expr>),
     MutDecl(Token, Box<Expr>),
+    ResolvedMutDecl(u16, Box<Expr>),
+    FnDecl(Token, Vec<Token>, Box<Expr>),
+    ResolvedFnDecl {
+        name: Token,
+        id: u16,
+        upvalues: Vec<UpValueIndex>,
+        captured: Vec<u16>,
+        params: Vec<Token>,
+        body: Box<Expr>
+    },
 
     Error
 }
@@ -70,9 +82,25 @@ pub enum Stmt {
 impl std::fmt::Display for Stmt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Stmt::Expr(expr) => write!(f, "{}", expr),
-            Stmt::MutDecl(name, val) => {
-                write!(f, "mut {} = {}", name.val, val)
+            Stmt::Expr(expr) => writeln!(f, "{}", expr),
+            Stmt::ResolvedMutDecl(id, val) => {
+                write!(f, "#{} = {}", id, val)
+            },
+            Stmt::ResolvedFnDecl {
+                name,
+                id,
+                upvalues,
+                captured,
+                params,
+                body
+            } => {
+                write!(f, "fn #{}", id);
+                for param in params {
+                    write!(f, "({})", param.val);
+                }
+                write!(f, ": ");
+                std::fmt::Display::fmt(&**body, f);
+                Ok(())
             },
             _ => panic!("display trait not defined")
         }

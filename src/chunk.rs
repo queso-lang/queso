@@ -1,13 +1,14 @@
 use crate::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LineRL {pub line: u32, pub repeat: u16}
 type LineVec = Vec<LineRL>;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Chunk {
     pub instrs: Vec<Instruction>,
     consts: Vec<Value>,
+    pub var_count: u16,
     lines: LineVec
 }
 
@@ -27,6 +28,7 @@ impl Chunk {
         Chunk {
             instrs: Vec::<Instruction>::new(),
             consts: Vec::<Value>::new(),
+            var_count: 0,
             lines: LineVec::new()
         }
     }
@@ -78,21 +80,32 @@ impl Chunk {
             self.print_instr(i, true);
         }
     }
+    pub fn print_debug(&self, name: &String) {
+        println!("== {} ==", name);
+        print!("consts ");
+        for c in self.consts.clone() {
+            print!("| {}", c);
+        }
+        println!();
+        for i in 0..self.instrs.len() {
+            self.print_instr(i, true);
+        }
+    }
     pub fn print_instr(&self, instr_id: usize, hide_repeating_lines: bool) {
-        print!("{:<4} ", 
-            if instr_id >= 1
-            && self.get_line_no(instr_id as u32) == self.get_line_no((instr_id-1) as u32)
-            && hide_repeating_lines {
-                "".to_string()
-            } else {
-                self.get_line_no(instr_id as u32).to_string()
-            }
-        );
+        // print!("{:<4} ", 
+        //     if instr_id >= 1
+        //     && self.get_line_no(instr_id as u32) == self.get_line_no((instr_id-1) as u32)
+        //     && hide_repeating_lines {
+        //         "".to_string()
+        //     } else {
+        //         self.get_line_no(instr_id as u32).to_string()
+        //     }
+        // );
         self.print_instr_info(&self.get_instr(instr_id));
     }
     pub fn print_instr_info(&self, instr: &Instruction) {
         match instr {
-            Instruction::PushConstant (id) => println!("{:?}, value: {:?}", instr, self.get_const(*id)),
+            Instruction::PushConstant (id) => println!("{:?}, value: {}", instr, self.get_const(*id)),
             _ => println!("{:?}", instr)
         };
     }

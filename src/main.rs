@@ -1,6 +1,11 @@
 #![allow(dead_code)]
 #![allow(unused)]
+
+use std::cell::RefCell;
+pub type MutRc<T> = Rc<RefCell<T>>;
+
 use std::io::{self, Read};
+use std::rc::Rc;
 
 mod token;
 use token::*;
@@ -37,6 +42,15 @@ use env::*;
 
 mod resolver;
 use resolver::*;
+
+mod function;
+use function::*;
+
+mod callframe;
+use callframe::*;
+
+mod upvalue;
+use upvalue::*;
 
 extern crate clap; 
 use clap::{App, Arg, crate_version};
@@ -144,8 +158,16 @@ fn run(opts: QuesoOpts, src: String) -> bool {
         let mut compiler = Compiler::new(&mut chk);
         compiler.compile(program);
 
-        let mut vm = VM::new(opts.debug.instrs);
-        let res = vm.execute(chk);
+        let mut vm = VM::new(chk, opts.debug.instrs);
+
+
+        use std::time::Instant;
+        let now = Instant::now();
+        let res = vm.execute();
+        let new_now = Instant::now();
+        println!("{:?}", new_now.duration_since(now));
+        
+        
         match res {
             Err(err) => println!("{}", err),
             _ => {}
