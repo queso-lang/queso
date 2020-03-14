@@ -1,5 +1,7 @@
 use crate::*;
 use std::time::{Instant, Duration};
+use std::io::BufWriter;
+use std::io::Write;
 
 type Stack = Vec<Value>;
 
@@ -10,6 +12,9 @@ pub struct VM {
     open_upvalues: Vec<MutRc<UpValue>>, 
 
     stack: Stack,
+
+    stdout_buf: BufWriter<std::io::Stdout>,
+
     debug: bool
 }
 
@@ -24,6 +29,9 @@ impl VM {
             open_upvalues: vec![],
 
             stack,
+
+            stdout_buf: BufWriter::new(std::io::stdout()),
+
             debug
         }
     }
@@ -262,15 +270,12 @@ impl VM {
                         self.stack.push(Value::Bool(b.is_greater_than(&a)));
                     },
                     Instruction::Trace => {
-                        let a = self.pop_stack();
+                        let a = self.get_stack_top();
 
                         let val = a.to_string().unwrap_or("".to_string());
                         //add filename
                         let line_no = self.frame.clsr.func.chk.get_line_no(self.frame.cur_instr as u32);
-                        println!("[{}] {}", line_no, val);
-                        //maybe don't pop at all?
-
-                        self.stack.push(a);
+                        writeln!(self.stdout_buf, "[{}] {}", line_no, val);
                     },
                     Instruction::Pop => {
                         self.pop_stack();
