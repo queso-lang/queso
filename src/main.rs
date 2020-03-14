@@ -67,6 +67,7 @@ struct QuesoOpts {
 
 
 fn main() {
+    {std::io::stdout();};
     let matches = App::new("queso")
        .version(crate_version!())
        .about("The interpreter for the queso language")
@@ -107,7 +108,13 @@ fn main() {
     };
 
     if let Some(file) = matches.value_of("file") {
-        unimplemented!()
+        use std::fs;
+
+        let contents = fs::read_to_string(file).unwrap_or_else(|_| {
+            fs::read_to_string(file.to_string() + &".queso".to_string()).expect("Could not read the file")
+        });
+
+        run(opts, contents);
     }
     else {
         repl(opts)

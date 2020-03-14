@@ -15,7 +15,7 @@ pub struct VM {
 
 impl VM {
     pub fn new(chk: Chunk, debug: bool) -> VM {
-        let stack = Vec::<Value>::with_capacity(100);
+        let stack = Vec::<Value>::new();
 
         VM {
             frame: CallFrame::new(chk, 0),
