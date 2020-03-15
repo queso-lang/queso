@@ -17,10 +17,9 @@ impl Value {
             Value::Bool(b) => *b,
             Value::Number(n) => *n!=0.,
             Value::String(s) => s.len() > 0,
-            // Value::Closure(_) => true,
             Value::Null => false,
             
-            Value::Uninitialized | _=> panic!()
+            Value::Uninitialized | Value::Obj(_) | Value::Heap(_) => panic!()
         }
     }
     pub fn to_number(&self) -> Result<f64, &'static str> {
@@ -86,8 +85,6 @@ impl std::fmt::Display for Value {
             Value::String(s) => write!(f, "{}", s.clone()),
             Value::Bool(b) => write!(f, "{}", (if *b {"true"} else {"false"}).to_string()),
             Value::Number(num) => write!(f, "{}", num.to_string()),
-            // Value::Function(func) => write!(f, "func {}", unsafe {(**func).name.clone()}),
-            // Value::Closure(clsr) => write!(f, "clsr {}", clsr.get_function().name),
             Value::Heap(id) => write!(f, "{}", id),
             Value::Obj(obj) => write!(f, "{:#?}", *obj),
             Value::Null => write!(f, "null"),

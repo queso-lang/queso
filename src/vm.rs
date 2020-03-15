@@ -72,6 +72,17 @@ impl VM {
         for val in self.stack.iter() {
             print!("| {} ", val);
         }
+        println!()
+    }
+
+    fn print_heap(&self) {
+        print!("heap  ");
+        if self.heap.mem.len() == 0 {
+            print!("<empty>");
+        }
+        for val in self.heap.mem.iter() {
+            print!("| {} ", val.obj);
+        }
         println!();
     }
 
@@ -121,6 +132,7 @@ impl VM {
 
             if self.debug {
                 self.print_stack();
+                self.print_heap();
                 self.heap.get_clsr_fn(&self.frame.clsr).chk.print_instr(self.frame.cur_instr, false);
 
                 println!();

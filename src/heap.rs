@@ -7,6 +7,26 @@ pub enum ObjType {
     Value(Value)
 }
 
+impl ObjType {
+    pub fn is_truthy(&self) -> bool {
+        match self {
+            ObjType::Value(val) => val.is_truthy(),
+            _ => true
+        }
+    }
+}
+
+impl std::fmt::Display for ObjType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ObjType::Function(func) => write!(f, "fn {}", func.name),
+            ObjType::Closure(clsr) => write!(f, "clsr {}", clsr.func),
+            ObjType::Value(val) => std::fmt::Display::fmt(&val, f),
+            _ => panic!()
+        }
+    }
+}
+
 #[derive(PartialEq, Clone, Debug)]
 pub struct Obj {
     pub obj: ObjType,
@@ -15,7 +35,7 @@ pub struct Obj {
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Heap {
-    mem: Vec<Obj>
+    pub mem: Vec<Obj>
 }
 
 impl Heap {
