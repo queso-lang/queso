@@ -9,19 +9,23 @@ pub struct Function {
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Closure {
-    pub func: *mut Function,
-    pub upvalues: Vec<MutRc<UpValue>>
+    pub func: u16,
+    pub upvalues: Vec<MutRc<ObjUpValue>>
 }
 
 impl Closure {
-    pub fn from_function(func: *mut Function, upvalues: Vec<MutRc<UpValue>>) -> Closure {
+    pub fn from_function(func: u16, upvalues: Vec<MutRc<ObjUpValue>>) -> Closure {
         Closure {
             func,
             upvalues
         }
     }
 
-    pub fn get_function(&self) -> &Function {
-        unsafe {&*self.func}
-    }
+    // pub fn get_function(&self, heap: &Heap) -> &Function {
+    //     heap.get_clsr_fn(self)
+    // }
+
+    // pub fn get_function_mut(&self) -> &mut Function {
+    //     unsafe {&mut *self.func}
+    // }
 }

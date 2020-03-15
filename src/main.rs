@@ -52,12 +52,18 @@ use callframe::*;
 mod upvalue;
 use upvalue::*;
 
+mod gc;
+use gc::*;
+
+mod heap;
+use heap::*;
+
 extern crate clap; 
 use clap::{App, Arg, crate_version};
 
 #[derive(Clone)]
 struct DebugOpts {
-    pub tokens: bool, pub ast: bool, pub instrs: bool
+    pub tokens: bool, pub ast: bool, pub instrs: bool, pub gc: bool
 }
 
 #[derive(Clone)]
@@ -94,13 +100,20 @@ fn main() {
             .help("turns on bytecode instructions logging")
             .hidden(true)
         )
+        .arg(
+            Arg::with_name("debug gc")
+            .long("#gc")
+            .help("turns on garbager collection logging")
+            .hidden(true)
+        )
        .get_matches();
 
 
     let debug_opts = DebugOpts {
         tokens: matches.occurrences_of("debug tokens") > 0,
         ast: matches.occurrences_of("debug ast") > 0,
-        instrs: matches.occurrences_of("debug instrs") > 0
+        instrs: matches.occurrences_of("debug instrs") > 0,
+        gc: matches.occurrences_of("debug gc") > 0
     };
 
     let opts = QuesoOpts {

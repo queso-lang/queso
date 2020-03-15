@@ -6,12 +6,14 @@ use std::io::Write;
 type Stack = Vec<Value>;
 
 pub struct VM {
-    frame: CallFrame,
-    callstack: Vec<CallFrame>,
+    pub frame: CallFrame,
 
-    open_upvalues: Vec<MutRc<UpValue>>, 
+    pub callstack: Vec<CallFrame>,
+
+    pub open_upvalues: Vec<MutRc<ObjUpValue>>, 
 
     pub stack: Stack,
+    pub heap: Heap,
 
     stdout_buf: BufWriter<std::io::Stdout>,
 
@@ -20,15 +22,15 @@ pub struct VM {
 
 impl VM {
     pub fn new(chk: Chunk, debug: bool) -> VM {
-        let stack = Vec::<Value>::new();
-
+        let mut heap = Heap::new();
         VM {
-            frame: CallFrame::new(chk, 0),
+            frame: CallFrame::new(chk, &mut heap, 0),
             callstack: vec![],
 
             open_upvalues: vec![],
 
-            stack,
+            stack: vec![],
+            heap,
 
             stdout_buf: BufWriter::new(std::io::stdout()),
 
@@ -38,7 +40,7 @@ impl VM {
         
     fn next_instr(&mut self) -> Option<&Instruction> {
         self.frame.cur_instr += 1;
-        self.frame.clsr.get_function().chk.try_get_instr(self.frame.cur_instr - 1)
+        self.heap.get_clsr_fn(&self.frame.clsr).chk.try_get_instr(self.frame.cur_instr - 1)
     }
 
     fn pop_stack(&mut self) -> Value {
@@ -73,11 +75,11 @@ impl VM {
         println!();
     }
 
-    fn capture_upvalue(&mut self, upvalueid: &UpValueIndex) -> MutRc<UpValue> {
+    fn capture_upvalue(&mut self, upvalueid: &UpValueIndex) -> MutRc<ObjUpValue> {
         if upvalueid.is_local {
             let slot = self.frame.stack_base as u16 + upvalueid.id;
 
-            Rc::new(RefCell::new(UpValue::stack(slot)))
+            Rc::new(RefCell::new(ObjUpValue::stack(slot)))
         }
         else {
             Rc::clone(self.frame.clsr.upvalues.get_mut(upvalueid.id as usize).expect(""))
@@ -85,22 +87,21 @@ impl VM {
     }
 
     fn close_upvalues(&mut self) {
-        let captured = self.frame.clsr.get_function().captured.clone();
+        let captured = self.heap.get_clsr_fn(&self.frame.clsr).captured.clone();
 
         for id in captured.iter() {
             let slot = self.frame.stack_base as u16 + id;
 
-            let cur_value = self.get_stack_mut(slot);
+            let cur_value = self.get_stack_mut(slot).clone();
 
-            let on_heap = Box::new(cur_value.clone());
-            let on_heap_address = Box::into_raw(on_heap);
+            let on_heap_id = self.heap.alloc_val(cur_value);
 
             for upv in &self.open_upvalues {
                 let mut upv = upv.borrow_mut();
                 let loc = &mut upv.loc;
                 if let UpValueLocation::Stack(l) = loc {
                     if *l == slot {
-                        upv.close(on_heap_address);
+                        upv.close(on_heap_id);
                     }
                 }
             }
@@ -120,7 +121,7 @@ impl VM {
 
             if self.debug {
                 self.print_stack();
-                self.frame.clsr.get_function().chk.print_instr(self.frame.cur_instr, false);
+                self.heap.get_clsr_fn(&self.frame.clsr).chk.print_instr(self.frame.cur_instr, false);
 
                 println!();
             }
@@ -142,7 +143,7 @@ impl VM {
                     },
                     Instruction::PushConstant(id) => {
                         let id = *id;
-                        let constant: &Value = self.frame.clsr.get_function().chk.get_const(id);
+                        let constant: &Value = self.heap.get_clsr_fn(&self.frame.clsr).chk.get_const(id);
                         self.stack.push(constant.clone());
                     },
                     Instruction::PushTrue => {
@@ -274,7 +275,7 @@ impl VM {
 
                         let val = a.to_string().unwrap_or("".to_string());
                         //add filename
-                        let line_no = self.frame.clsr.get_function().chk.get_line_no(self.frame.cur_instr as u32);
+                        let line_no = self.heap.get_clsr_fn(&self.frame.clsr).chk.get_line_no(self.frame.cur_instr as u32);
                         writeln!(self.stdout_buf, "[{}] {}", line_no, val);
                     },
                     Instruction::Pop => {
@@ -293,7 +294,7 @@ impl VM {
 
                             let value = match upvalue.borrow().loc {
                                 UpValueLocation::Stack(id) => self.get_stack(id).clone(),
-                                UpValueLocation::Heap(ptr) => (*ptr).clone()
+                                UpValueLocation::Heap(id) => self.heap.get_val(id).clone()
                             };
                             
                             self.stack.push(value);
@@ -309,11 +310,9 @@ impl VM {
                         let set_to = self.get_stack_top().clone();
                         let mut upvalue = self.frame.clsr.upvalues.get_mut(id as usize).expect("").clone();
 
-                        unsafe {
-                            match upvalue.borrow_mut().loc {
-                                UpValueLocation::Stack(id) => self.set_stack(id, set_to),
-                                UpValueLocation::Heap(ptr) => (*ptr) = set_to
-                            }
+                        match upvalue.borrow_mut().loc {
+                            UpValueLocation::Stack(id) => self.set_stack(id, set_to),
+                            UpValueLocation::Heap(id) => self.heap.set_val(id, set_to)
                         };
                     },
                     Instruction::Declare(id) => {
@@ -353,15 +352,18 @@ impl VM {
 
                         let clsr = self.get_stack(funcpos);
 
-                        if let Value::Closure(clsr) = clsr {
-                            let mut new_frame = CallFrame::from_closure(clsr.clone(), funcpos as usize);
+                        if let Value::Heap(id) = clsr {
+                            let id = *id;
+                            if let ObjType::Closure(clsr) = &self.heap.get(id).obj {
+                                let mut new_frame = CallFrame::from_closure(clsr.clone(), funcpos as usize);
 
-                            let parent_frame = std::mem::replace(&mut self.frame, new_frame);
+                                let parent_frame = std::mem::replace(&mut self.frame, new_frame);
 
-                            self.callstack.push(parent_frame);
-                        }
-                        else {
-                            return Err("Tried to call a value which isn't a function");
+                                self.callstack.push(parent_frame);
+                            }
+                            else {
+                                return Err("Tried to call a value which isn't a function");
+                            }
                         }
                     },
                     Instruction::Reserve(reserve_count) => {
@@ -376,10 +378,13 @@ impl VM {
                         let stack_base = self.frame.stack_base.clone() as u16;
                         let id = id + stack_base;
                         
-                        let func = self.frame.clsr.get_function().chk.get_const(const_id).clone();
-                        if let Value::Function(func) = func {
+                        let func = self.heap.get_clsr_fn(&self.frame.clsr).chk.get_const(const_id).clone();
+                        if let Value::Obj(obj) = func {
+                            let heap_id = self.heap.alloc(*obj);
 
-                            let mut upvalues = Vec::<MutRc<UpValue>>::new();
+                            // println!("test {:#?}", func);
+
+                            let mut upvalues = Vec::<MutRc<ObjUpValue>>::new();
 
                             for upvalueid in upvalueids {
                                 let mut upv = self.capture_upvalue(&upvalueid);
@@ -391,15 +396,18 @@ impl VM {
                                 self.open_upvalues.push(r)
                             }
 
-                            let closure = Closure {
-                                func,
+                            let clsr = Closure {
+                                func: heap_id,
                                 upvalues
                             };
 
-                            let val = Value::Closure(closure);
+                            let clsr = self.heap.alloc(ObjType::Closure(clsr));
+
+                            let val = Value::Heap(clsr);
                         
                             self.set_stack(id, val);
                         }
+                        else {panic!()}
                     },
 
                     #[allow(unreachable_patterns)]

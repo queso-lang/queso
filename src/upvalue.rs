@@ -3,34 +3,29 @@ use crate::*;
 #[derive(Clone, PartialEq, Debug)]
 pub enum UpValueLocation {
     Stack(u16),
-    Heap(*mut Value)
+    Heap(u16)
 }
 
 #[derive(Clone, PartialEq)]
-pub struct UpValue {
+pub struct ObjUpValue {
     pub loc: UpValueLocation
 }
 
-impl UpValue {
-    pub fn stack(id: u16) -> UpValue {
-        UpValue {
+impl ObjUpValue {
+    pub fn stack(id: u16) -> ObjUpValue {
+        ObjUpValue {
             loc: UpValueLocation::Stack(id)
         }
     }
 
-    pub fn close(&mut self, at: *mut Value ) {
-        self.loc = UpValueLocation::Heap(at);
+    pub fn close(&mut self, id: u16) {
+        self.loc = UpValueLocation::Heap(id);
     }
 }
 
-impl std::fmt::Debug for UpValue {
+impl std::fmt::Debug for ObjUpValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.loc);
-        if let UpValueLocation::Heap(ptr) = self.loc {
-            unsafe {
-                write!(f, " val {}", *ptr);
-            }
-        }
         Ok(())
     }
 }

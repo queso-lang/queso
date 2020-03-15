@@ -15,15 +15,15 @@ pub struct CallFrame {
 }
 
 impl CallFrame {
-    pub fn new(chk: Chunk, stack_base: usize) -> CallFrame {
-        let func = Box::new(Function {
+    pub fn new(chk: Chunk, heap: &mut Heap, stack_base: usize) -> CallFrame {
+        let func = heap.alloc(ObjType::Function(Function {
             chk,
             name: "".to_string(),
             captured: vec![]
-        });
-        let func_ptr = Box::into_raw(func);
+        }));
+
         CallFrame {
-            clsr: Closure::from_function(func_ptr, vec![]),
+            clsr: Closure::from_function(func, vec![]),
             funct: FunctionType::Program,
             cur_instr: 0,
             stack_base

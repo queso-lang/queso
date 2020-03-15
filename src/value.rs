@@ -5,8 +5,8 @@ pub enum Value {
     Bool(bool),
     Number(f64),
     String(String),
-    Function(*mut Function),
-    Closure(Closure),
+    Heap(u16),
+    Obj(Box<ObjType>),
     Null,
     Uninitialized
 }
@@ -17,11 +17,10 @@ impl Value {
             Value::Bool(b) => *b,
             Value::Number(n) => *n!=0.,
             Value::String(s) => s.len() > 0,
-            Value::Closure(_) => true,
+            // Value::Closure(_) => true,
             Value::Null => false,
             
-            Value::Uninitialized | 
-            Value::Function(_) => panic!()
+            Value::Uninitialized | _=> panic!()
         }
     }
     pub fn to_number(&self) -> Result<f64, &'static str> {
@@ -32,7 +31,7 @@ impl Value {
                 Ok(num) => return Ok(num),
                 _ => return Err("Could not convert the string to a number")
             },
-            Value::Function(_) => Err("Can't convert a function to a number"),
+            // Value::Function(_) => Err("Can't convert a function to a number"),
             Value::Null => return Ok(0.),
             _ => return Err("This operand cannot be converted to a number")
         }
@@ -42,7 +41,7 @@ impl Value {
             Value::String(s) => return Ok(s.clone()),
             Value::Bool(b) => return Ok((if *b {"true"} else {"false"}).to_string()),
             Value::Number(num) => return Ok(num.to_string()),
-            Value::Function(_) => Err("Can't convert a function to a string"),
+            // Value::Function(_) => Err("Can't convert a function to a string"),
             Value::Null => return Ok("null".to_string()),
             _ => return Err("This operand cannot be converted to a string")
         }
@@ -87,8 +86,10 @@ impl std::fmt::Display for Value {
             Value::String(s) => write!(f, "{}", s.clone()),
             Value::Bool(b) => write!(f, "{}", (if *b {"true"} else {"false"}).to_string()),
             Value::Number(num) => write!(f, "{}", num.to_string()),
-            Value::Function(func) => write!(f, "func {}", unsafe {(**func).name.clone()}),
-            Value::Closure(clsr) => write!(f, "clsr {}", clsr.get_function().name),
+            // Value::Function(func) => write!(f, "func {}", unsafe {(**func).name.clone()}),
+            // Value::Closure(clsr) => write!(f, "clsr {}", clsr.get_function().name),
+            Value::Heap(id) => write!(f, "{}", id),
+            Value::Obj(obj) => write!(f, "{:#?}", *obj),
             Value::Null => write!(f, "null"),
             Value::Uninitialized => write!(f, "-"),
             _ => panic!()
