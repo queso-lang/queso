@@ -20,12 +20,4 @@ impl Closure {
             upvalues
         }
     }
-
-    // pub fn get_function(&self, heap: &Heap) -> &Function {
-    //     heap.get_clsr_fn(self)
-    // }
-
-    // pub fn get_function_mut(&self) -> &mut Function {
-    //     unsafe {&mut *self.func}
-    // }
 }

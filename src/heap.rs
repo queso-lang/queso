@@ -1,4 +1,6 @@
 use crate::*;
+use std::collections::HashSet;
+use slab::Slab;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum ObjType {
@@ -33,14 +35,19 @@ pub struct Obj {
     pub is_marked: bool
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Heap {
-    pub mem: Vec<Obj>
+    pub mem: Slab<Obj>
 }
 
 impl Heap {
     pub fn new() -> Heap {
-        Heap {mem: vec![]}
+        const CAPACITY: usize = 100;
+        let mem = Slab::with_capacity(CAPACITY);
+
+        Heap {
+            mem
+        }
     }
 
     pub fn alloc_val(&mut self, val: Value) -> u16 {
@@ -48,7 +55,11 @@ impl Heap {
     }
 
     pub fn alloc(&mut self, obj: ObjType) -> u16 {
-        self.mem.push(Obj{obj, is_marked: false});
+        let obj = Obj {
+            obj, is_marked: false
+        };
+        self.mem.insert(obj);
+
         self.mem.len() as u16 - 1
     }
 

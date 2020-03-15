@@ -81,7 +81,7 @@ impl VM {
             print!("<empty>");
         }
         for val in self.heap.mem.iter() {
-            print!("| {} ", val.obj);
+            print!("| {} ", val.1.obj);
         }
         println!();
     }
@@ -394,8 +394,6 @@ impl VM {
                         if let Value::Obj(obj) = func {
                             let heap_id = self.heap.alloc(*obj);
 
-                            // println!("test {:#?}", func);
-
                             let mut upvalues = Vec::<MutRc<ObjUpValue>>::new();
 
                             for upvalueid in upvalueids {
@@ -408,10 +406,7 @@ impl VM {
                                 self.open_upvalues.push(r)
                             }
 
-                            let clsr = Closure {
-                                func: heap_id,
-                                upvalues
-                            };
+                            let clsr = Closure::from_function(heap_id, upvalues);
 
                             let clsr = self.heap.alloc(ObjType::Closure(clsr));
 

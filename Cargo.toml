@@ -9,3 +9,4 @@ edition = "2018"
 phf = { version = "0.8", features = ["macros"] }
 clap = "2.33.0"
 time = "*"
+slab = "0.4.2"
