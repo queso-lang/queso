@@ -7,13 +7,13 @@ pub enum UpValueLocation {
 }
 
 #[derive(Clone, PartialEq)]
-pub struct ObjUpValue {
+pub struct UpValue {
     pub loc: UpValueLocation
 }
 
-impl ObjUpValue {
-    pub fn stack(id: u16) -> ObjUpValue {
-        ObjUpValue {
+impl UpValue {
+    pub fn stack(id: u16) -> UpValue {
+        UpValue {
             loc: UpValueLocation::Stack(id)
         }
     }
@@ -23,7 +23,7 @@ impl ObjUpValue {
     }
 }
 
-impl std::fmt::Debug for ObjUpValue {
+impl std::fmt::Debug for UpValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.loc);
         Ok(())

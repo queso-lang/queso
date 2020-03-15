@@ -1,1 +1,5 @@
-fn fib(n): if n < 2 -> 1 else fib(n-2) + fib(n-1); trace fib(30)
+fn fib(n):
+    if n < 2 -> 1
+    else fib(n-2) + fib(n-1);
+
+trace fib(30)

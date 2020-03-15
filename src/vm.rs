@@ -10,7 +10,7 @@ pub struct VM {
 
     pub callstack: Vec<CallFrame>,
 
-    pub open_upvalues: Vec<MutRc<ObjUpValue>>, 
+    pub open_upvalues: Vec<u16>, 
 
     pub stack: Stack,
     pub heap: Heap,
@@ -86,14 +86,14 @@ impl VM {
         println!();
     }
 
-    fn capture_upvalue(&mut self, upvalueid: &UpValueIndex) -> MutRc<ObjUpValue> {
+    fn capture_upvalue(&mut self, upvalueid: &UpValueIndex) -> u16 {
         if upvalueid.is_local {
             let slot = self.frame.stack_base as u16 + upvalueid.id;
 
-            Rc::new(RefCell::new(ObjUpValue::stack(slot)))
+            self.heap.alloc(ObjType::UpValue(UpValue::stack(slot)))
         }
         else {
-            Rc::clone(self.frame.clsr.upvalues.get_mut(upvalueid.id as usize).expect(""))
+            self.frame.clsr.upvalues.get(upvalueid.id as usize).expect("").clone()
         }
     }
 
@@ -108,11 +108,11 @@ impl VM {
             let on_heap_id = self.heap.alloc_val(cur_value);
 
             for upv in &self.open_upvalues {
-                let mut upv = upv.borrow_mut();
-                let loc = &mut upv.loc;
-                if let UpValueLocation::Stack(l) = loc {
-                    if *l == slot {
-                        upv.close(on_heap_id);
+                let upvalue = self.heap.get_upvalue_mut(*upv);
+
+                if let UpValueLocation::Stack(l) = upvalue.loc {
+                    if l == slot {
+                        upvalue.close(on_heap_id);
                     }
                 }
             }
@@ -303,8 +303,9 @@ impl VM {
                             let id = *id;
                             
                             let upvalue = self.frame.clsr.upvalues.get(id as usize).expect("");
+                            let upvalue = self.heap.get_upvalue(*upvalue);
 
-                            let value = match upvalue.borrow().loc {
+                            let value = match upvalue.loc {
                                 UpValueLocation::Stack(id) => self.get_stack(id).clone(),
                                 UpValueLocation::Heap(id) => self.heap.get_val(id).clone()
                             };
@@ -320,9 +321,11 @@ impl VM {
                     Instruction::SetUpValue(id) => {
                         let id = *id;
                         let set_to = self.get_stack_top().clone();
-                        let mut upvalue = self.frame.clsr.upvalues.get_mut(id as usize).expect("").clone();
 
-                        match upvalue.borrow_mut().loc {
+                        let mut upvalue = self.frame.clsr.upvalues.get_mut(id as usize).expect("");
+                        let upvalue = self.heap.get_upvalue(*upvalue);
+
+                        match upvalue.loc {
                             UpValueLocation::Stack(id) => self.set_stack(id, set_to),
                             UpValueLocation::Heap(id) => self.heap.set_val(id, set_to)
                         };
@@ -394,16 +397,16 @@ impl VM {
                         if let Value::Obj(obj) = func {
                             let heap_id = self.heap.alloc(*obj);
 
-                            let mut upvalues = Vec::<MutRc<ObjUpValue>>::new();
+                            let mut upvalues = Vec::<u16>::new();
 
                             for upvalueid in upvalueids {
                                 let mut upv = self.capture_upvalue(&upvalueid);
 
                                 upvalues.push(upv);
 
-                                let mut r = Rc::clone(upvalues.last_mut().expect(""));
+                                let mut r = upvalues.last_mut().unwrap();
 
-                                self.open_upvalues.push(r)
+                                self.open_upvalues.push(*r)
                             }
 
                             let clsr = Closure::from_function(heap_id, upvalues);

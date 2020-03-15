@@ -6,7 +6,8 @@ use slab::Slab;
 pub enum ObjType {
     Function(Function),
     Closure(Closure),
-    Value(Value)
+    Value(Value),
+    UpValue(UpValue)
 }
 
 impl ObjType {
@@ -15,6 +16,22 @@ impl ObjType {
             ObjType::Value(val) => val.is_truthy(),
             _ => true
         }
+    }
+
+    pub fn to_string(&self) -> Result<String, &'static str> {
+        match self {
+            ObjType::Value(val) => val.to_string(),
+            _ => Err("Can't convert this to a string")
+        }
+    }
+
+    pub fn display(&self) -> String {
+        match self {
+            ObjType::Function(func) => format!("fn {}", func.name),
+            ObjType::Closure(clsr) => format!("clsr {}", clsr.func),
+            ObjType::Value(val) => val.display(),
+            _ => panic!()
+        } 
     }
 }
 
@@ -67,14 +84,40 @@ impl Heap {
         self.mem.get(id as usize)
     }
 
+    pub fn try_get_mut(&mut self, id: u16) -> Option<&mut Obj> {
+        self.mem.get_mut(id as usize)
+    }
+
     pub fn get(&self, id: u16) -> &Obj {
         self.try_get(id).expect("This is a problem with the interpreter itself")
+    }
+
+    pub fn get_mut(&mut self, id: u16) -> &mut Obj {
+        self.try_get_mut(id).expect("This is a problem with the interpreter itself")
     }
 
     pub fn get_val(&self, id: u16) -> &Value {
         {
             if let ObjType::Value(val) = &self.get(id).obj {
                 Some(val)
+            }
+            else {None}
+        }.unwrap()
+    }
+
+    pub fn get_upvalue(&self, id: u16) -> &UpValue {
+        {
+            if let ObjType::UpValue(upv) = &self.get(id).obj {
+                Some(upv)
+            }
+            else {None}
+        }.unwrap()
+    }
+
+    pub fn get_upvalue_mut(&mut self, id: u16) -> &mut UpValue {
+        {
+            if let ObjType::UpValue(upv) = &mut self.get_mut(id).obj {
+                Some(upv)
             }
             else {None}
         }.unwrap()
