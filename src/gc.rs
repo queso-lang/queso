@@ -130,8 +130,8 @@ impl GC {
         // future collections
         // TODO: instead of swapping every mark, make a flag inside the
         // gc that indicates which state is the marked one
-        for (i, obj) in unsafe {(*unsafe_heap_mem).iter_mut()} {
-            unsafe {obj.is_marked = false;}
+        for (i, obj) in heap.mem.iter_mut() {
+            obj.is_marked = false;
         }
     }
 

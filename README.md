@@ -25,9 +25,9 @@ This is a snippet of some functional aspects of the language:
 fn filterSpicySalsas(salsas): salsas.filter(salsa: salsa.isSpicy);
 
 let salsas = [
-    #{name = "fresca", isSpicy = false}, //object literals
-    #{name = "habanero", isSpicy = true},
-    #{name = "verde", isSpicy = false},
+    #[name = "fresca", isSpicy = false], //object literals
+    #[name = "habanero", isSpicy = true],
+    #[name = "verde", isSpicy = false],
 ];
 
 trace salsas |> filterSpicySalsas();
@@ -39,7 +39,7 @@ So, what's going on here? this looks a little different than other langs
 
 When invoked with an array, filterSpicySalsas returns a subarray containining only the salsas that have a field `isSpicy = true`
 
-**Second**, `#{}` is the syntax for object literals. `{}` is way too similar to code blocks (and in fact could be ambiguous in queso).
+**Second**, `#[]` is the syntax for object literals. `{}` is way too similar to code blocks (and in fact could be ambiguous in queso).
 Why `#`? because object literals are quite similar to **hash** maps.
 
 **Lastly**, there's the ~~cheese~~ pipe `|>` operator, which lets you chain functions and inject the left operand as the right operand's first argument. This is a common tool in functional programming. It lets you convert a bunch of nested expressions into a linear one!
