@@ -138,9 +138,11 @@ You may run the binary with the following debugging flags:
 
 `--#instrs` - shows instructions and the stack during execution
 
+`--#gc` - shows values marked by the GC on every collection
+
 Example using `cargo` to execute queso:
 ```shell
-cargo run -- --#tokens --#ast --#instrs
+cargo run -- --#tokens --#ast --#instrs --#gc
 ```
 
 #### License

@@ -1,0 +1,12 @@
+mut get_one;
+
+fn foo(): {
+    mut a = "one";
+    fn one(): {
+        a
+    };
+    get_one = one
+};
+
+foo();
+trace get_one() == "one"

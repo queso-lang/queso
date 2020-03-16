@@ -26,8 +26,8 @@ impl Chunk {
     // api
     pub fn new() -> Chunk {
         Chunk {
-            instrs: Vec::<Instruction>::new(),
-            consts: Vec::<Value>::new(),
+            instrs: vec![],
+            consts: vec![],
             var_count: 0,
             lines: LineVec::new()
         }

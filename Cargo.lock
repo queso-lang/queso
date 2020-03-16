@@ -142,6 +142,7 @@ version = "0.1.0"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "phf 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "slab 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -212,6 +213,11 @@ dependencies = [
 [[package]]
 name = "siphasher"
 version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "slab"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -332,6 +338,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum rand_pcg 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "16abd0c1b639e9eb4d7c50c0b8100b0d0f849be2349829c740fe8e6eb4816429"
 "checksum rustversion 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "b3bba175698996010c4f6dce5e7f173b6eb781fce25d2cfc45e27091ce0b79f6"
 "checksum siphasher 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "83da420ee8d1a89e640d0948c646c1c088758d3a3c538f943bfa97bdac17929d"
+"checksum slab 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 "checksum strsim 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
 "checksum syn 1.0.14 (registry+https://github.com/rust-lang/crates.io-index)" = "af6f3550d8dff9ef7dc34d384ac6f107e5d31c8f57d9f28e0081503f547ac8f5"
 "checksum textwrap 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"

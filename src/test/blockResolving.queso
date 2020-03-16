@@ -1,0 +1,24 @@
+mut get_one;
+mut get_two;
+
+fn foo(): {
+  {
+    mut a = "one";
+    fn one(): {
+      a
+    };
+    get_one = one
+  };
+
+  {
+    mut b = "two";
+    fn two(): {
+      b
+    };
+    get_two = two
+  }
+};
+
+foo();
+trace get_one() == "one";
+trace get_two() == "two"

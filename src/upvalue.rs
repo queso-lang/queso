@@ -3,7 +3,7 @@ use crate::*;
 #[derive(Clone, PartialEq, Debug)]
 pub enum UpValueLocation {
     Stack(u16),
-    Heap(*mut Value)
+    Heap(u32)
 }
 
 #[derive(Clone, PartialEq)]
@@ -18,19 +18,14 @@ impl UpValue {
         }
     }
 
-    pub fn close(&mut self, at: *mut Value ) {
-        self.loc = UpValueLocation::Heap(at);
+    pub fn close(&mut self, id: u32) {
+        self.loc = UpValueLocation::Heap(id);
     }
 }
 
 impl std::fmt::Debug for UpValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.loc);
-        if let UpValueLocation::Heap(ptr) = self.loc {
-            unsafe {
-                write!(f, " val {}", *ptr);
-            }
-        }
         Ok(())
     }
 }
