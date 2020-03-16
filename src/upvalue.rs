@@ -3,7 +3,7 @@ use crate::*;
 #[derive(Clone, PartialEq, Debug)]
 pub enum UpValueLocation {
     Stack(u16),
-    Heap(u16)
+    Heap(u32)
 }
 
 #[derive(Clone, PartialEq)]
@@ -18,7 +18,7 @@ impl UpValue {
         }
     }
 
-    pub fn close(&mut self, id: u16) {
+    pub fn close(&mut self, id: u32) {
         self.loc = UpValueLocation::Heap(id);
     }
 }

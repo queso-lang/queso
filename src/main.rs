@@ -180,10 +180,11 @@ fn run(opts: QuesoOpts, src: String) -> bool {
 
         let mut vm = VM::new(chk, opts.debug.instrs);
 
+        let mut gc = GC::new(opts.debug.gc);
 
         use std::time::Instant;
         let now = Instant::now();
-        let res = vm.execute();
+        let res = vm.execute(&mut gc);
         let new_now = Instant::now();
         println!("{:?}", new_now.duration_since(now));
         

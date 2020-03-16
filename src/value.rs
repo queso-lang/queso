@@ -5,7 +5,7 @@ pub enum Value {
     Bool(bool),
     Number(f64),
     String(String),
-    Heap(u16),
+    Heap(u32),
     Obj(Box<ObjType>),
     Null,
     Uninitialized
@@ -58,7 +58,7 @@ impl Value {
             Value::String(s) => format!("{}", s.clone()),
             Value::Bool(b) => format!("{}", (if *b {"true"} else {"false"}).to_string()),
             Value::Number(num) => format!("{}", num.to_string()),
-            Value::Heap(id) => format!("{}", id),
+            Value::Heap(id) => format!("h{}", id),
             Value::Obj(obj) => format!("{:#?}", *obj),
             Value::Null => format!("null"),
             Value::Uninitialized => format!("-"),

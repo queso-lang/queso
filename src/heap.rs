@@ -30,6 +30,10 @@ impl ObjType {
             ObjType::Function(func) => format!("fn {}", func.name),
             ObjType::Closure(clsr) => format!("clsr {}", clsr.func),
             ObjType::Value(val) => val.display(),
+            ObjType::UpValue(upv) => format!("upv {}", match upv.loc {
+                UpValueLocation::Stack(id) => "s".to_string() + &id.to_string(),
+                UpValueLocation::Heap(id) => "h".to_string() + &id.to_string()
+            }),
             _ => panic!()
         } 
     }
@@ -37,12 +41,7 @@ impl ObjType {
 
 impl std::fmt::Display for ObjType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            ObjType::Function(func) => write!(f, "fn {}", func.name),
-            ObjType::Closure(clsr) => write!(f, "clsr {}", clsr.func),
-            ObjType::Value(val) => std::fmt::Display::fmt(&val, f),
-            _ => panic!()
-        }
+        write!(f, "{}", self.display())
     }
 }
 
@@ -59,7 +58,7 @@ pub struct Heap {
 
 impl Heap {
     pub fn new() -> Heap {
-        const CAPACITY: usize = 100;
+        const CAPACITY: usize = 1000;
         let mem = Slab::with_capacity(CAPACITY);
 
         Heap {
@@ -67,36 +66,37 @@ impl Heap {
         }
     }
 
-    pub fn alloc_val(&mut self, val: Value) -> u16 {
+    pub fn alloc_val(&mut self, val: Value) -> u32 {
         self.alloc(ObjType::Value(val))
     }
 
-    pub fn alloc(&mut self, obj: ObjType) -> u16 {
+    pub fn alloc(&mut self, obj: ObjType) -> u32 {
         let obj = Obj {
             obj, is_marked: false
         };
-        self.mem.insert(obj);
-
-        self.mem.len() as u16 - 1
+        self.mem.insert(obj) as u32
     }
 
-    pub fn try_get(&self, id: u16) -> Option<&Obj> {
-        self.mem.get(id as usize)
+    pub fn try_get(&self, id: u32) -> Option<&Obj> {
+        match self.mem.get(id as usize) {
+            Some(obj) => Some(obj),
+            None => panic!(id)
+        }
     }
 
-    pub fn try_get_mut(&mut self, id: u16) -> Option<&mut Obj> {
+    pub fn try_get_mut(&mut self, id: u32) -> Option<&mut Obj> {
         self.mem.get_mut(id as usize)
     }
 
-    pub fn get(&self, id: u16) -> &Obj {
+    pub fn get(&self, id: u32) -> &Obj {
         self.try_get(id).expect("This is a problem with the interpreter itself")
     }
 
-    pub fn get_mut(&mut self, id: u16) -> &mut Obj {
+    pub fn get_mut(&mut self, id: u32) -> &mut Obj {
         self.try_get_mut(id).expect("This is a problem with the interpreter itself")
     }
 
-    pub fn get_val(&self, id: u16) -> &Value {
+    pub fn get_val(&self, id: u32) -> &Value {
         {
             if let ObjType::Value(val) = &self.get(id).obj {
                 Some(val)
@@ -105,7 +105,7 @@ impl Heap {
         }.unwrap()
     }
 
-    pub fn get_upvalue(&self, id: u16) -> &UpValue {
+    pub fn get_upvalue(&self, id: u32) -> &UpValue {
         {
             if let ObjType::UpValue(upv) = &self.get(id).obj {
                 Some(upv)
@@ -114,7 +114,7 @@ impl Heap {
         }.unwrap()
     }
 
-    pub fn get_upvalue_mut(&mut self, id: u16) -> &mut UpValue {
+    pub fn get_upvalue_mut(&mut self, id: u32) -> &mut UpValue {
         {
             if let ObjType::UpValue(upv) = &mut self.get_mut(id).obj {
                 Some(upv)
@@ -132,11 +132,11 @@ impl Heap {
         }.unwrap()
     }
 
-    pub fn set(&mut self, id: u16, to: ObjType) {
+    pub fn set(&mut self, id: u32, to: ObjType) {
         self.mem[id as usize].obj = to
     }
 
-    pub fn set_val(&mut self, id: u16, to: Value) {
+    pub fn set_val(&mut self, id: u32, to: Value) {
         self.mem[id as usize].obj = ObjType::Value(to)
     }
 }
