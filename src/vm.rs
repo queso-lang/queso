@@ -5,7 +5,9 @@ use std::io::Write;
 
 type Stack = Vec<Value>;
 
-const GC_THR_GROW: f32 = 1.;
+// Incremental GC settings
+const GC_THR_GROW: f32 = 1.125;
+const GC_THR_START: u32 = 8000;
 
 pub struct VM {
     pub frame: CallFrame,
@@ -17,7 +19,6 @@ pub struct VM {
     pub stack: Stack,
     pub heap: Heap,
 
-    gc: GC,
     gc_thr: u32,
 
     stdout_buf: BufWriter<std::io::Stdout>,
@@ -37,8 +38,7 @@ impl VM {
             stack: vec![],
             heap,
             
-            gc: GC::new(debug),
-            gc_thr: 8000,
+            gc_thr: GC_THR_START,
 
             stdout_buf: BufWriter::new(std::io::stdout()),
 
@@ -145,11 +145,11 @@ impl VM {
                 println!();
             }
 
-            // println!("{}", self.heap.mem.len());
+            // If heap length is bigger then the threshold, collect
             if self.heap.mem.len() > self.gc_thr as usize {
-                // println!("more");
                 gc.collect_garbage(self);
-                // println!("{} {} {}", self.gc_thr, GC_THR_GROW, self.gc_thr * GC_THR_GROW as u32);
+
+                // Increase the threshold
                 self.gc_thr = (self.gc_thr as f32 * GC_THR_GROW) as u32;
             }
 
