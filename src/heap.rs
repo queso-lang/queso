@@ -6,6 +6,8 @@ use slab::Slab;
 pub enum ObjType {
     Function(Function),
     Closure(Closure),
+    Class(Class),
+
     Value(Value),
     UpValue(UpValue)
 }
@@ -66,37 +68,37 @@ impl Heap {
         }
     }
 
-    pub fn alloc_val(&mut self, val: Value) -> u32 {
+    pub fn alloc_val(&mut self, val: Value) -> HeapIdx {
         self.alloc(ObjType::Value(val))
     }
 
-    pub fn alloc(&mut self, obj: ObjType) -> u32 {
+    pub fn alloc(&mut self, obj: ObjType) -> HeapIdx {
         let obj = Obj {
             obj, is_marked: false
         };
-        self.mem.insert(obj) as u32
+        self.mem.insert(obj) as HeapIdx
     }
 
-    pub fn try_get(&self, id: u32) -> Option<&Obj> {
+    pub fn try_get(&self, id: HeapIdx) -> Option<&Obj> {
         match self.mem.get(id as usize) {
             Some(obj) => Some(obj),
             None => panic!(id)
         }
     }
 
-    pub fn try_get_mut(&mut self, id: u32) -> Option<&mut Obj> {
+    pub fn try_get_mut(&mut self, id: HeapIdx) -> Option<&mut Obj> {
         self.mem.get_mut(id as usize)
     }
 
-    pub fn get(&self, id: u32) -> &Obj {
+    pub fn get(&self, id: HeapIdx) -> &Obj {
         self.try_get(id).expect("This is a problem with the interpreter itself")
     }
 
-    pub fn get_mut(&mut self, id: u32) -> &mut Obj {
+    pub fn get_mut(&mut self, id: HeapIdx) -> &mut Obj {
         self.try_get_mut(id).expect("This is a problem with the interpreter itself")
     }
 
-    pub fn get_val(&self, id: u32) -> &Value {
+    pub fn get_val(&self, id: HeapIdx) -> &Value {
         {
             if let ObjType::Value(val) = &self.get(id).obj {
                 Some(val)
@@ -105,7 +107,7 @@ impl Heap {
         }.unwrap()
     }
 
-    pub fn get_upvalue(&self, id: u32) -> &UpValue {
+    pub fn get_upvalue(&self, id: HeapIdx) -> &UpValue {
         {
             if let ObjType::UpValue(upv) = &self.get(id).obj {
                 Some(upv)
@@ -114,7 +116,7 @@ impl Heap {
         }.unwrap()
     }
 
-    pub fn get_upvalue_mut(&mut self, id: u32) -> &mut UpValue {
+    pub fn get_upvalue_mut(&mut self, id: HeapIdx) -> &mut UpValue {
         {
             if let ObjType::UpValue(upv) = &mut self.get_mut(id).obj {
                 Some(upv)
@@ -132,11 +134,11 @@ impl Heap {
         }.unwrap()
     }
 
-    pub fn set(&mut self, id: u32, to: ObjType) {
+    pub fn set(&mut self, id: HeapIdx, to: ObjType) {
         self.mem[id as usize].obj = to
     }
 
-    pub fn set_val(&mut self, id: u32, to: Value) {
+    pub fn set_val(&mut self, id: HeapIdx, to: Value) {
         self.mem[id as usize].obj = ObjType::Value(to)
     }
 }

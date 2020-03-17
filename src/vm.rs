@@ -418,7 +418,7 @@ impl VM {
                     
                     let func = self.heap.get_clsr_fn(&self.frame.clsr).chk.get_const(const_id).clone();
                     if let Value::Obj(obj) = func {
-                        let heap_id = self.heap.alloc(*obj);
+                        let func_id = self.heap.alloc(*obj);
 
                         let mut upvalues = Vec::<u32>::new();
 
@@ -432,11 +432,11 @@ impl VM {
                             self.open_upvalues.push(*r)
                         }
 
-                        let clsr = Closure::from_function(heap_id, upvalues);
+                        let clsr = Closure::from_function(func_id, upvalues);
 
-                        let clsr = self.heap.alloc(ObjType::Closure(clsr));
+                        let clsr_id = self.heap.alloc(ObjType::Closure(clsr));
 
-                        let val = Value::Heap(clsr);
+                        let val = Value::Heap(clsr_id);
                     
                         self.set_stack(id, val);
                     }
