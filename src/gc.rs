@@ -18,15 +18,10 @@ impl GC {
     }
 
     // Debug helper
-    fn print_debug_str(&self, s: String) {
-        if self.debug {
-            println!("{}", s);
-        }
-    }
-
-    // Debug helper
     fn print_debug(&self, s: &str) {
-        self.print_debug_str(s.to_string());
+        if self.debug {
+            print!("{}", s);
+        }
     }
 
     // Mark Obj

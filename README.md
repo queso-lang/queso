@@ -31,7 +31,7 @@ let salsas = [
 ];
 
 trace salsas |> filterSpicySalsas();
-// prints [#{name = "habanero", isSpicy = true}] along with the line and filename
+// prints [#[name = "habanero", isSpicy = true]] along with the line and filename
 ```
 So, what's going on here? this looks a little different than other langs
 
