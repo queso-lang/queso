@@ -215,7 +215,7 @@ impl<'a> Compiler<'a> {
                 }));
                 let const_id = self.chk.add_const(Value::Obj(func));
 
-                self.chk.add_instr(Instruction::Closure(id, const_id, upvalues), 0)
+                self.chk.add_instr(Instruction::DeclareClosure(id, const_id, upvalues), 0)
             }
             _ => panic!("This is a problem with the compiler itself")
         }

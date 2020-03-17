@@ -408,7 +408,7 @@ impl VM {
                     let reserve_count = *reserve_count;
                     self.stack.resize(self.stack.len() + reserve_count as usize, Value::Uninitialized);
                 },
-                Instruction::Closure(id, const_id, upvalueids) => {
+                Instruction::DeclareClosure(id, const_id, upvalueids) => {
                     let id = *id;
                     let const_id = *const_id;
                     let upvalueids = upvalueids.clone();

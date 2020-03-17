@@ -58,6 +58,9 @@ use gc::*;
 mod heap;
 use heap::*;
 
+mod class;
+use class::*;
+
 extern crate clap; 
 use clap::{App, Arg, crate_version};
 

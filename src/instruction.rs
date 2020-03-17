@@ -31,7 +31,7 @@ pub enum Instruction {
     Declare(u16),
 
     FnCall(u16),
-    Closure(u16, u16, Vec<UpValueIndex>), //assignid, constid
+    DeclareClosure(u16, u16, Vec<UpValueIndex>), //assignid, constid
 
     JumpIfFalsy(u16),
     PopAndJumpIfFalsy(u16), //always pop, that is
