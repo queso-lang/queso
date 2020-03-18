@@ -308,7 +308,7 @@ impl VM {
                 Instruction::Trace => {
                     let a = self.get_stack_top();
 
-                    let val = a.to_string().unwrap_or("".to_string());
+                    let val = a.to_string()?;
                     //add filename
                     let line_no = self.heap.get_clsr_fn(&self.frame.clsr).chk.get_line_no(self.frame.cur_instr as u32);
                     writeln!(self.stdout_buf, "[{}] {}", line_no, val);
@@ -319,6 +319,26 @@ impl VM {
                 Instruction::GetLocal(id) => {
                     let id = *id + self.frame.stack_base as u16;
                     let var = self.get_stack(id).clone();
+                    self.stack.push(var);
+                },
+                Instruction::GetLocalField {
+                    id, list
+                } => {
+                    let mut list = list.clone();
+                    let id = *id + self.frame.stack_base as u16;
+                    let mut var = self.get_stack(id).clone();
+                    let mut val = Value::Null;
+                    for field in list.drain(..) {
+                        if let Value::Heap(heap_id) = var {
+                            let obj = &self.heap.get(heap_id).obj;
+                            if let ObjType::Instance(inst) = obj {
+                                match inst.fields.get(&field) {
+                                    Some(v) => var = v.clone(),
+                                    None => var = Value::Null
+                                }
+                            }
+                        }
+                    }
                     self.stack.push(var);
                 },
                 Instruction::GetUpValue(id) => {

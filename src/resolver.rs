@@ -188,21 +188,63 @@ impl Resolver {
         }
     }
 
+    // Flattens binary dot access operation
+    // ((a.b).c).d => [a,b,c,d]
+    fn flatten_field_access(l: Expr, op: Token, r: Expr) -> Result<Vec<Token>, &'static str> {
+        let mut list = vec![];
+        if let Expr::Access(r) = r {
+            if let Expr::Access(l) = l {
+                list.push(l);
+                list.push(r);
+                return Ok(list);
+            }
+            else if let Expr::Binary(_l, op, _r) = l {
+                if op.t == TokenType::Dot {
+                    list.push(r);
+                    return Ok([Self::flatten_field_access(*_l, op, *_r)?, list].concat())
+                }
+            }
+        }
+        
+        Err("Illegal access operand")
+    }
+
     fn resolve_expr(&mut self, expr: Expr) -> Result<Expr, &'static str> {
-        match expr {
+        match expr.clone() {
             Expr::Binary(left, op, right) => {
                 if op.t == TokenType::Equal {
                     let right = self.resolve_expr(*right)?;
+
                     if let Expr::Access(l) = *(left.clone()) {
                         let id = self.access(&l)?;
                         return Ok(Expr::ResolvedAssign(l, id, Box::new(right)));
                     }
-                    else {
-                        let err = "Invalid assignment target. Expected an identifier";
-                        error(op.clone(), err);
-                        return Err(err);
+
+                    else if let Expr::Binary(l, op, r) = *left {
+                        if let Expr::Access(_) = *r {
+                            let list = Self::flatten_field_access(*l, op, *r.clone())?;
+                            let id = self.access(&list[0])?;
+
+                            return Ok(Expr::ResolvedFieldAssign {
+                                id, list, set_to: Box::new(right)
+                            });
+                        }
                     }
+                    
+                    let err = "Invalid assignment target";
+                    error(op.clone(), err);
+                    return Err(err);
                 }
+
+                if op.t == TokenType::Dot {
+                    let list = Self::flatten_field_access(*left, op, *right.clone())?;
+                    let id = self.access(&list[0])?;
+
+                    return Ok(Expr::ResolvedFieldAccess {
+                        id, list
+                    });
+                }
+
                 let left = self.resolve_expr(*left)?;
                 let right = self.resolve_expr(*right)?;
                 Ok(Expr::Binary(Box::new(left), op, Box::new(right)))

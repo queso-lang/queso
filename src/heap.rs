@@ -7,6 +7,7 @@ pub enum ObjType {
     Function(Function),
     Closure(Closure),
     Class(Class),
+    Instance(Instance),
 
     Value(Value),
     UpValue(UpValue)

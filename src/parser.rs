@@ -121,6 +121,12 @@ impl Parser {
         parser.rules.insert(TokenType::Or,
             ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::Or as u8});
 
+        parser.rules.insert(TokenType::Dot,
+            ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::FnCall as u8});
+
+        // parser.rules.insert(TokenType::HashBracket,
+        //     ParserRule {prefix: None,                   infix: Some(Parser::binary),    bp: BP::FnCall as u8});
+
         parser
     }
     
@@ -273,6 +279,11 @@ impl Parser {
         let argslen = args.len();
         Expr::FnCall(Box::new(left), args, argslen as u16)
     }
+
+    // fn dot(&mut self, left: Expr) -> Expr {
+    //     self.toks.next();
+
+    // }
 }
 
 // STMT

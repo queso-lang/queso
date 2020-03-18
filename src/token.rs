@@ -5,7 +5,7 @@ pub enum TokenType {
     LeftParen, RightParen, LeftBracket, RightBracket, LeftBrace, RightBrace,
 
     Minus, Plus, Slash, Star, StarStar, Percent,
-    Comma, Dot, Colon, ColonColon, Semi, At, AtColon, Pipe, Arrow, Hash,
+    Comma, Dot, Colon, ColonColon, Semi, At, AtColon, Pipe, Arrow, Hash, HashBracket,
     Or, And,
     BitOr, BitAnd,
     Bang, BangEqual,

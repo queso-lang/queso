@@ -68,7 +68,7 @@ impl GC {
             ObjType::Value(val) => {
                 self.mark_heap_from_value(&val.clone(), &mut vm.heap)
             },
-            ObjType::Class(cl) => {
+            ObjType::Instance(cl) => {
                 
             },
             _ => {}

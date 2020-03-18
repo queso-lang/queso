@@ -77,7 +77,10 @@ impl Lexer {
             '+' => self.new_token(TokenType::Plus),
             ',' => self.new_token(TokenType::Comma),
             '.' => self.new_token(TokenType::Dot),
-            '#' => self.new_token(TokenType::Hash),
+            '#' => {
+                let t = if self.match_token('[') {TokenType::HashBracket} else {TokenType::Hash};
+                self.new_token(t)
+            },
             '%' => self.new_token(TokenType::Percent),
 
             '*' => {

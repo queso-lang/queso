@@ -19,7 +19,16 @@ pub enum Expr {
     Access(Token),
 
     ResolvedAccess(Token, ResolveType),
+    ResolvedFieldAccess {
+        list: Vec<Token>,
+        id: ResolveType
+    },
     ResolvedAssign(Token, ResolveType, Box<Expr>),
+    ResolvedFieldAssign {
+        list: Vec<Token>,
+        id: ResolveType,
+        set_to: Box<Expr>
+    },
     ResolvedBlock(Vec<Stmt>),
 
     Error
@@ -55,6 +64,14 @@ impl std::fmt::Display for Expr {
             },
             Expr::ResolvedAccess(tok, id) => write!(f, "{}", id),
             Expr::ResolvedAssign(tok, id, val) => write!(f, "{} = {}", id, val),
+            Expr::ResolvedFieldAssign {
+                list,
+                id,
+                set_to
+            } => {
+                let list_str = list.iter().for_each(|el| {std::fmt::Display::fmt(el, f);});
+                write!(f, "#{} = {}", id, set_to)
+            },
             Expr::FnCall(_, _, _) => write!(f, "call"),
             _ => panic!("display trait not defined")
         }

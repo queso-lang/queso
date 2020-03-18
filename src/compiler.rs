@@ -165,6 +165,40 @@ impl<'a> Compiler<'a> {
                     },
                 }
             },
+            Expr::ResolvedFieldAccess {
+                id, list
+            } => {
+                match id {
+                    ResolveType::Local {id} => {
+                        self.chk.add_instr(Instruction::GetLocalField {
+                            id, list: list[1..].iter().map(|el| {el.val.clone().into_boxed_str()}).collect()
+                        }, 0)
+                    },
+                    ResolveType::UpValue {id} => {
+                        self.chk.add_instr(Instruction::GetUpValueField {
+                            id, list: list[1..].iter().map(|el| {el.val.clone().into_boxed_str()}).collect()
+                        }, 0)
+                    },
+                }
+            },
+            Expr::ResolvedFieldAssign {
+                id, list, set_to
+            } => {
+                self.compile_expr(*set_to);
+
+                match id {
+                    ResolveType::Local {id} => {
+                        self.chk.add_instr(Instruction::SetLocalField {
+                            id, list: list[1..].iter().map(|el| {el.val.clone().into_boxed_str()}).collect()
+                        }, 0)
+                    },
+                    ResolveType::UpValue {id} => {
+                        self.chk.add_instr(Instruction::SetUpValueField {
+                            id, list: list[1..].iter().map(|el| {el.val.clone().into_boxed_str()}).collect()
+                        }, 0)
+                    },
+                }
+            },
             _ => panic!("This is a problem with the compiler itself")
         }
 
@@ -216,6 +250,18 @@ impl<'a> Compiler<'a> {
                 let const_id = self.chk.add_const(Value::Obj(func));
 
                 self.chk.add_instr(Instruction::DeclareClosure(id, const_id, upvalues), 0)
+            },
+            Stmt::ResolvedClassDecl {
+                name,
+                id,
+                decls
+            } => {
+                self.chk.var_count += 1;
+                let class = Box::new(ObjType::Class(Class::new(name.val.clone())));
+
+                let const_id = self.chk.add_const(Value::Obj(class));
+
+                self.chk.add_instr(Instruction::DeclareClass {const_id, assign_id: id}, 0)
             }
             _ => panic!("This is a problem with the compiler itself")
         }
