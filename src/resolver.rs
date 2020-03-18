@@ -176,6 +176,14 @@ impl Resolver {
                     body: Box::new(body)
                 })
             },
+            Stmt::ClassDecl {name, decls} => {
+                let id = self.frame().env.add_local(name.clone());
+                Ok(Stmt::ResolvedClassDecl {
+                    id,
+                    name,
+                    decls
+                })
+            }
             _ => panic!()
         }
     }

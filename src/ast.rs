@@ -65,15 +65,24 @@ impl std::fmt::Display for Expr {
 pub enum Stmt {
     Expr(Box<Expr>),
     MutDecl(Token, Box<Expr>),
-    ResolvedMutDecl(u16, Box<Expr>),
+    ResolvedMutDecl(StackIdx, Box<Expr>),
     FnDecl(Token, Vec<Token>, Box<Expr>),
     ResolvedFnDecl {
         name: Token,
-        id: u16,
+        id: StackIdx,
         upvalues: Vec<UpValueIndex>,
-        captured: Vec<u16>,
+        captured: Vec<StackIdx>,
         params: Vec<Token>,
         body: Box<Expr>
+    },
+    ClassDecl {
+        name: Token,
+        decls: Vec<Stmt>
+    },
+    ResolvedClassDecl {
+        id: StackIdx,
+        name: Token,
+        decls: Vec<Stmt>
     },
 
     Error
@@ -100,6 +109,14 @@ impl std::fmt::Display for Stmt {
                 }
                 write!(f, ": ");
                 std::fmt::Display::fmt(&**body, f);
+                Ok(())
+            },
+            Stmt::ResolvedClassDecl {
+                name,
+                id,
+                decls
+            } => {
+                write!(f, "class #{}", id);
                 Ok(())
             },
             _ => panic!("display trait not defined")

@@ -36,6 +36,7 @@ impl ObjType {
                 UpValueLocation::Stack(id) => "s".to_string() + &id.to_string(),
                 UpValueLocation::Heap(id) => "h".to_string() + &id.to_string()
             }),
+            ObjType::Class(cl) => format!("class {}", cl.name),
             _ => panic!()
         } 
     }

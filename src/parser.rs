@@ -236,12 +236,7 @@ impl Parser {
 
     fn block(&mut self) -> Expr {
         self.toks.next();
-        let mut stmts = Vec::<Stmt>::new();
-        let mut is_first = true;
-        while self.toks.peek().t != TokenType::RightBrace && self.toks.peek().t != TokenType::EOF {
-            stmts.push(self.stmt(is_first));
-            is_first = false;
-        }
+        let mut stmts = self.stmts(TokenType::RightBrace);
         self.consume(TokenType::RightBrace, "Unmatched {");
         Expr::Block(stmts)
     }
@@ -283,26 +278,54 @@ impl Parser {
 // STMT
 impl Parser {
     pub fn program(&mut self) -> Program {
+        self.stmts(TokenType::EOF)
+    }
+    fn stmts(&mut self, until: TokenType) -> Vec<Stmt> {
         let mut stmts = Vec::<Stmt>::new();
         let mut is_first = true;
-        while self.toks.peek().t != TokenType::EOF {
-            stmts.push(self.stmt(is_first));
+        while self.toks.peek().t != TokenType::EOF && self.toks.peek().t != until {
+            if !is_first {
+                if self.consume(TokenType::Semi, "Expected a SEMI after statement") {
+                }
+                else {self.sync()};
+            }
+            stmts.push(self.stmt());
             is_first = false;
         }
         stmts
     }
-    fn stmt(&mut self, is_first: bool) -> Stmt {
-        if !is_first {
-            if self.consume(TokenType::Semi, "Expected a SEMI after expression") {
-                self.panic = false;
+    fn decls(&mut self, until: TokenType) -> Vec<Stmt> {
+        let mut decls = Vec::<Stmt>::new();
+        let mut is_first = true;
+        while self.toks.peek().t != TokenType::EOF && self.toks.peek().t != until {
+            if !is_first {
+                if self.consume(TokenType::Semi, "Expected a SEMI after declaration") {
+                    self.panic = false;
+                }
+                else {self.sync()};
             }
-            else {self.sync()};
+            let decl = match self.decl() {
+                Some(decl) => decl,
+                None => {
+                    self.error(self.toks.peek().clone(), "Expected a declaration");
+                    is_first = false;
+                    continue
+                }
+            };
+            decls.push(decl);
+            is_first = false;
         }
-        
+        decls
+    }
+    fn stmt(&mut self) -> Stmt {
+        self.decl().unwrap_or_else(|| self.expr_stmt())
+    }
+    fn decl(&mut self) -> Option<Stmt> {
         match self.toks.peek().t {
-            TokenType::Mut => self.mut_decl(),
-            TokenType::Fn => self.fn_decl(),
-            _ => self.expr_stmt()
+            TokenType::Mut => Some(self.mut_decl()),
+            TokenType::Fn => Some(self.fn_decl()),
+            TokenType::Class => Some(self.class_decl()),
+            _ => None
         }
     }
     fn expr_stmt(&mut self) -> Stmt {
@@ -344,6 +367,15 @@ impl Parser {
 
         let body = self.expr();
         Stmt::FnDecl(name, params, Box::new(body))
+    }
+    fn class_decl(&mut self) -> Stmt {
+        self.toks.next();
+        let name = self.toks.peek().clone();
+        self.consume(TokenType::Identifier, "Expected class name");
+        self.consume(TokenType::LeftBrace, "Expected { after class name");
+        let decls = self.decls(TokenType::RightBrace);
+        self.consume(TokenType::RightBrace, "Expected } after class body");
+        Stmt::ClassDecl {name, decls}
     }
 }
 
