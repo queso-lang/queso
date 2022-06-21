@@ -37,6 +37,8 @@ export class Lexer {
 
     this.to += 1;
     this.fileTo[1] += 1;
+
+    return true;
   };
 
   private isEOF = () => this.to >= this.src.length;
@@ -63,7 +65,7 @@ export class Lexer {
     while (isDigit(this.peek(0) ?? '')) {
       this.next();
     }
-    if (this.peek(0) !== '.' && isDigit(this.peek(0) ?? '')) {
+    if (this.peek(0) === '.' && isDigit(this.peek(1) ?? '')) {
       this.next();
       while (isDigit(this.peek(0) ?? '')) {
         this.next();
@@ -88,21 +90,28 @@ export class Lexer {
         'continue',
         'return',
         'catch',
+        'null',
+        'true',
+        'false',
       ].includes(val)
-        ? (val.toUpperCase() as any)
+        ? ((val.slice(0, 1).toUpperCase() + val.slice(1)) as any)
         : 'Identifier',
     );
   };
 
   lexNext = () => {
     this.from = this.to;
-    this.fileFrom[1] = this.fileTo[1];
+    this.fileFrom = [...this.fileTo];
+
+    // console.log('a', this.fileFrom, this.fileTo);
 
     if (this.isEOF()) {
       return this.createToken('EOF');
     }
 
     const c = this.next();
+
+    // console.log('b', c, this.fileFrom, this.fileTo);
 
     const tokenFn = {
       '(': () => this.createToken('LeftParen'),
@@ -112,6 +121,9 @@ export class Lexer {
       '{': () => this.createToken('LeftBrace'),
       '}': () => this.createToken('RightBrace'),
       '+': () => this.createToken('Plus'),
+      ',': () => this.createToken('Comma'),
+      '.': () => this.createToken('Dot'),
+      ';': () => this.createToken('Semi'),
       '*': () => this.createToken(this.matchToken('*') ? 'StarStar' : 'Star'),
       '-': () => this.createToken(this.matchToken('>') ? 'SlimArrow' : 'Minus'),
       '!': () => this.createToken(this.matchToken('=') ? 'BangEqual' : 'Bang'),
@@ -127,23 +139,45 @@ export class Lexer {
             : 'Invalid',
         ),
       '&': () => this.createToken(this.matchToken('&') ? 'And' : 'Invalid'),
-
       '/': () => {
         if (this.matchToken('/')) {
           while (this.peek(0) !== '\n' && !this.isEOF()) {
             this.next();
           }
-          // return this.lexNext();
+          return (this.lexNext as () => Token)();
         }
+        return this.createToken('Slash');
+      },
+      '=': () =>
+        this.createToken(
+          this.matchToken('>')
+            ? 'FatArrow'
+            : this.matchToken('=')
+            ? 'EqualEqual'
+            : 'Equal',
+        ),
+
+      '\n': () => {
+        this.fileTo = [this.fileTo[0] + 1, 1];
+        this.fileFrom = [...this.fileTo];
+        return (this.lexNext as () => Token)();
       },
     }[c];
 
     const token = (
       tokenFn ??
       (() => {
+        if ([' ', '\t', '\r'].includes(c)) {
+          return (this.lexNext as () => Token)();
+        }
+
         if (isDigit(c)) {
           return this.makeNumber();
         }
+        if (isLetterOrUnderscore(c)) {
+          return this.makeIdentifier();
+        }
+        return this.createToken('Invalid');
       })
     )();
 
