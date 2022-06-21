@@ -1,10 +1,9 @@
-/target
-**/*.rs.bk
+.env
+node_modules
+.DS_Store
+dist
+dist-client
+dist-ssr
+*.local
 
-
-#Added by cargo
-#
-#already existing elements are commented out
-
-#/target
-#**/*.rs.bk
+yarn-error.log
