@@ -24,7 +24,7 @@ null
 
 ### Variables
 Immutable variables are the basis of functional programming in queso.
-```
+```rust
 let immutableVariable = 1;
 immutableVariable = 2; // err! (compile-time)
 mut mutableVariable = 3;
