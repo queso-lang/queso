@@ -48,6 +48,13 @@ foo **= 2
 2 != 3
 3 == 3
 
+true && true
+false || true
+
+// short-circuiting
+false || 123
+`foo` && `bar`
+
 `foo` ++ `bar` // string concatenation
 
 [*a, *b], {*a, *b, -removedProperty} // spread, remove property operators
@@ -66,8 +73,8 @@ c(b(a(123)), 456)
 let count = (list, predicate) -> filter(list, predicate).len
 [1, 2, 3, 4].>count(x -> x > 3) // 1
 // this is the pipe-access operator. Similar to extension methods.
-// It pipes the left operand into the righ operand's (which has to be a function) first argument.
-// notice that reduce(list, ...) could also be written as list.>reduce(...)
+// It pipes the left operand into the right operand's (which has to be a function) first argument.
+// notice that filter(list, ...) could also be written as list.>filter(...)
 
 // explicit conversions
 !!0 // to bool. Note: there is no `!!` operator, rather two `!` operators chained.
