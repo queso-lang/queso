@@ -22,6 +22,15 @@ null
 // single-line comments will be supported
 ```
 
+### Variables
+Immutable variables are the basis of functional programming in queso.
+```
+let immutableVariable = 1;
+immutableVariable = 2; // err! (compile-time)
+mut mutableVariable = 3;
+mutableVariable = 4; // ok!
+```
+
 ### Operators
 ```rust
 // arithmetic (numbers only, no implicit conversions)
