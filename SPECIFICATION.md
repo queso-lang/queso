@@ -31,65 +31,79 @@ mut mutableVariable = 3;
 mutableVariable = 4; // ok!
 ```
 
-### Operators
-```rust
-// arithmetic (numbers only, no implicit conversions)
-1 + 2
-1 - 2
-1 * 2
-1 / 2
-4 ** 5 // exponentiation
-// no modulus, no bitwise operators. Use std functions.
+<details>
+  <summary>
+    <h3>Operators</h3>
+   </summary>
+  
+  ```rust
+  // arithmetic (numbers only, no implicit conversions)
+  1 + 2
+  1 - 2
+  1 * 2
+  1 / 2
+  4 ** 5 // exponentiation
+  // no modulus, no bitwise operators. Use std functions.
 
-// assignment
-foo = 2
-foo += 2
-foo -= 2
-foo *= 2
-foo /= 2
-foo **= 2
+  // assignment
+  foo = 2
+  foo += 2
+  foo -= 2
+  foo *= 2
+  foo /= 2
+  foo **= 2
+  foo ||= bar
+  foo &&= bar
+  foo ??= bar
 
-!true
-3 > 2
-3 >= 2
-2 < 3
-2 <= 3
-2 != 3
-3 == 3
+  !true
+  3 > 2
+  3 >= 2
+  2 < 3
+  2 <= 3
+  2 != 3
+  3 == 3
 
-true && true
-false || true
+  true && true
+  false || true
 
-// short-circuiting
-false || 123
-`foo` && `bar`
+  // short-circuiting
+  false || 123
+  `foo` && `bar`
 
-`foo` ++ `bar` // string concatenation
+  `foo` ++ `bar` // string concatenation
 
-[*a, *b], {*a, *b, -removedProperty} // spread, remove property operators
+  [*a, *b], {*a, *b, -removedProperty} // spread, remove property operators
 
-foo.bar // dot-access, dereferencing
-foo.bar[5] // array access
-foo[`bar`] // computed access
-foo.bar() // invocation
-foo?.bar?.buzz?.() // optional chaining
+  foo.bar // dot-access, dereferencing
+  foo.bar[5] // array access
+  foo[`bar`] // computed access
+  foo.bar() // invocation
+  foo?.bar?.buzz?.() // optional chaining
 
-c(b(a(123)), 456)
-// is equivalent to:
-123 |> a |> b |> x -> c(x, 456) // the pipe operator.
-// It's still undecided whether the implementation should be similar to F# or Hack.
+  c(b(a(123)), 456)
+  // is equivalent to:
+  123 |> a |> b |> x -> c(x, 456) // the pipe operator.
+  // It's still undecided whether the implementation should be similar to F# or Hack.
 
-let countIf = (list, predicate) -> filter(list, predicate).len
-[1, 2, 3, 4].>countIf(x -> x > 3) // 1
-// this is the pipe-access operator. Similar to extension methods.
-// It pipes the left operand into the right operand's (which has to be a function) first argument.
-// notice that filter(list, ...) could also be written as list.>filter(...)
+  let countIf = (list, predicate) -> filter(list, predicate).len
+  [1, 2, 3, 4].>countIf(x -> x > 3) // 1
+  // this is the pipe-access operator. Similar to extension methods.
+  // It pipes the left operand into the right operand's (which has to be a function) first argument.
+  // notice that filter(list, ...) could also be written as list.>filter(...)
 
-// explicit conversions
-!!0 // to bool. Note: there is no `!!` operator, rather two `!` operators chained.
-`{123}`, ``123 // to string. Second syntax is under consideration.
-+`123` // to number
-```
+  // explicit conversions
+  !!0 // to bool. Note: there is no `!!` operator, rather two `!` operators chained.
+  `{123}`, ``123 // to string. Second syntax is under consideration.
+  +`123` // to number
+
+  // async/await, throw, catch
+  ...fetch() // await
+  throw {}
+  ...fetch() catch err -> log(err)
+  ```
+  
+</details>
 
 ### Blocks
 Queso adds special meaning to the standard `()` grouping operator.
@@ -101,7 +115,7 @@ The blocks are also full-fledged scopes with the possibility to define and shado
 let myFavoriteSalsas = (
   let allSalsas = [{name: `fresca`, isFavorite: true}, {name: `blanca`, isFavorite: false}, {name: `crema`, isFavorite: true}];
   allSalsas.filter(salsa -> salsa.isFavorite)
-).map(salsa -> salsa.name)
+).>map(salsa -> salsa.name)
 // [`fresca`, `crema`]
 ```
 
@@ -121,7 +135,7 @@ log(
   (
     doSomething();
   )
-) // throws. Either remove the trailing semi (and return `doSomething()`), or add the null
+) // does not compile. Either remove the trailing semi (and return `doSomething()`), or add the null
 ```
 
 ### Functions
@@ -252,4 +266,18 @@ let data =
 ```
 
 ### OOP?
-Queso puts an emphasis on paradigms other than OOP. Thus, in the current language design iteration, there are no traditional classes or inheritance.
+Queso puts an emphasis on paradigms other than OOP. Thus, in the current language design iteration, there are no traditional classes or inheritance. However, it does implement some OOP ideas, such as modules, which are similar to static classes.
+
+### Modules
+Each file is a module. Modules are singletons. A module can have exports (named values -- variables), as well as imports (which are the exports from other modules).
+```ts
+// A.queso
+export let utils = {
+  countIf = (list, predicate) -> filter(list, predicate).len;
+}
+
+// B.queso
+import ./A => utils;
+
+log([1, 2, 3, 4].>utils.countIf(x -> x > 3)) // 1
+```
