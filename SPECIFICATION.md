@@ -79,8 +79,8 @@ c(b(a(123)), 456)
 123 |> a |> b |> x -> c(x, 456) // the pipe operator.
 // It's still undecided whether the implementation should be similar to F# or Hack.
 
-let count = (list, predicate) -> filter(list, predicate).len
-[1, 2, 3, 4].>count(x -> x > 3) // 1
+let countIf = (list, predicate) -> filter(list, predicate).len
+[1, 2, 3, 4].>countIf(x -> x > 3) // 1
 // this is the pipe-access operator. Similar to extension methods.
 // It pipes the left operand into the right operand's (which has to be a function) first argument.
 // notice that filter(list, ...) could also be written as list.>filter(...)
@@ -105,18 +105,37 @@ let myFavoriteSalsas = (
 // [`fresca`, `crema`]
 ```
 
+This is similar to languages such as Rust. However, what makes it different is that it is considered an error to include a semicolon after the last statement. So, to not return anything from a block, you must state it explicitly. While it could be justified in a statically-typed language such as Rust, forgetting a semi in a language such as Queso could drastically alter the program behaviour. Thus:
+
+```ts
+// ✔️
+log(
+  (
+    doSomething();
+    null
+  )
+) // null
+
+// ❌
+log(
+  (
+    doSomething();
+  )
+) // throws. Either remove the trailing semi (and return `doSomething()`), or add the null
+```
+
 ### Functions
 All functions in queso are lambdas and are first-class citizens. There are no function declarations. Instead, simply assign a lambda to a variable.
 The return value can be anything, including a block (similar to function declarations in other languages), or any other value.
 ```rust
-arg -> retValue; // one argument
--> retValue; // no arguments
-(arg1, arg2) -> retValue // multiple arguments
+arg -> retValue; // one param
+-> retValue; // no params
+(arg1, arg2) -> retValue // multiple params
 
-let getUsers = async -> (
+let getUsers = ...-> (
   let users = ...fetch(`GET`, `/users`);
   users.map(user -> {*user, -password})
-) // async, block body
+) // async, no params, block body
 ```
 
 ### Lists, objects
@@ -174,3 +193,63 @@ user.preferredCuisine == `mexican` ? (
 )
 ```
 
+### async/await programming
+Queso uses an async/await syntax similar to JavaScript.
+
+An asynchronous task is represented by a Promise object.
+
+This object is in the form of `type Promise<T> = {then: (callback: (resolvedValue: T) -> ()) -> self, catch: (err) -> ()}`.
+
+To get the promised value, one could call `promise.then(val -> log(val))`, or preferrably, use the await syntax `log(...promise)`.
+
+To use this syntax, the wrapping function must also be marked as async. The full example:
+
+```ts
+let getUserNames = ...-> (
+  for user in ...fetch(`GET`, `/users`) => user.name
+);
+
+let someWhereElse = (arg1, arg2) ...-> (
+  log(...getUserNames());
+)
+```
+
+### throw and try..catch
+A full example of a typical throw and try..catch usage:
+```ts
+// an example of a function which can throw
+let assertAllUserNamesNonEmpty = () ...-> (
+  let users = ...fetch(`GET`, `/users`);
+  !!(
+    for user in users => user.name.len ? user.name : throw {type: `emptyUserName`} // the thrown value is just an object
+  ).len
+);
+
+let someWhereElse = () ...-> (
+  // catch errors from a single async function
+  // here, catch acts as a binary operator with the right operand being a callback function
+  ...assertAllUserNamesNonEmpty() catch err -> log(err);
+  
+  // this is more alike to traditional try..catch blocks with multiple statements
+  (
+    foo();
+    bar()
+  ) catch err -> (
+    if err.type == `notFound` => rethrow; // shorthand for "throw err"
+    log(err)
+  )
+)
+```
+
+Catches can also be used in series, as well as return a value:
+```ts
+let data =
+  ...fetch(`mainUrl`)
+  catch -> ...fetch(`fallbackUrl1`) // notice the lack of parameters in the catch callback, since we don't use the err object
+  catch -> ...fetch(`fallbackUrl2`)
+  catch -> []; // if everything fails, maybe return some fallback value.
+  // notice that omitting the last catch is synonymous to writing `catch -> rethrow`
+```
+
+### OOP?
+Queso puts an emphasis on paradigms other than OOP. Thus, in the current language design iteration, there are no traditional classes or inheritance.
