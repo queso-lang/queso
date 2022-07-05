@@ -10,7 +10,7 @@ See the [SPECIFICATION](./SPECIFICATION.md) for a more concrete definition of th
 
 ### What is **queso**?
 
-**queso** is a general-purpose, functional, dynamically-typed, safe, and immutable scripting language that builds on the foundation of existing languages with convenience and quality of life features and tweaks.
+**queso** is a general-purpose, dynamically-typed, safe, and immutable scripting language with a focus on functional programming. **queso** builds on the foundation of existing languages with convenience and quality of life features and tweaks.
 
 **queso** promotes the *everything is an expression notion*, where constructs such as if, while, as well as blocks, have a value.
 
@@ -31,7 +31,7 @@ let spicySalsas = salsas |> filterSpicySalsas;
 
 log(
   spicySalsas
-    .>map(.name)
+    .>map(_.name)
     .>sort()
     .>join(`, `)
 )
@@ -48,7 +48,11 @@ Then, familiarly, we define a list of objects. The value of the `name` key is a 
 
 We could then do `filterSpicySalsas(salsas)` to retrieve just the salsas with `isSpicy == true`, or simply use the ~~cheese~~ pipe operator, like we did above.
 
-Lastly, from the spicy salsas, we want to print out a sorted, comma-separated string of the salsas' names. And so, we map the list of salsas to their names. This could be done like so: `spicySalsas.>map(salsa -> salsa.name)`. Alternatively, if the expected argument of a function is some predicate, we can use any binary operator, and leave the left operand empty. Queso will pipe the predicate's argument to that operand. The same applies to binary functions, and not only predicates. Take this example of a function which reduces the list:
+Lastly, from the spicy salsas, we want to print out a sorted, comma-separated string of the salsas' names. And so, we map the list of salsas to their names. This could be done like so: `spicySalsas.>map(salsa -> salsa.name)`.
+
+In this case however, we can use special semantics, which come from the fact that operators in queso are functions themselves. Moreover, we can use the placeholder `_` keyword to easily create curried functions. For instance, `let sum = (a, b) -> a + b` can be curried like so: `let sumWithFive = sum(5, _)`. This is equivalent to writing `let sumWithFive = b -> sum(5, b)`.
+
+Thus, `.>map(_.name)` is equivalent to `.>map(salsa -> salsa.name)`. Notice that this creates a unary function, but we can just pass the operator itself without placeholders if we are epxected to provide a binary function. Take this example of a function which reduces a list:
 
 ```ts
 let reduce = (list, reducer, initial) -> (
@@ -105,11 +109,27 @@ So, right off the bat, we get a look at the module system. We define three modul
 
 In the first file, we import some theoretical ORM library. Then we define a function to be used later on in our web server to fetch a user by their id. The function is asynchronous, which is indicated by the async `...->` operator. This means you can use the await `...` operator inside of the function. Here, we're calling an import from the ORM library, and then awaiting the returned Promise.
 
-Once we have that user, we want to return it, but remove the `password` property, for sescurity reasons. We create a new object, then spread that original user object (spreading means copying all key:value pairs) with the concatenation `++` operator, and lastly remove the `password` key using the `-` operator. Recall that the last expression in a block will be returned, so we don't need to use the `return` keyword explicitly.
+Once we have that user, we want to return it, but remove the `password` property, for security reasons. We create a new object, then spread that original user object (spreading means copying all key:value pairs) with the concatenation `++` operator, and lastly remove the `password` key using the `-` operator. Recall that the last expression in a block will be returned, so we don't need to use the `return` keyword explicitly.
 
 In the second file, we define a small utility function for checking whether the user is authorized to access our endpoint.
 
 Lastly, in our main file, we import the functions from the two other files, as well as a function for creating a router object from some theoretical web server library. We create the router (almosts like instantiation), then define one route with the middleware and the route handler. If the requested user is the current user, we just return the user object which already sits in our `ctx`. Otherwise, we use our `getUserById()` function by awaiting it.
+
+#### Standard Library
+Queso provides a flexible system for basic behavior and the ability to swap the standard library with your own implementation that tailors best to your needs. This is because queso does not implement any methods on the built-in primitives, rather it provides a `core` module for basic functions. For instance, let's say the native function for finding an element in a list was not flexible enough for you:
+
+```ts
+// this is imported implicitly, but can be disabled entirely
+import core => find;
+log( [1, 2, 3].>find(_ > 1) ) // prints the element 2, but what if you wanted the index too?
+
+let find = list, predicate ->
+  for i in range(list) =>
+    list[i] |> el -> predicate(el) ? return [el, i] : continue
+  else => [null, -1]
+
+log ( [1, 2, 3].>find(_ > 1) ) // prints [2, 1]
+```
 
 #### License
 
