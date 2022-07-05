@@ -140,7 +140,7 @@ log(
 
 ### Functions
 All functions in queso are lambdas and are first-class citizens. There are no function declarations. Instead, simply assign a lambda to a variable.
-The return value can be anything, including a block (similar to function declarations in other languages), or any other value.
+The return value can be anything, including a block (similar to function declarations in other languages), or any other expression.
 ```rust
 arg -> retValue; // one param
 -> retValue; // no params
@@ -280,4 +280,32 @@ export let utils = {
 import ./A => utils;
 
 log([1, 2, 3, 4].>utils.countIf(x -> x > 3)) // 1
+```
+
+### Immutability
+All data structures in queso are immutable. By mutating a data structure, you're creating an entirely new one instead. On the other hand, variables can be immutable or mutable. This allows for the usage of common and familiar patterns (such as counting through iteration), while still maintaining an immutable data structure. 
+
+```ts
+let foo = [1, 2, 3];
+foo = [4, 5, 6]; // ❌ can't mutate the variable!
+foo[0] = 7; // ❌ can't mutate the data structure either!
+
+mut common = [1, 2]
+common = [3, 4] // ✔️ can mutate the variable
+common[0] = 5 // ❌ still can't mutate the data structure itself!
+
+// an example of OOP mutable programming in queso
+// this works thanks to late binding
+let createCounter = -> (
+  mut counter = 0;
+  
+  let increment = -> counter += 1;
+  
+  let get = -> counter;
+);
+
+let counter = createCounter();
+counter.increment();
+log( counter.get() ) // 1
+
 ```
