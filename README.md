@@ -2,144 +2,133 @@
 
 ![license](https://img.shields.io/github/license/queso-lang/queso)
 ![size](https://img.shields.io/github/languages/code-size/queso-lang/queso)
-![maintained](https://img.shields.io/maintenance/yes/2020)
-![issues](https://img.shields.io/github/issues-closed/queso-lang/queso)
 ![helpwanted](https://img.shields.io/github/labels/queso-lang/queso/help%20wanted)
 
 Checkout [develop](../../tree/develop) and feature branches for latest commits!
+
+See the [SPECIFICATION](./SPECIFICATION.md) for a more concrete definition of the language.
+
 ### What is **queso**?
 
-**queso** is a functional dynamically-typed scripting language that builds on the foundation of existing languages with many **unique** convenience and quality of life features and tweaks. In fact, the driving force behind it was bad design choices in other langs.
+**queso** is a general-purpose, dynamically-typed, safe, and immutable scripting language with a focus on functional programming. **queso** builds on the foundation of existing languages with convenience and quality of life features and tweaks.
 
-**queso** promotes the *everything is an expression notion*, which fits nicely in a functional scripting language. However, declarations (`let`, `mut`, `fn`, `class`) are not considered expressions,
-since `if a -> let b` doesn't make sense.
+**queso** promotes the *everything is an expression notion*, where constructs such as if, while, as well as blocks, have a value.
 
-**queso** runs everywhere **C** does. It is an interpreted language and uses a byte code virtual machine to make it silky smooth.
+**queso** will be compiled to WebAssembly, and is supposed to be run in any WASM runtime, be it the browser, or a native environment.
 
 Enough with that. Let's see it in practice!
 
-This is a snippet of some functional aspects of the language:
-```rust
-// functional programming
-fn filterSpicySalsas(salsas): salsas.filter(salsa: salsa.isSpicy);
+```ts
+let filterSpicySalsas = salsas -> salsas.>filter(salsa -> salsa.isSpicy);
 
 let salsas = [
-    #{name = "fresca", isSpicy = false}, //object literals
-    #{name = "habanero", isSpicy = true},
-    #{name = "verde", isSpicy = false},
+  {name: `fresca`, isSpicy: false},
+  {name: `roja`, isSpicy: true},
+  {name: `habanero`, isSpicy: true},
 ];
 
-trace salsas |> filterSpicySalsas();
-// prints [#{name = "habanero", isSpicy = true}] along with the line and filename
-```
-So, what's going on here? this looks a little different than other langs
+let spicySalsas = salsas |> filterSpicySalsas;
 
-**First**, function declaration has a colon `:`. That's because the function body doesn't have to be a block. It just has to be an expression. The `salsas.filter(...)` is immediately returned. Lambdas are similar, in fact `salsa: salsa.isSpicy` is an example of one.
-
-When invoked with an array, filterSpicySalsas returns a subarray containining only the salsas that have a field `isSpicy = true`
-
-**Second**, `#{}` is the syntax for object literals. `{}` is way too similar to code blocks (and in fact could be ambiguous in queso).
-Why `#`? because object literals are quite similar to **hash** maps.
-
-**Lastly**, there's the ~~cheese~~ pipe `|>` operator, which lets you chain functions and inject the left operand as the right operand's first argument. This is a common tool in functional programming. It lets you convert a bunch of nested expressions into a linear one!
-```rust
-// instead of this:
-e(d(c(b(a))))
-// do this:
-a |> b() |> c() |> d() |> e()
-```
----
-### That's just the top of the iceberg!
-Look at these beautiful event-driven capabilities of queso:
-```rust
-// OOP with event-driven capabilities
-class DataLoader {
-  mut evtLoaded = new Event();
-  let endpoint = null;
-  static fn :@new(init endpoint): this;
-  fn load(): emit evtLoaded -> ..fetch(endpoint);
-}
-let dl = new DataLoader("http://localhost/data");
-dl.load(); // `evtLoaded` has been emitted.
-
-// somewhere
-on dl.evtLoaded -> data: trace data; // invoke this lambda when dl.evtLoaded happens
-
-// somewhere else
-on evtLoaded -> refreshGUI;
+log(
+  spicySalsas
+    .>map(_.name)
+    .>sort()
+    .>join(`, `)
+)
+// prints habanero, roja
 ```
 
-*Whoa..* new things. You're greeted with the `mut` keyword which just means a mutable variable. `let` variables cannot be changed after initializing and are the basis of functional programming in queso.
+First, we define the function `filterSpicySalsas`. All functions in queso are lambdas.
 
-Then there's the `:@new` constructor. We'll get to it later. What you might find interesting is the `init` keyword. That's just syntax sugar for `(endpoint): {this.endpoint = endpoint}`. Are you convinced yet? So many languages lack this obvious feature.
+Inside that function, we see the dot-pipe operator `.>`. This is because `filter` is not actually a method, but rather just a function.
 
-The `load` method is where the real event-driven capabilities shine. When called, it emits the `evtLoaded` Event with some data.
-When that happens, it's like a signal being propagated across your code. That signal is captured by the `on` keyword and the data is passed to the function after `->`. Technically speaking, `on` registers a listener on the Event.
+Traditionally, we could represent that same operation with: `filter(salsas, salsa -> salsa.isSpicy)` or with the pipe operator `salsas |> x -> filter(x, salsa -> salsa.isSpicy)`. Thus, the dot-pipe operator `.>` pipes the left operand into the right operand's first argument.
 
-If you have a keen eye, you probably noticed the `..` syntax. That's just `await`, but simpler.
+Then, familiarly, we define a list of objects. The value of the `name` key is a string (all strings in queso are multiline and interpolated), while `isSpicy` contains a bool.
 
-## Symbols
+We could then do `filterSpicySalsas(salsas)` to retrieve just the salsas with `isSpicy == true`, or simply use the ~~cheese~~ pipe operator, like we did above.
 
-Above, we used a `:@new` to construct an instance of `DataLoader`. What `:@` syntax really means is a ***Symbol***.
+Lastly, from the spicy salsas, we want to print out a sorted, comma-separated string of the salsas' names. And so, we map the list of salsas to their names. This could be done like so: `spicySalsas.>map(salsa -> salsa.name)`.
 
-A symbol is a meta-field that's attached to the variable itself, and not it's value.
+In this case however, we can use special semantics, which come from the fact that operators in queso are functions themselves. Moreover, we can use the placeholder `_` keyword to easily create curried functions. For instance, `let sum = (a, b) -> a + b` can be curried like so: `let sumWithFive = sum(5, _)`. This is equivalent to writing `let sumWithFive = b -> sum(5, b)`.
 
-Consider this example:
+Thus, `.>map(_.name)` is equivalent to `.>map(salsa -> salsa.name)`. Notice that this creates a unary function, but we can just pass the operator itself without placeholders if we are epxected to provide a binary function. Take this example of a function which reduces a list:
 
-```rust
-mut taco = "sloppy joe";
-taco:@toString = (): `TACO: $taco`;
-trace taco; // prints "TACO: sloppy joe"
-taco = "al pastor";
-trace taco; // prints "TACO: al pastor" even though the value of taco changed
+```ts
+let reduce = (list, reducer, initial) -> (
+  mut accumulator = initial;
+  for el in list => (
+    accumulator = reducer(accumulator, el)
+  );
+  accumulator // last value in a block is returned
+);
+
+let foo = [1, 2, 3];
+// same as foo.>reduce((a, b) -> a + b, 0)
+log( foo.>reduce(+, 0) ); // 6
+
+// a more complicated example to show that even the dot-access operator can be used this way:
+let traverseKeys = [`buzz`, `yeet`];
+let bar = {buzz: {yeet: 123}};
+log( traverseKeys.>reduce(., bar) ) // 123
+// here, bar is being accessed with the keys specified in traverseKeys
+// this is just like writing bar.buzz.yeet
 ```
 
-This lets you define fields that are used by the language (and also your own!). Examples of other built-in symbols are:
+Notice how our reduce function uses parentheses `()` to denote a block. This is because while other languages use `()` for grouping expressions to alter the precedence of operations, such as in `a - (b + c)`, queso extends this notion to grouping expressions themselves into lists, just like normal blocks. The last expression in the block will be "returned" as the block's value. The blocks are also full-fledged scopes with the possibility to define and shadow variables.
 
-#### :@iter - iterators
-```rust
-let cheese = 123;
-cheese:@iter: *(): { yield 1; yield 2; } //this is a generator function
-for n in foo -> trace n; //1 2
+Coming back to the original example, we use dot-piping to 1. map the salsa objects to just their names, 2. sort the values lexicographically, 3. join them with a comma. We end up with `habanero, roja`.
+
+Let's jump in to a real-world example of a web server in queso:
+
+```ts
+// userService.queso
+import orm => repos;
+export let getUserById = id ...-> (
+  let users = ...repos.users.getOne({where: {id}});
+  {++user, -password}
+)
+
+// middleware.queso
+export let adminGuard = (ctx, next) ...-> ctx.state.user.role == 'admin' ? ...next() : throw {type: 401}; 
+
+// userRouter.queso
+import ./userService => getUserById;
+import ./middleware => adminGuard;
+import web => createRouter;
+
+export let router = createRouter();
+
+router.GET(`/user/:id`, adminGuard, ctx ...-> (
+  [ctx.request.body.id, ctx.state.user] |> [id, user]
+    -> id == user.id ? user : ...getUserById(id)
+));
 ```
 
-#### :@get and :@set - getter and setter functions (everything's a property!)
-```rust
-mut cheese = 123;
-cheese:@get = (it): it * 2;
-trace cheese; // 246
-cheese:@set = (it, val): it = {trace "cheese has changed! beware.."; val};
-cheese = 5;
-trace cheese; // cheese has changed! beware.. 10
-```
+So, right off the bat, we get a look at the module system. We define three modules (a file is a module) with their respective exports and imports. All exports are named.
 
-Symbols are a work in progress and the syntax might change. `cheese:#iter` and `cheese#iter` are also some good candidates.
+In the first file, we import some theoretical ORM library. Then we define a function to be used later on in our web server to fetch a user by their id. The function is asynchronous, which is indicated by the async `...->` operator. This means you can use the await `...` operator inside of the function. Here, we're calling an import from the ORM library, and then awaiting the returned Promise.
 
-And guess what! There's a heck of a lot more. It's getting a little long for the readme though. Unfortunately, The full-fledged docs are a work in progress, so you'll have to wait. You could also help!
+Once we have that user, we want to return it, but remove the `password` property, for security reasons. We create a new object, then spread that original user object (spreading means copying all key:value pairs) with the concatenation `++` operator, and lastly remove the `password` key using the `-` operator. Recall that the last expression in a block will be returned, so we don't need to use the `return` keyword explicitly.
 
-### Contributing
+In the second file, we define a small utility function for checking whether the user is authorized to access our endpoint.
 
-All help is welcome! Let's make this delicious language a reality.
+Lastly, in our main file, we import the functions from the two other files, as well as a function for creating a router object from some theoretical web server library. We create the router (almosts like instantiation), then define one route with the middleware and the route handler. If the requested user is the current user, we just return the user object which already sits in our `ctx`. Otherwise, we use our `getUserById()` function by awaiting it.
 
-You can get started by cloning the repo:
-```shell
-git clone https://github.com/queso-lang/queso.git
-```
-and then running `cargo run` to execute it and `cargo test` to run unit tests.
+#### Standard Library
+Queso provides a flexible system for basic behavior and the ability to swap the standard library with your own implementation that tailors best to your needs. This is because queso does not implement any methods on the built-in primitives, rather it provides a `core` module for basic functions. For instance, let's say the native function for finding an element in a list was not flexible enough for you:
 
-#### Debugging tools
+```ts
+// this is imported implicitly, but can be disabled entirely
+import core => find;
+log( [1, 2, 3].>find(_ > 1) ) // prints the element 2, but what if you wanted the index too?
 
-You may run the binary with the following debugging flags:
+let find = list, predicate ->
+  for i in range(list) =>
+    list[i] |> el -> predicate(el) ? return [el, i] : continue
+  else => [null, -1]
 
-`--#tokens` - shows tokens upon lexing
-
-`--#ast` - shows the ast upon parsing; will visualise the ast using graphviz in the future (#14)
-
-`--#instrs` - shows instructions and the stack during execution
-
-Example using `cargo` to execute queso:
-```shell
-cargo run -- --#tokens --#ast --#instrs
+log ( [1, 2, 3].>find(_ > 1) ) // prints [2, 1]
 ```
 
 #### License
