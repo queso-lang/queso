@@ -79,57 +79,86 @@ Notice how our reduce function uses parentheses `()` to denote a block. This is 
 
 Coming back to the original example, we use dot-piping to 1. map the salsa objects to just their names, 2. sort the values lexicographically, 3. join them with a comma. We end up with `habanero, roja`.
 
-Let's jump in to a real-world example of a web server in queso:
+<details open>
+  <summary>
+    <h3>More about queso</h3>
+  </summary>
 
-```ts
-// userService.queso
-import orm => repos;
-export let getUserById = id ...-> (
-  let users = ...repos.users.getOne({where: {id}});
-  {++user, -password}
-)
+  Let's jump in to a real-world example of a web server in queso:
 
-// middleware.queso
-export let adminGuard = (ctx, next) ...-> ctx.state.user.role == 'admin' ? ...next() : throw {type: 401}; 
+  ```ts
+  // userService.queso
+  import orm => repos;
+  export let getUserById = id ...-> (
+    let users = ...repos.users.getOne({where: {id}});
+    {++user, -password}
+  )
 
-// userRouter.queso
-import ./userService => getUserById;
-import ./middleware => adminGuard;
-import web => createRouter;
+  // middleware.queso
+  export let adminGuard = (ctx, next) ...-> ctx.state.user.role == 'admin' ? ...next() : throw {type: 401}; 
 
-export let router = createRouter();
+  // userRouter.queso
+  import ./userService => getUserById;
+  import ./middleware => adminGuard;
+  import web => createRouter;
 
-router.GET(`/user/:id`, adminGuard, ctx ...-> (
-  [ctx.request.body.id, ctx.state.user] |> [id, user]
-    -> id == user.id ? user : ...getUserById(id)
-));
-```
+  export let router = createRouter();
 
-So, right off the bat, we get a look at the module system. We define three modules (a file is a module) with their respective exports and imports. All exports are named.
+  router.GET(`/user/:id`, adminGuard, ctx ...-> (
+    [ctx.request.body.id, ctx.state.user] |> [id, user]
+      -> id == user.id ? user : ...getUserById(id)
+  ));
+  ```
 
-In the first file, we import some theoretical ORM library. Then we define a function to be used later on in our web server to fetch a user by their id. The function is asynchronous, which is indicated by the async `...->` operator. This means you can use the await `...` operator inside of the function. Here, we're calling an import from the ORM library, and then awaiting the returned Promise.
+  So, right off the bat, we get a look at the module system. We define three modules (a file is a module) with their respective exports and imports. All exports are named.
 
-Once we have that user, we want to return it, but remove the `password` property, for security reasons. We create a new object, then spread that original user object (spreading means copying all key:value pairs) with the concatenation `++` operator, and lastly remove the `password` key using the `-` operator. Recall that the last expression in a block will be returned, so we don't need to use the `return` keyword explicitly.
+  In the first file, we import some theoretical ORM library. Then we define a function to be used later on in our web server to fetch a user by their id. The function is asynchronous, which is indicated by the async `...->` operator. This means you can use the await `...` operator inside of the function. Here, we're calling an import from the ORM library, and then awaiting the returned Promise.
 
-In the second file, we define a small utility function for checking whether the user is authorized to access our endpoint.
+  Once we have that user, we want to return it, but remove the `password` property, for security reasons. We create a new object, then spread that original user object (spreading means copying all key:value pairs) with the concatenation `++` operator, and lastly remove the `password` key using the `-` operator. Recall that the last expression in a block will be returned, so we don't need to use the `return` keyword explicitly.
 
-Lastly, in our main file, we import the functions from the two other files, as well as a function for creating a router object from some theoretical web server library. We create the router (almosts like instantiation), then define one route with the middleware and the route handler. If the requested user is the current user, we just return the user object which already sits in our `ctx`. Otherwise, we use our `getUserById()` function by awaiting it.
+  In the second file, we define a small utility function for checking whether the user is authorized to access our endpoint.
 
-#### Standard Library
-Queso provides a flexible system for basic behavior and the ability to swap the standard library with your own implementation that tailors best to your needs. This is because queso does not implement any methods on the built-in primitives, rather it provides a `core` module for basic functions. For instance, let's say the native function for finding an element in a list was not flexible enough for you:
+  Lastly, in our main file, we import the functions from the two other files, as well as a function for creating a router object from some theoretical web server library. We create the router (almosts like instantiation), then define one route with the middleware and the route handler. If the requested user is the current user, we just return the user object which already sits in our `ctx`. Otherwise, we use our `getUserById()` function by awaiting it.
 
-```ts
-// this is imported implicitly, but can be disabled entirely
-import core => find;
-log( [1, 2, 3].>find(_ > 1) ) // prints the element 2, but what if you wanted the index too?
+  #### Standard Library
+  Queso provides a flexible system for basic behavior and the ability to swap the standard library with your own implementation that tailors best to your needs. This is because queso does not implement any methods on the built-in primitives, rather it provides a `core` module for basic functions. For instance, let's say the native function for finding an element in a list was not flexible enough for you:
 
-let find = list, predicate ->
-  for i in range(list) =>
-    list[i] |> el -> predicate(el) ? return [el, i] : continue
-  else => [null, -1]
+  ```ts
+  // this is imported implicitly, but can be disabled entirely
+  import core => find;
+  log( [1, 2, 3].>find(_ > 1) ) // prints the element 2, but what if you wanted the index too?
 
-log ( [1, 2, 3].>find(_ > 1) ) // prints [2, 1]
-```
+  let find = list, predicate ->
+    for i in range(list) =>
+      list[i] |> el -> predicate(el) ? return [el, i] : continue
+    else => [null, -1]
+
+  log ( [1, 2, 3].>find(_ > 1) ) // prints [2, 1]
+  ```
+
+</details>
+
+### Roadmap
+
+- [ ] Lexer
+  - [x] Basic lexer functionality
+  - [x] File position tracking
+  - [ ] Per-file position tracking
+  - [ ] Lex all tokens (🚧)
+  - [ ] Token stream abstraction (🚧)
+- [ ] Parser
+  - [ ] Pratt parsing for expressions
+  - [ ] Determine operator precedence
+  - [ ] Research CST, LR parsing
+- [ ] Resolver
+  - [ ] Resolve standard variable declarations
+  - [ ] Determine the best way to resolve more complex declarations, such as `if let`
+- [ ] Additional passes (TBD)
+- [ ] Generator
+  - [ ] Binaryen for WASM
+- [ ] Runtime (TBD)
+- [ ] Standard Library (TBD)
+
 
 #### License
 
