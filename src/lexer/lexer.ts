@@ -1,4 +1,4 @@
-import { Token, TokenType } from './token';
+import { Token, TokenType } from './Token';
 
 const isDigit = (c: string) => /^\d$/.test(c);
 const isLetterOrUnderscore = (c: string) => /^[a-zA-Z_]$/.test(c);
@@ -32,7 +32,7 @@ export class Lexer {
     return this.src[this.to + ahead];
   };
 
-  private matchToken = (expect: string) => {
+  private matchNext = (expect: string) => {
     if (this.isEOF() || this.peek(0) !== expect) return false;
 
     this.to += 1;
@@ -124,23 +124,23 @@ export class Lexer {
       ',': () => this.createToken('Comma'),
       '.': () => this.createToken('Dot'),
       ';': () => this.createToken('Semi'),
-      '*': () => this.createToken(this.matchToken('*') ? 'StarStar' : 'Star'),
-      '-': () => this.createToken(this.matchToken('>') ? 'SlimArrow' : 'Minus'),
-      '!': () => this.createToken(this.matchToken('=') ? 'BangEqual' : 'Bang'),
-      '<': () => this.createToken(this.matchToken('=') ? 'LessEqual' : 'Less'),
+      '*': () => this.createToken(this.matchNext('*') ? 'StarStar' : 'Star'),
+      '-': () => this.createToken(this.matchNext('>') ? 'SlimArrow' : 'Minus'),
+      '!': () => this.createToken(this.matchNext('=') ? 'BangEqual' : 'Bang'),
+      '<': () => this.createToken(this.matchNext('=') ? 'LessEqual' : 'Less'),
       '>': () =>
-        this.createToken(this.matchToken('=') ? 'GreaterEqual' : 'Greater'),
+        this.createToken(this.matchNext('=') ? 'GreaterEqual' : 'Greater'),
       '|': () =>
         this.createToken(
-          this.matchToken('>')
+          this.matchNext('>')
             ? 'Pipe'
-            : this.matchToken('|')
+            : this.matchNext('|')
             ? 'Or'
             : 'Invalid',
         ),
-      '&': () => this.createToken(this.matchToken('&') ? 'And' : 'Invalid'),
+      '&': () => this.createToken(this.matchNext('&') ? 'And' : 'Invalid'),
       '/': () => {
-        if (this.matchToken('/')) {
+        if (this.matchNext('/')) {
           while (this.peek(0) !== '\n' && !this.isEOF()) {
             this.next();
           }
@@ -150,9 +150,9 @@ export class Lexer {
       },
       '=': () =>
         this.createToken(
-          this.matchToken('>')
+          this.matchNext('>')
             ? 'FatArrow'
-            : this.matchToken('=')
+            : this.matchNext('=')
             ? 'EqualEqual'
             : 'Equal',
         ),

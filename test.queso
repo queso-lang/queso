@@ -11,3 +11,4 @@ foo bar
 789.123
 012
 null true false
+let mut in loop break continue return catch

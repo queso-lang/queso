@@ -1,7 +1,7 @@
 // entry point
 
 import { readFileSync } from 'fs';
-import { Lexer } from './lexer/lexer';
+import { Lexer } from './lexer/Lexer';
 
 const lexer = new Lexer(readFileSync('./test.queso', 'utf8'));
 
