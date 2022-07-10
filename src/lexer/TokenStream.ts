@@ -1,7 +1,7 @@
 import { Lexer } from './Lexer';
 import { Token, TokenType } from './Token';
 
-class TokenStream {
+export class TokenStream {
   private cur: Token;
 
   constructor(private lexer: Lexer) {

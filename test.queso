@@ -1,14 +1,1 @@
-()[]{}
--+/* **
-,.; |>
-|>-
--> =>
-|| &&
-! != = == > >= < <=
-foo bar
-123
-456.
-789.123
-012
-null true false
-let mut in loop break continue return catch
+1 + 2 * 3 - 4 - 5 / / 5
