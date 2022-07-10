@@ -1,14 +1,16 @@
 // entry point
 
 import { readFileSync } from 'fs';
+import { ErrorReporter } from './error/ErrorReporter';
 import { Lexer } from './lexer/Lexer';
 import { TokenStream } from './lexer/TokenStream';
 import { Expr, Program, Stmt } from './parser/AST';
 import { Parser } from './parser/Parser';
 
-const lexer = new Lexer(readFileSync('./test.queso', 'utf8'));
+const fileContents = readFileSync('./test.queso', 'utf8');
+const lexer = new Lexer(fileContents);
 const tokenStream = new TokenStream(lexer);
-const parser = new Parser(tokenStream);
+const parser = new Parser(tokenStream, new ErrorReporter(fileContents));
 
 // console.dir(, { depth: null });
 
@@ -29,8 +31,8 @@ const displayAST = (node: Expr | Stmt): string => {
   }
   return '?';
 };
-
-console.log(displayAST(parser.parse()[0]));
+parser.parse();
+// console.log(displayAST(parser.parse()[0]));
 
 // while (true) {
 //   const token = lexer.lexNext();

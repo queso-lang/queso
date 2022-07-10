@@ -1,3 +1,4 @@
+import { ErrorReporter } from '../error/ErrorReporter';
 import { TokenType, Token } from '../lexer/Token';
 import { TokenStream } from '../lexer/TokenStream';
 import { noop } from '../utils';
@@ -33,7 +34,10 @@ export class Parser {
   hadError = false;
   private panic = false;
 
-  constructor(public tokenStream: TokenStream) {}
+  constructor(
+    public tokenStream: TokenStream,
+    public errorReporter: ErrorReporter,
+  ) {}
 
   parse = () => this.program();
 
@@ -48,12 +52,13 @@ export class Parser {
   };
 
   private error = (token: Token, msg: string) => {
-    if (this.panic) return;
+    if (this.panic || token.type === 'EOF') return;
     this.hadError = true;
     this.panic = true;
-    console.log(
-      `[${token.pos.from[0]}:${token.pos.from[1]}-${token.pos.to[0]}:${token.pos.to[1]}] ${msg}`,
-    );
+    // console.log(
+    //   `[${token.pos.from[0]}:${token.pos.from[1]}-${token.pos.to[0]}:${token.pos.to[1]}] ${msg}`,
+    // );
+    this.errorReporter.report(msg, token.pos);
   };
 
   private sync = () => {

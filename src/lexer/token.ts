@@ -1,3 +1,5 @@
+import { PositionRange } from "../utils";
+
 export type TokenType =
   | 'LeftParen' // open scope
   | 'RightParen' // close scope
@@ -45,12 +47,7 @@ export type TokenType =
   | 'EOF'
   | 'Invalid';
 
-export type TokenPos = {
-  from: [line: number, col: number];
-  to: [line: number, col: number];
-};
-
-export type Token = { type: TokenType; val: string; pos: TokenPos };
+export type Token = { type: TokenType; val: string; pos: PositionRange };
 
 // export const createTokenStream = (lexer: Lexer) => {
 

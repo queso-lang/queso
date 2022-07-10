@@ -184,5 +184,3 @@ export class Lexer {
     return token;
   };
 }
-
-export const tokenize = (src: string) => {};
