@@ -99,6 +99,14 @@ export class Lexer {
     );
   };
 
+  private makeString = () => {
+    while (this.peek(0) !== '`' && !this.isEOF()) {
+      this.next();
+    }
+    this.next();
+    return this.createToken('String');
+  };
+
   lexNext = () => {
     this.from = this.to;
     this.fileFrom = [...this.fileTo];
@@ -132,11 +140,7 @@ export class Lexer {
         this.createToken(this.matchNext('=') ? 'GreaterEqual' : 'Greater'),
       '|': () =>
         this.createToken(
-          this.matchNext('>')
-            ? 'Pipe'
-            : this.matchNext('|')
-            ? 'Or'
-            : 'Invalid',
+          this.matchNext('>') ? 'Pipe' : this.matchNext('|') ? 'Or' : 'Invalid',
         ),
       '&': () => this.createToken(this.matchNext('&') ? 'And' : 'Invalid'),
       '/': () => {
@@ -176,6 +180,9 @@ export class Lexer {
         }
         if (isLetterOrUnderscore(c)) {
           return this.makeIdentifier();
+        }
+        if (c === '`') {
+          return this.makeString();
         }
         return this.createToken('Invalid');
       })

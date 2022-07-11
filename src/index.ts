@@ -23,17 +23,19 @@ const displayAST = (node: Expr | Stmt): string => {
       node[1][2],
     )})`;
   }
-  if (node[0] === 'Constant') {
-    return node[1][0].val;
+  if (node[0] === 'Unary') {
+    return `(${node[1][0].val} ${displayAST(node[1][1])})`;
+  }
+  if (
+    ['Constant', 'NullLiteral', 'FalseLiteral', 'TrueLiteral'].includes(node[0])
+  ) {
+    return (node as any)[1][0].val;
   }
   if (node[0] === 'Error') {
     return 'ERR';
   }
   return '?';
 };
-parser.parse();
-// console.log(displayAST(parser.parse()[0]));
-
 // while (true) {
 //   const token = lexer.lexNext();
 //   const posString = `[${token.pos.from[0]}:${token.pos.from[1]}-${token.pos.to[0]}:${token.pos.to[1]}]`;
@@ -41,3 +43,6 @@ parser.parse();
 
 //   if (token.type === 'EOF') break;
 // }
+
+// parser.parse();
+console.log(parser.parse().map((x) => displayAST(x)));

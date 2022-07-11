@@ -2,6 +2,7 @@ import { ErrorReporter } from '../error/ErrorReporter';
 import { TokenType, Token } from '../lexer/Token';
 import { TokenStream } from '../lexer/TokenStream';
 import { noop } from '../utils';
+import { match } from 'ts-pattern';
 import { createASTExpr, createASTStmt, Expr, Program, Stmt } from './AST';
 
 enum BP {
@@ -119,13 +120,15 @@ export class Parser {
   private literal = (): Expr => {
     const tok = this.tokenStream.next();
 
-    const expr = noop<{ [key in TokenType]?: Expr }>({
-      Number: createASTExpr('Constant', [tok]),
-    })[tok.type];
-
-    if (!expr) {
-      throw new Error('This is an error with the parser itself!');
-    }
+    const expr = match(tok.type)
+      .with('Number', () => createASTExpr('Constant', [tok]))
+      .with('String', () => createASTExpr('Constant', [tok]))
+      .with('True', () => createASTExpr('TrueLiteral', [tok]))
+      .with('False', () => createASTExpr('FalseLiteral', [tok]))
+      .with('Null', () => createASTExpr('NullLiteral', [tok]))
+      .otherwise(() => {
+        throw new Error('This is an error with the parser itself!');
+      });
 
     return expr;
   };
@@ -166,6 +169,8 @@ export class Parser {
       }
     }
 
+    const tok = this.tokenStream.peek();
+
     return this.exprStmt();
   };
 
@@ -175,20 +180,38 @@ export class Parser {
 
   private rules: { [key in TokenType]?: ParserRule } = {
     LeftParen: { prefix: this.grouping, infix: undefined, bp: BP.FnCall },
+
     Plus: { prefix: this.unary, infix: this.binary, bp: BP.Addition },
     Minus: { prefix: this.unary, infix: this.binary, bp: BP.Addition },
     Slash: { prefix: undefined, infix: this.binary, bp: BP.Multiplication },
     Star: { prefix: undefined, infix: this.binary, bp: BP.Multiplication },
+    Bang: { prefix: this.unary, infix: undefined, bp: BP.Zero },
+
     Number: { prefix: this.literal, infix: undefined, bp: BP.Zero },
-    EOF: { prefix: undefined, infix: undefined, bp: BP.Zero },
+    String: { prefix: this.literal, infix: undefined, bp: BP.Zero },
+    True: { prefix: this.literal, infix: undefined, bp: BP.Zero },
+    False: { prefix: this.literal, infix: undefined, bp: BP.Zero },
+    Null: { prefix: this.literal, infix: undefined, bp: BP.Zero },
+
+    EqualEqual: { prefix: undefined, infix: this.binary, bp: BP.Equality },
+    BangEqual: { prefix: undefined, infix: this.binary, bp: BP.Equality },
+
+    Greater: { prefix: undefined, infix: this.binary, bp: BP.Comparison },
+    GreaterEqual: { prefix: undefined, infix: this.binary, bp: BP.Comparison },
+    Less: { prefix: undefined, infix: this.binary, bp: BP.Comparison },
+    LessEqual: { prefix: undefined, infix: this.binary, bp: BP.Comparison },
+
+    Identifier: { prefix: this.access, infix: undefined, bp: BP.Zero },
+
+    And: { prefix: undefined, infix: this.binary, bp: BP.And },
+    Or: { prefix: undefined, infix: this.binary, bp: BP.Or },
   };
 
   private getRule = (type: TokenType) => {
     const rule = this.rules[type];
 
     if (!rule) {
-      console.log(type);
-      throw new Error('This is a problem with the parser itself');
+      return { prefix: undefined, infix: undefined, bp: BP.Zero };
     }
 
     return rule;
