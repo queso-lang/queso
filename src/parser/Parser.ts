@@ -56,6 +56,7 @@ export class Parser {
 
   private error = (token: Token, msg: string) => {
     if (this.panic) return;
+    console.log(token);
     this.hadError = true;
     this.panic = true;
     // console.log(
@@ -143,7 +144,7 @@ export class Parser {
       const expr = this.fnFromLeftParen();
       return expr;
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       backtrackPoint();
 
       // console.log(this.tokenStream.peek());
@@ -156,8 +157,12 @@ export class Parser {
     }
   };
 
-  private access = (): Expr => {
+  private identifier = (): Expr => {
     const cur = this.tokenStream.next();
+
+    if (this.tokenStream.peek().type === 'SlimArrow') {
+      return this.fnFromIdentifier(cur);
+    }
 
     return createASTExpr('Access', [cur]);
   };
@@ -229,11 +234,15 @@ export class Parser {
     // if so, we backtrack and parse the argument list and the whole lambda
     // otherwise we throw and backtrack to try and parse a grouping instead
     while (true) {
-      if (['Semi', 'EOF'].includes(this.tokenStream.peek().type)) {
+      // look as far as a semi, eof, or leftparen
+      // the LeftParen comes from the fact, that we
+      // might have an expression like (a + (b) -> c)
+      // where the existence of the nested lambda
+      // confuses the parser, which now tries to parse the grouping as a lambda
+      if (['Semi', 'EOF', 'LeftParen'].includes(this.tokenStream.peek().type)) {
         throw new Backtrack();
       }
       if (this.tokenStream.peek().type === 'RightParen') {
-        console.log('x');
         this.tokenStream.next();
         if (this.tokenStream.peek().type !== 'SlimArrow') {
           throw new Backtrack();
@@ -251,6 +260,16 @@ export class Parser {
     this.tokenStream.next(); // SlimArrow
 
     return createASTExpr('Fn', [params, this.expr()]);
+  };
+
+  private fnNoParams = (): Expr => {
+    this.tokenStream.next();
+    return createASTExpr('Fn', [[], this.expr()]);
+  };
+
+  private fnFromIdentifier = (name: Token): Expr => {
+    this.tokenStream.next();
+    return createASTExpr('Fn', [[name], this.expr()]);
   };
 
   private mutDecl = (): Stmt => {
@@ -290,10 +309,12 @@ export class Parser {
     Less: { prefix: undefined, infix: this.binary, bp: BP.Comparison },
     LessEqual: { prefix: undefined, infix: this.binary, bp: BP.Comparison },
 
-    Identifier: { prefix: this.access, infix: undefined, bp: BP.Zero },
+    Identifier: { prefix: this.identifier, infix: undefined, bp: BP.Zero },
 
     And: { prefix: undefined, infix: this.binary, bp: BP.And },
     Or: { prefix: undefined, infix: this.binary, bp: BP.Or },
+
+    SlimArrow: { prefix: this.fnNoParams, infix: undefined, bp: BP.Zero },
   };
 
   private getRule = (type: TokenType) => {
