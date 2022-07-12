@@ -18,8 +18,16 @@ const displayAST = (node: Expr | Stmt): string => {
   if (node[0] === 'Expr') {
     return displayAST(node[1][0]);
   }
+  if (node[0] === 'MutDecl') {
+    return node[1][1][0] === 'NullLiteral'
+      ? `mut ${node[1][0].val}`
+      : `mut ${node[1][0].val} = ${displayAST(node[1][1])}`;
+  }
+  if (node[0] === 'Access') {
+    return node[1][0].val;
+  }
   if (node[0] === 'Binary') {
-    return `(${node[1][1].val} ${displayAST(node[1][0])} ${displayAST(
+    return `(${displayAST(node[1][0])} ${node[1][1].val} ${displayAST(
       node[1][2],
     )})`;
   }
@@ -30,6 +38,11 @@ const displayAST = (node: Expr | Stmt): string => {
     ['Constant', 'NullLiteral', 'FalseLiteral', 'TrueLiteral'].includes(node[0])
   ) {
     return (node as any)[1][0].val;
+  }
+  if (node[0] === 'Fn') {
+    return `(${node[1][0].map((x) => x.val).join(', ')}) -> ${displayAST(
+      node[1][1],
+    )}`;
   }
   if (node[0] === 'Error') {
     return 'ERR';
@@ -45,4 +58,6 @@ const displayAST = (node: Expr | Stmt): string => {
 // }
 
 // parser.parse();
-console.log(parser.parse().map((x) => displayAST(x)));
+for (const stmt of parser.parse()) {
+  console.log(displayAST(stmt));
+}

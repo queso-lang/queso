@@ -16,9 +16,10 @@ export type Expr =
   | ADT<'FnCall', [Expr, Expr[], number]>
   | ADT<'IfElse', [Expr, Expr, Expr | null]>
   | ADT<'Access', [Token]>
+  | ADT<'Fn', [Token[], Expr]>
   | ADT<'Error'>;
 
-export type Stmt = ADT<'Expr', [Expr]> | ADT<'Error'>;
+export type Stmt = ADT<'Expr', [Expr]> | ADT<'Error'> | ADT<'MutDecl', [Token, Expr]>;
 
 export type Program = Stmt[];
 

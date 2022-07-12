@@ -31,6 +31,8 @@ type ParserRule = {
   assoc?: 'left' | 'right' | null;
 };
 
+class Backtrack extends Error {}
+
 export class Parser {
   hadError = false;
   private panic = false;
@@ -53,7 +55,7 @@ export class Parser {
   };
 
   private error = (token: Token, msg: string) => {
-    if (this.panic || token.type === 'EOF') return;
+    if (this.panic) return;
     this.hadError = true;
     this.panic = true;
     // console.log(
@@ -136,11 +138,22 @@ export class Parser {
   private grouping = (): Expr => {
     this.tokenStream.next();
 
-    const expr = this.expr();
+    const backtrackPoint = this.tokenStream.backtrackPoint();
+    try {
+      const expr = this.fnFromLeftParen();
+      return expr;
+    } catch (err) {
+      console.log(err);
+      backtrackPoint();
 
-    this.consume('RightParen', 'Unmatched (');
+      // console.log(this.tokenStream.peek());
 
-    return expr;
+      const expr = this.expr();
+
+      this.consume('RightParen', 'Unmatched (');
+
+      return expr;
+    }
   };
 
   private access = (): Expr => {
@@ -171,11 +184,87 @@ export class Parser {
 
     const tok = this.tokenStream.peek();
 
-    return this.exprStmt();
+    match(tok.type)
+      .with('RightParen', () => {
+        this.error(
+          tok,
+          'Unexpected semi. Either remove the semi, or explicitly return null',
+        );
+      })
+      .with('EOF', () => {
+        this.error(
+          tok,
+          'The last statement in your program must not end in a semi',
+        );
+      });
+
+    return match(tok.type)
+      .with('Mut', () => this.mutDecl())
+      .otherwise(() => this.exprStmt());
   };
 
   private exprStmt = (): Stmt => {
     return createASTStmt('Expr', [this.expr()]);
+  };
+
+  private fnArgList = (endWith: 'RightParen' | 'SlimArrow'): Token[] => {
+    let params: Token[] = [];
+    if (this.tokenStream.peek().type !== endWith) {
+      while (true) {
+        params.push(this.tokenStream.peek());
+        this.consume('Identifier', 'Expected parameter name');
+
+        if (!this.tokenStream.nextIf('Comma')) {
+          break;
+        }
+      }
+    }
+    return params;
+  };
+
+  private fnFromLeftParen = (): Expr => {
+    const backtrackPoint = this.tokenStream.backtrackPoint();
+
+    // in this loop we detect if this statement has a ") ->" somewhere
+    // if so, we backtrack and parse the argument list and the whole lambda
+    // otherwise we throw and backtrack to try and parse a grouping instead
+    while (true) {
+      if (['Semi', 'EOF'].includes(this.tokenStream.peek().type)) {
+        throw new Backtrack();
+      }
+      if (this.tokenStream.peek().type === 'RightParen') {
+        console.log('x');
+        this.tokenStream.next();
+        if (this.tokenStream.peek().type !== 'SlimArrow') {
+          throw new Backtrack();
+        }
+        this.tokenStream.next();
+        break;
+      }
+      this.tokenStream.next();
+    }
+    backtrackPoint();
+
+    const params = this.fnArgList('RightParen');
+
+    this.tokenStream.next(); // RightParen
+    this.tokenStream.next(); // SlimArrow
+
+    return createASTExpr('Fn', [params, this.expr()]);
+  };
+
+  private mutDecl = (): Stmt => {
+    this.tokenStream.next();
+
+    const name = this.tokenStream.peek();
+    this.consume('Identifier', 'Expected a variable identifier');
+
+    let val = createASTExpr('NullLiteral', [name]);
+    if (this.tokenStream.nextIf('Equal')) {
+      val = this.expr();
+    }
+
+    return createASTStmt('MutDecl', [name, val]);
   };
 
   private rules: { [key in TokenType]?: ParserRule } = {
