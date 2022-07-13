@@ -34,9 +34,7 @@ const displayAST = (node: Expr | Stmt): string => {
   if (node[0] === 'Unary') {
     return `(${node[1][0].val} ${displayAST(node[1][1])})`;
   }
-  if (
-    ['Constant', 'NullLiteral', 'FalseLiteral', 'TrueLiteral'].includes(node[0])
-  ) {
+  if (['Constant', 'FalseLiteral', 'TrueLiteral'].includes(node[0])) {
     return (node as any)[1][0].val;
   }
   if (node[0] === 'Fn') {
@@ -44,10 +42,20 @@ const displayAST = (node: Expr | Stmt): string => {
       node[1][1],
     )}`;
   }
+  if (node[0] === 'IfElse') {
+    return `if ${displayAST(node[1][0])} then {${displayAST(
+      node[1][1],
+    )}} else {${displayAST(node[1][2])}}`;
+  }
+  if (node[0] === 'NullLiteral') {
+    return `null`;
+  }
   if (node[0] === 'Error') {
     return 'ERR';
   }
-  return '?';
+  console.log({ node });
+
+  return JSON.stringify(node);
 };
 // while (true) {
 //   const token = lexer.lexNext();

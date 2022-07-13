@@ -9,6 +9,7 @@ enum BP {
   Zero = 0,
   KeywordExpr,
   Assignment,
+  ConditionalTernary,
   Or,
   And,
   Equality,
@@ -23,15 +24,40 @@ enum BP {
 
 type PrefixFn = () => Expr;
 type InfixFn = (expr: Expr) => Expr;
+type PostfixFn = (expr: Expr) => Expr;
 
 type ParserRule = {
-  prefix?: PrefixFn;
-  infix?: InfixFn;
-  bp: BP;
-  assoc?: 'left' | 'right' | null;
+  prefix?: {
+    fn: PrefixFn;
+    bp: BP;
+  };
+  infix?: {
+    fn: InfixFn;
+    assoc: 'left' | 'right';
+    bp: BP;
+  };
+  postfix?: {
+    fn: PostfixFn;
+    bp: BP;
+  };
 };
 
 class Backtrack extends Error {}
+
+const getBpForInfixRule = (
+  infixRule:
+    | {
+        fn: InfixFn;
+        assoc: 'left' | 'right';
+        bp: BP;
+      }
+    | undefined,
+) =>
+  infixRule
+    ? infixRule.assoc === 'left'
+      ? [infixRule.bp, infixRule.bp + 0.1]
+      : [infixRule.bp + 0.1, infixRule.bp]
+    : [0, 0];
 
 export class Parser {
   hadError = false;
@@ -74,19 +100,30 @@ export class Parser {
     }
   };
 
-  private parseBp = (bp: BP): Expr => {
+  private parseBp = (minBp: BP): Expr => {
     const cur = this.tokenStream.peek();
-    const prefixFn = this.getRule(cur.type).prefix;
+    const prefixRule = this.getRule(cur.type).prefix;
 
-    if (prefixFn) {
-      let expr = prefixFn();
+    if (prefixRule) {
+      let expr = prefixRule.fn();
 
       while (true) {
         const cur = this.tokenStream.peek();
-        if (bp > this.getRule(cur.type).bp) break;
+        const rule = this.getRule(cur.type);
 
-        const infixFn = this.getRule(cur.type).infix;
-        expr = infixFn!(expr);
+        const postfixRule = rule.postfix;
+        if (postfixRule) {
+          const postfixBp = postfixRule.bp;
+          if (postfixBp < minBp) break;
+
+          expr = postfixRule.fn(expr);
+        } else {
+          const infixRule = rule.infix;
+          const [lBp, rBp] = getBpForInfixRule(infixRule);
+          if (lBp < minBp) break;
+
+          expr = infixRule!.fn(expr);
+        }
       }
 
       return expr;
@@ -102,7 +139,7 @@ export class Parser {
 
   private unary = (): Expr => {
     const op = this.tokenStream.next();
-    const expr = this.parseBp(BP.Unary);
+    const expr = this.parseBp(this.getRule(op.type).prefix!.bp);
     return createASTExpr('Unary', [op, expr]);
   };
 
@@ -115,9 +152,30 @@ export class Parser {
   private binary = (left: Expr): Expr => {
     const op = this.tokenStream.next();
 
-    const right = this.parseBp(this.getRule(op.type).bp + 1);
+    const infixRule = this.getRule(op.type).infix;
+    const [lBp, rBp] = getBpForInfixRule(infixRule);
+    const right = this.parseBp(rBp);
 
     return createASTExpr('Binary', [left, op, right]);
+  };
+
+  private conditionalTernary = (left: Expr): Expr => {
+    // this is always of type Question
+    const op = this.tokenStream.next();
+    // console.log({ op });
+
+    const thenExpr = this.parseBp(BP.Assignment);
+
+    let elseExpr = createASTExpr('NullLiteral', [op]);
+    if (this.tokenStream.nextIf('Colon')) {
+      const infixRule = this.getRule(op.type).infix;
+      const [lBp, rBp] = getBpForInfixRule(infixRule);
+      elseExpr = this.parseBp(rBp);
+    }
+
+    // console.dir({ left, thenExpr, elseExpr }, { depth: null });
+
+    return createASTExpr('IfElse', [left, thenExpr, elseExpr]);
   };
 
   private literal = (): Expr => {
@@ -287,43 +345,93 @@ export class Parser {
   };
 
   private rules: { [key in TokenType]?: ParserRule } = {
-    LeftParen: { prefix: this.grouping, infix: undefined, bp: BP.FnCall },
+    LeftParen: {
+      prefix: {
+        fn: this.grouping,
+        bp: BP.Unary,
+      },
+    },
+    Plus: {
+      prefix: { fn: this.unary, bp: BP.Unary },
+      infix: { fn: this.binary, bp: BP.Addition, assoc: 'left' },
+    },
+    Minus: {
+      prefix: { fn: this.unary, bp: BP.Unary },
+      infix: { fn: this.binary, bp: BP.Addition, assoc: 'left' },
+    },
+    Slash: {
+      infix: { fn: this.binary, bp: BP.Multiplication, assoc: 'left' },
+    },
+    Star: {
+      infix: { fn: this.binary, bp: BP.Multiplication, assoc: 'left' },
+    },
+    Bang: {
+      prefix: { fn: this.unary, bp: BP.Unary },
+    },
 
-    Plus: { prefix: this.unary, infix: this.binary, bp: BP.Addition },
-    Minus: { prefix: this.unary, infix: this.binary, bp: BP.Addition },
-    Slash: { prefix: undefined, infix: this.binary, bp: BP.Multiplication },
-    Star: { prefix: undefined, infix: this.binary, bp: BP.Multiplication },
-    Bang: { prefix: this.unary, infix: undefined, bp: BP.Zero },
+    Number: {
+      prefix: { fn: this.literal, bp: BP.Atom },
+    },
+    String: {
+      prefix: { fn: this.literal, bp: BP.Atom },
+    },
+    True: {
+      prefix: { fn: this.literal, bp: BP.Atom },
+    },
+    False: {
+      prefix: { fn: this.literal, bp: BP.Atom },
+    },
+    Null: {
+      prefix: { fn: this.literal, bp: BP.Atom },
+    },
 
-    Number: { prefix: this.literal, infix: undefined, bp: BP.Zero },
-    String: { prefix: this.literal, infix: undefined, bp: BP.Zero },
-    True: { prefix: this.literal, infix: undefined, bp: BP.Zero },
-    False: { prefix: this.literal, infix: undefined, bp: BP.Zero },
-    Null: { prefix: this.literal, infix: undefined, bp: BP.Zero },
+    EqualEqual: {
+      infix: { fn: this.binary, bp: BP.Equality, assoc: 'left' },
+    },
+    BangEqual: {
+      infix: { fn: this.binary, bp: BP.Equality, assoc: 'left' },
+    },
 
-    EqualEqual: { prefix: undefined, infix: this.binary, bp: BP.Equality },
-    BangEqual: { prefix: undefined, infix: this.binary, bp: BP.Equality },
+    Greater: {
+      infix: { fn: this.binary, bp: BP.Comparison, assoc: 'left' },
+    },
+    GreaterEqual: {
+      infix: { fn: this.binary, bp: BP.Comparison, assoc: 'left' },
+    },
+    Less: {
+      infix: { fn: this.binary, bp: BP.Comparison, assoc: 'left' },
+    },
+    LessEqual: {
+      infix: { fn: this.binary, bp: BP.Comparison, assoc: 'left' },
+    },
 
-    Greater: { prefix: undefined, infix: this.binary, bp: BP.Comparison },
-    GreaterEqual: { prefix: undefined, infix: this.binary, bp: BP.Comparison },
-    Less: { prefix: undefined, infix: this.binary, bp: BP.Comparison },
-    LessEqual: { prefix: undefined, infix: this.binary, bp: BP.Comparison },
+    Identifier: {
+      prefix: { fn: this.identifier, bp: BP.Atom },
+    },
 
-    Identifier: { prefix: this.identifier, infix: undefined, bp: BP.Zero },
+    And: {
+      infix: { fn: this.binary, bp: BP.And, assoc: 'left' },
+    },
+    Or: {
+      infix: { fn: this.binary, bp: BP.Or, assoc: 'left' },
+    },
 
-    And: { prefix: undefined, infix: this.binary, bp: BP.And },
-    Or: { prefix: undefined, infix: this.binary, bp: BP.Or },
+    SlimArrow: {
+      prefix: { fn: this.fnNoParams, bp: BP.Unary },
+    },
 
-    SlimArrow: { prefix: this.fnNoParams, infix: undefined, bp: BP.Zero },
+    Question: {
+      infix: {
+        fn: this.conditionalTernary,
+        bp: BP.ConditionalTernary,
+        assoc: 'right',
+      },
+    },
   };
 
   private getRule = (type: TokenType) => {
     const rule = this.rules[type];
 
-    if (!rule) {
-      return { prefix: undefined, infix: undefined, bp: BP.Zero };
-    }
-
-    return rule;
+    return rule ?? {};
   };
 }

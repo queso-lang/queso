@@ -132,6 +132,8 @@ export class Lexer {
       ',': () => this.createToken('Comma'),
       '.': () => this.createToken('Dot'),
       ';': () => this.createToken('Semi'),
+      '?': () => this.createToken('Question'),
+      ':': () => this.createToken('Colon'),
       '*': () => this.createToken(this.matchNext('*') ? 'StarStar' : 'Star'),
       '-': () => this.createToken(this.matchNext('>') ? 'SlimArrow' : 'Minus'),
       '!': () => this.createToken(this.matchNext('=') ? 'BangEqual' : 'Bang'),

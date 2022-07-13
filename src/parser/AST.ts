@@ -1,4 +1,4 @@
-import { Token } from "../lexer/Token";
+import { Token } from '../lexer/Token';
 
 type ADT<
   name extends string,
@@ -14,21 +14,28 @@ export type Expr =
   | ADT<'NullLiteral', [Token]>
   | ADT<'Block', [Stmt[]]>
   | ADT<'FnCall', [Expr, Expr[], number]>
-  | ADT<'IfElse', [Expr, Expr, Expr | null]>
+  | ADT<'IfElse', [Expr, Expr, Expr]>
   | ADT<'Access', [Token]>
   | ADT<'Fn', [Token[], Expr]>
   | ADT<'Error'>;
 
-export type Stmt = ADT<'Expr', [Expr]> | ADT<'Error'> | ADT<'MutDecl', [Token, Expr]>;
+export type Stmt =
+  | ADT<'Expr', [Expr]>
+  | ADT<'Error'>
+  | ADT<'MutDecl', [Token, Expr]>;
 
 export type Program = Stmt[];
 
 type ASTNode = Expr | Stmt;
 
-type InferADTValueFromName<T> = ASTNode extends infer R ? (R extends [T, infer S] ? S : never) : never;
-type Rest<T> = InferADTValueFromName<T> extends never ? [] : [
-  value: InferADTValueFromName<T>,
-];
+type InferADTValueFromName<T> = ASTNode extends infer R
+  ? R extends [T, infer S]
+    ? S
+    : never
+  : never;
+type Rest<T> = InferADTValueFromName<T> extends never
+  ? []
+  : [value: InferADTValueFromName<T>];
 
 export const createASTExpr = <T extends Expr[0]>(
   type: T,

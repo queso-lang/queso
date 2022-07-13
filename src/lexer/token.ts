@@ -1,4 +1,4 @@
-import { PositionRange } from "../utils";
+import { PositionRange } from '../utils';
 
 export type TokenType =
   | 'LeftParen' // open scope
@@ -15,6 +15,8 @@ export type TokenType =
   | 'Comma' // object key:value separator
   | 'Dot' // property access
   | 'Semi' // statement delimeter
+  | 'Question'
+  | 'Colon'
   | 'Pipe' // piping
   | 'SlimArrow' // function arrow
   | 'FatArrow' // control flow
