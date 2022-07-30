@@ -53,8 +53,8 @@ export class Lexer {
   ): Token => {
     return {
       pos: {
-        from: this.fileFrom,
-        to: this.fileTo,
+        from: [...this.fileFrom],
+        to: [...this.fileTo],
       },
       type,
       val,
