@@ -1,4 +1,6 @@
 import { Token } from '../lexer/Token';
+import { EnvUpvalue } from '../resolver/Env';
+import { Resolution } from '../resolver/Resolution';
 
 type ADT<
   name extends string,
@@ -13,16 +15,27 @@ export type Expr =
   | ADT<'FalseLiteral', [Token]>
   | ADT<'NullLiteral', [Token]>
   | ADT<'Block', [Stmt[]]>
-  | ADT<'FnCall', [Expr, Expr[], number]>
+  | ADT<'FnCall', [Expr, Expr[]]>
   | ADT<'IfElse', [Expr, Expr, Expr]>
   | ADT<'Access', [Token]>
   | ADT<'Fn', [Token[], Expr]>
+  | ADT<'ResolvedAccess', { token: Token; resolution: Resolution }>
+  | ADT<
+      'ResolvedFn',
+      {
+        upvalues: EnvUpvalue[];
+        captured: number[];
+        params: Token[];
+        body: Expr;
+      }
+    >
   | ADT<'Error'>;
 
 export type Stmt =
   | ADT<'Expr', [Expr]>
   | ADT<'Error'>
-  | ADT<'MutDecl', [Token, Expr]>;
+  | ADT<'MutDecl', [Token, Expr]>
+  | ADT<'ResolvedMutDecl', { token: Token; id: number; expr: Expr }>;
 
 export type Program = Stmt[];
 

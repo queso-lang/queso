@@ -6,11 +6,13 @@ import { Lexer } from './lexer/Lexer';
 import { TokenStream } from './lexer/TokenStream';
 import { Expr, Program, Stmt } from './parser/AST';
 import { Parser } from './parser/Parser';
+import { Resolver } from './resolver/Resolver';
 
 const fileContents = readFileSync('./test.queso', 'utf8');
+const errorReporter = new ErrorReporter(fileContents);
 const lexer = new Lexer(fileContents);
 const tokenStream = new TokenStream(lexer);
-const parser = new Parser(tokenStream, new ErrorReporter(fileContents));
+const parser = new Parser(tokenStream, errorReporter);
 
 // console.dir(, { depth: null });
 
@@ -23,8 +25,20 @@ const displayAST = (node: Expr | Stmt): string => {
       ? `mut ${node[1][0].val}`
       : `mut ${node[1][0].val} = ${displayAST(node[1][1])}`;
   }
+  if (node[0] === 'ResolvedMutDecl') {
+    return node[1].expr[0] === 'NullLiteral'
+      ? `mut #${node[1].id}_${node[1].token.val}`
+      : `mut #${node[1].id}_${node[1].token.val} = ${displayAST(node[1].expr)}`;
+  }
   if (node[0] === 'Access') {
     return node[1][0].val;
+  }
+  if (node[0] === 'ResolvedAccess') {
+    if ('local' in node[1].resolution) {
+      return `#${node[1].resolution.local}_${node[1].token.val}`;
+    } else {
+      return `^${node[1].resolution.upvalue}_${node[1].token.val}`;
+    }
   }
   if (node[0] === 'Binary') {
     return `(${displayAST(node[1][0])} ${node[1][1].val} ${displayAST(
@@ -42,6 +56,11 @@ const displayAST = (node: Expr | Stmt): string => {
       node[1][1],
     )}`;
   }
+  if (node[0] === 'ResolvedFn') {
+    return `(${node[1].params.map((x) => x.val).join(', ')}) -> ${displayAST(
+      node[1].body,
+    )}`;
+  }
   if (node[0] === 'IfElse') {
     return `if ${displayAST(node[1][0])} then {${displayAST(
       node[1][1],
@@ -53,7 +72,15 @@ const displayAST = (node: Expr | Stmt): string => {
   if (node[0] === 'Error') {
     return 'ERR';
   }
-  console.log({ node });
+  if (node[0] === 'FnCall') {
+    return `( ${displayAST(node[1][0])} )(${node[1][1].map((x) =>
+      displayAST(x),
+    )})`;
+  }
+  if (node[0] === 'Block') {
+    return `( ${node[1][0].map((stmt) => displayAST(stmt)).join('; ')} )`;
+  }
+  // console.dir({ node }, { depth: null });
 
   return JSON.stringify(node);
 };
@@ -65,7 +92,12 @@ const displayAST = (node: Expr | Stmt): string => {
 //   if (token.type === 'EOF') break;
 // }
 
-// parser.parse();
-for (const stmt of parser.parse()) {
-  console.log(displayAST(stmt));
+const parsed = parser.parse();
+
+const resolver = new Resolver(errorReporter);
+
+const parsedResolved = resolver.resolve(parsed);
+
+for (const stmt of parsedResolved) {
+  console.log(displayAST(stmt) + '\n');
 }

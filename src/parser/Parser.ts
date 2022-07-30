@@ -223,16 +223,21 @@ export class Parser {
       const expr = this.fnFromLeftParen();
       return expr;
     } catch (err) {
-      // console.log(err);
       backtrackPoint();
 
-      // console.log(this.tokenStream.peek());
-
-      const expr = this.expr();
+      const stmts: Stmt[] = [];
+      let isFirst = true;
+      while (
+        this.tokenStream.peek().type !== 'RightParen' &&
+        this.tokenStream.peek().type !== 'EOF'
+      ) {
+        stmts.push(this.stmt(isFirst));
+        isFirst = false;
+      }
 
       this.consume('RightParen', 'Unmatched (');
 
-      return expr;
+      return createASTExpr('Block', [stmts]);
     }
   };
 
