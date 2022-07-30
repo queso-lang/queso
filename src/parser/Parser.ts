@@ -81,8 +81,8 @@ export class Parser {
   };
 
   private error = (token: Token, msg: string) => {
-    if (this.panic) return;
-    console.log(token);
+    if (this.panic || token.type === 'EOF') return;
+    // console.log('error on token', token);
     this.hadError = true;
     this.panic = true;
     // console.log(
@@ -164,7 +164,7 @@ export class Parser {
     const op = this.tokenStream.next();
     // console.log({ op });
 
-    const thenExpr = this.parseBp(BP.Assignment);
+    const thenExpr = this.expr();
 
     let elseExpr = createASTExpr('NullLiteral', [op]);
     if (this.tokenStream.nextIf('Colon')) {
@@ -176,6 +176,27 @@ export class Parser {
     // console.dir({ left, thenExpr, elseExpr }, { depth: null });
 
     return createASTExpr('IfElse', [left, thenExpr, elseExpr]);
+  };
+
+  private fnCall = (left: Expr): Expr => {
+    // this is always of type LeftParen
+    const op = this.tokenStream.next();
+
+    let args: Expr[] = [];
+
+    if (this.tokenStream.peek().type !== 'RightParen') {
+      while (true) {
+        args.push(this.expr());
+
+        if (!this.tokenStream.nextIf('Comma')) {
+          break;
+        }
+      }
+    }
+
+    this.consume('RightParen', 'Expected ) after argument list');
+
+    return createASTExpr('FnCall', [left, args]);
   };
 
   private literal = (): Expr => {
@@ -270,7 +291,7 @@ export class Parser {
     return createASTStmt('Expr', [this.expr()]);
   };
 
-  private fnArgList = (endWith: 'RightParen' | 'SlimArrow'): Token[] => {
+  private fnParamList = (endWith: 'RightParen' | 'SlimArrow'): Token[] => {
     let params: Token[] = [];
     if (this.tokenStream.peek().type !== endWith) {
       while (true) {
@@ -291,6 +312,8 @@ export class Parser {
     // in this loop we detect if this statement has a ") ->" somewhere
     // if so, we backtrack and parse the argument list and the whole lambda
     // otherwise we throw and backtrack to try and parse a grouping instead
+
+    // TODO: limit this reasonably to only several tokens
     while (true) {
       // look as far as a semi, eof, or leftparen
       // the LeftParen comes from the fact, that we
@@ -312,7 +335,7 @@ export class Parser {
     }
     backtrackPoint();
 
-    const params = this.fnArgList('RightParen');
+    const params = this.fnParamList('RightParen');
 
     this.tokenStream.next(); // RightParen
     this.tokenStream.next(); // SlimArrow
@@ -349,6 +372,10 @@ export class Parser {
       prefix: {
         fn: this.grouping,
         bp: BP.Unary,
+      },
+      postfix: {
+        fn: this.fnCall,
+        bp: BP.FnCall,
       },
     },
     Plus: {
