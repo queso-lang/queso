@@ -57,9 +57,12 @@ const displayAST = (node: Expr | Stmt): string => {
     )}`;
   }
   if (node[0] === 'ResolvedFn') {
-    return `(${node[1].params.map((x) => x.val).join(', ')}) -> ${displayAST(
-      node[1].body,
-    )}`;
+    // console.log(node[1].captured);
+    return `[${node[1].upvalues
+      .map((x, i) => `^${i} = ${x.isLocal ? 'local ' : ''}${x.id}`)
+      .join(', ')}](${node[1].params
+      .map((x) => x.val)
+      .join(', ')}) -> ${displayAST(node[1].body)}`;
   }
   if (node[0] === 'IfElse') {
     return `if ${displayAST(node[1][0])} then {${displayAST(

@@ -1,10 +1,10 @@
 mut a;
 mut b;
-mut c = -> (
-  mut a;
-  (
-    mut a;
+-> (
+  -> (
+    b
+  );
+  -> (
     a
   )
-);
-c + b + a
+)
