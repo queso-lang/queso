@@ -1,12 +1,15 @@
 // entry point
 
+import binaryen from 'binaryen';
 import { readFileSync } from 'fs';
-import { ErrorReporter } from './error/ErrorReporter';
-import { Lexer } from './lexer/Lexer';
-import { TokenStream } from './lexer/TokenStream';
-import { Expr, Program, Stmt } from './parser/AST';
-import { Parser } from './parser/Parser';
-import { Resolver } from './resolver/Resolver';
+import { compile } from './compiler/compiler.js';
+import { ErrorReporter } from './error/ErrorReporter.js';
+import { Lexer } from './lexer/Lexer.js';
+import { TokenStream } from './lexer/TokenStream.js';
+import { Expr, Program, Stmt } from './parser/AST.js';
+import { Parser } from './parser/Parser.js';
+import { Resolver } from './resolver/Resolver.js';
+import { insertMemoryRuntime } from './runtime/memory.js';
 
 const fileContents = readFileSync('./test.queso', 'utf8');
 const errorReporter = new ErrorReporter(fileContents);
@@ -17,6 +20,9 @@ const parser = new Parser(tokenStream, errorReporter);
 // console.dir(, { depth: null });
 
 const displayAST = (node: Expr | Stmt): string => {
+  if (node[0] === 'Program') {
+    return `${node[1][0].map((stmt) => displayAST(stmt)).join(';\n')}`;
+  }
   if (node[0] === 'Expr') {
     return displayAST(node[1][0]);
   }
@@ -60,7 +66,7 @@ const displayAST = (node: Expr | Stmt): string => {
     // console.log(node[1].captured);
     return `[${node[1].upvalues
       .map((x, i) => `^${i} = ${x.isLocal ? 'local ' : ''}${x.id}`)
-      .join(', ')}](${node[1].params
+      .join(', ')}][${node[1].localCount} locals](${node[1].params
       .map((x) => x.val)
       .join(', ')}) -> ${displayAST(node[1].body)}`;
   }
@@ -101,6 +107,20 @@ const resolver = new Resolver(errorReporter);
 
 const parsedResolved = resolver.resolve(parsed);
 
-for (const stmt of parsedResolved) {
-  console.log(displayAST(stmt) + '\n');
+console.log(displayAST(parsedResolved));
+
+// for (const stmt of parsedResolved) {
+//   console.log(displayAST(stmt)   + '\n');
+// }
+
+const m = new binaryen.Module();
+
+insertMemoryRuntime(m);
+
+try {
+  const compiled = compile(m, parsedResolved);
+  console.log(m.emitText());
+} catch (err) {
+  console.log(err);
 }
+

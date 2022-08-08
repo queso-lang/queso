@@ -1,4 +1,4 @@
-import { Token } from '../lexer/Token';
+import { Token } from '../lexer/Token.js';
 
 type EnvLocal = {
   name: Token;

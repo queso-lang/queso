@@ -1,15 +1,15 @@
 import { match, P } from 'ts-pattern';
-import { ErrorReporter } from '../error/ErrorReporter';
-import { Token } from '../lexer/Token';
+import { ErrorReporter } from '../error/ErrorReporter.js';
+import { Token } from '../lexer/Token.js';
 import {
   createASTExpr,
   createASTStmt,
   Expr,
   Program,
   Stmt,
-} from '../parser/AST';
-import { Env } from './Env';
-import { Resolution } from './Resolution';
+} from '../parser/AST.js';
+import { Env } from './Env.js';
+import { Resolution } from './Resolution.js';
 
 type ResolverNode = {
   env: Env;
@@ -99,7 +99,7 @@ export class Resolver {
   };
 
   resolve = (program: Program) => {
-    return this.resolveStmts(program);
+    return createASTStmt('Program', [this.resolveStmts(program[1][0])]);
   };
 
   private resolveStmts = (stmts: Stmt[]) => {
@@ -179,6 +179,8 @@ export class Resolver {
         const upvalues = this.frame().env.upvalues;
         const captured = this.frame().env.captured;
 
+        const localCount = this.frame().env.locals.length - params.length;
+
         this.pop();
 
         return createASTExpr('ResolvedFn', {
@@ -186,6 +188,7 @@ export class Resolver {
           captured,
           params,
           body: resolvedBody,
+          localCount,
         });
       })
       .otherwise((expr) => expr);

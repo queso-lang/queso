@@ -1,4 +1,4 @@
-import { PositionRange } from '../utils';
+import { PositionRange } from '../utils.js';
 
 export type TokenType =
   | 'LeftParen' // open scope

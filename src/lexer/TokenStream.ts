@@ -1,5 +1,5 @@
-import { Lexer } from './Lexer';
-import { Token, TokenType } from './Token';
+import { Lexer } from './Lexer.js';
+import { Token, TokenType } from './Token.js';
 
 export class TokenStream {
   // private cur: Token;

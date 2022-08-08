@@ -1,9 +1,9 @@
-import { ErrorReporter } from '../error/ErrorReporter';
-import { TokenType, Token } from '../lexer/Token';
-import { TokenStream } from '../lexer/TokenStream';
-import { noop } from '../utils';
+import { ErrorReporter } from '../error/ErrorReporter.js';
+import { TokenType, Token } from '../lexer/Token.js';
+import { TokenStream } from '../lexer/TokenStream.js';
+import { noop } from '../utils.js';
 import { match } from 'ts-pattern';
-import { createASTExpr, createASTStmt, Expr, Program, Stmt } from './AST';
+import { createASTExpr, createASTStmt, Expr, Program, Stmt } from './AST.js';
 
 enum BP {
   Zero = 0,
@@ -252,14 +252,14 @@ export class Parser {
   };
 
   private program = (): Program => {
-    const stmts: Program = [];
+    const stmts: Stmt[] = [];
     let isFirst = true;
     while (this.tokenStream.peek().type !== 'EOF') {
       stmts.push(this.stmt(isFirst));
       isFirst = false;
     }
 
-    return stmts;
+    return createASTStmt('Program', [stmts]) as Program;
   };
 
   private stmt = (isFirst: boolean): Stmt => {

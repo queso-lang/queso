@@ -67,6 +67,11 @@ arg@^4.1.0:
   resolved "https://registry.yarnpkg.com/arg/-/arg-4.1.3.tgz#269fc7ad5b8e42cb63c896d5666017261c144089"
   integrity sha512-58S9QDqG0Xx27YwPSt9fJxivjYl432YCwfDMfZ+71RAqUrZef7LrKQZ3LHLOwCS4FLNBplP533Zx895SeOCHvA==
 
+binaryen@^109.0.0:
+  version "109.0.0"
+  resolved "https://registry.yarnpkg.com/binaryen/-/binaryen-109.0.0.tgz#9fdc868bcfc54a0082c9a62e0ca74e3ec7c6810f"
+  integrity sha512-Sslc4IiG9hh8+sX9cGkEWZm62FWfGFR8TYaDxVsaxqsa0L8zaD779S+16YX73CbA8n5YLjjCvY4R1duXMDzB0g==
+
 create-require@^1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/create-require/-/create-require-1.1.1.tgz#c1d7e8f1e5f6cfc9ff65f9cd352d37348756c333"

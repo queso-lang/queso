@@ -1,4 +1,4 @@
-import { Token, TokenType } from './Token';
+import { Token, TokenType } from './Token.js';
 
 const isDigit = (c: string) => /^\d$/.test(c);
 const isLetterOrUnderscore = (c: string) => /^[a-zA-Z_]$/.test(c);

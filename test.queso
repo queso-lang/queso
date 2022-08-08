@@ -1,10 +1,4 @@
-mut a;
-mut b;
 -> (
-  -> (
-    b
-  );
-  -> (
-    a
-  )
+  mut foo = 5;
+  print(foo)
 )

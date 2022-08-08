@@ -7,6 +7,7 @@
   "author": "judehunter <matisowagm@gmail.com>",
   "license": "Apache 2.0",
   "private": true,
+  "type": "module",
   "devDependencies": {
     "@types/node": "^18.0.0",
     "prettier": "^2.7.1",
@@ -14,6 +15,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
+    "binaryen": "^109.0.0",
     "ts-pattern": "^4.0.4"
   }
 }

@@ -1,8 +1,8 @@
-import { Token } from '../lexer/Token';
-import { EnvUpvalue } from '../resolver/Env';
-import { Resolution } from '../resolver/Resolution';
+import { Token } from '../lexer/Token.js';
+import { EnvUpvalue } from '../resolver/Env.js';
+import { Resolution } from '../resolver/Resolution.js';
 
-type ADT<
+export type ADT<
   name extends string,
   value extends Record<string, any> | any[] | null = null,
 > = value extends null ? [name] : [name, value];
@@ -27,17 +27,19 @@ export type Expr =
         captured: number[];
         params: Token[];
         body: Expr;
+        localCount: number;
       }
     >
   | ADT<'Error'>;
 
 export type Stmt =
+  | ADT<'Program', [Stmt[]]>
   | ADT<'Expr', [Expr]>
   | ADT<'Error'>
   | ADT<'MutDecl', [Token, Expr]>
   | ADT<'ResolvedMutDecl', { token: Token; id: number; expr: Expr }>;
 
-export type Program = Stmt[];
+export type Program = ADT<'Program', [Stmt[]]>;
 
 type ASTNode = Expr | Stmt;
 

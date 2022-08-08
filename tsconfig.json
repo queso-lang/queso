@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "target": "es2017",
+    "isolatedModules": true,
+    "target": "ES2017",
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,
-    "strict": true
+    "strict": true,
   },
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*", "src/runtime"]
 }

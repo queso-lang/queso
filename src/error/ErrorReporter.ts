@@ -1,4 +1,4 @@
-import { PositionRange } from '../utils';
+import { PositionRange } from '../utils.js';
 
 const strSplice = (str: String, idx: number, inStr: String) =>
   str.slice(0, idx) + inStr + str.slice(idx);
