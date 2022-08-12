@@ -33,13 +33,14 @@ export type Expr =
   | ADT<'Error'>;
 
 export type Stmt =
-  | ADT<'Program', [Stmt[]]>
+  | Program
+  | ADT<'ResolvedProgram', {body: Stmt[], localCount: number;}>
   | ADT<'Expr', [Expr]>
   | ADT<'Error'>
   | ADT<'MutDecl', [Token, Expr]>
   | ADT<'ResolvedMutDecl', { token: Token; id: number; expr: Expr }>;
 
-export type Program = ADT<'Program', [Stmt[]]>;
+export type Program = ADT<'Program', {body: Stmt[]}>;
 
 type ASTNode = Expr | Stmt;
 

@@ -52,6 +52,11 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.0.0.tgz#67c7b724e1bcdd7a8821ce0d5ee184d3b4dd525a"
   integrity sha512-cHlGmko4gWLVI27cGJntjs/Sj8th9aYwplmZFwmmgYQQvL5NUsgVJG7OddLvNfLqYS31KFN0s3qlaD9qCaxACA==
 
+"@wasmer/wasi@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@wasmer/wasi/-/wasi-1.0.2.tgz#77b638024199f82beaa92719b390aa1a562ea6e9"
+  integrity sha512-Y256k0Vjj9ZymIk8Cw1XDfuBYCOH9SZc2LjGk55vM+h6mhrKZkNvbR4pZeoXNdPWIu84luW0dULaAsLv5LA9NA==
+
 acorn-walk@^8.1.1:
   version "8.2.0"
   resolved "https://registry.yarnpkg.com/acorn-walk/-/acorn-walk-8.2.0.tgz#741210f2e2426454508853a2f44d0ab83b7f69c1"

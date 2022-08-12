@@ -9,6 +9,7 @@
     "outDir": "./dist",
     "incremental": true,
     "strict": true,
+    "noImplicitAny": false
   },
-  "include": ["./src/**/*", "src/runtime"]
+  "include": ["./src/**/*", "src/compiler/runtime"]
 }

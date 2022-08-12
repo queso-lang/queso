@@ -99,7 +99,7 @@ export class Resolver {
   };
 
   resolve = (program: Program) => {
-    return createASTStmt('Program', [this.resolveStmts(program[1][0])]);
+    return createASTStmt('ResolvedProgram', {body: this.resolveStmts(program[1].body), localCount: this.frame().env.locals.length});
   };
 
   private resolveStmts = (stmts: Stmt[]) => {

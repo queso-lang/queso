@@ -259,7 +259,7 @@ export class Parser {
       isFirst = false;
     }
 
-    return createASTStmt('Program', [stmts]) as Program;
+    return createASTStmt('Program', {body: stmts}) as Program;
   };
 
   private stmt = (isFirst: boolean): Stmt => {

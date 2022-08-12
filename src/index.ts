@@ -1,15 +1,16 @@
 // entry point
 
 import binaryen from 'binaryen';
-import { readFileSync } from 'fs';
-import { compile } from './compiler/compiler.js';
+import { fstat, readFileSync, writeFileSync } from 'fs';
+import { Compiler } from './compiler/compiler.js';
 import { ErrorReporter } from './error/ErrorReporter.js';
 import { Lexer } from './lexer/Lexer.js';
 import { TokenStream } from './lexer/TokenStream.js';
 import { Expr, Program, Stmt } from './parser/AST.js';
 import { Parser } from './parser/Parser.js';
 import { Resolver } from './resolver/Resolver.js';
-import { insertMemoryRuntime } from './runtime/memory.js';
+import { insertMemoryRuntime } from './compiler/runtime/memory.js';
+import { init, WASI } from '@wasmer/wasi';
 
 const fileContents = readFileSync('./test.queso', 'utf8');
 const errorReporter = new ErrorReporter(fileContents);
@@ -20,8 +21,10 @@ const parser = new Parser(tokenStream, errorReporter);
 // console.dir(, { depth: null });
 
 const displayAST = (node: Expr | Stmt): string => {
-  if (node[0] === 'Program') {
-    return `${node[1][0].map((stmt) => displayAST(stmt)).join(';\n')}`;
+  if (node[0] === 'ResolvedProgram') {
+    return `
+    PROGRAM (${node[1].localCount} locals)
+    ${node[1].body.map((stmt) => displayAST(stmt)).join(';\n')}`;
   }
   if (node[0] === 'Expr') {
     return displayAST(node[1][0]);
@@ -115,12 +118,29 @@ console.log(displayAST(parsedResolved));
 
 const m = new binaryen.Module();
 
-insertMemoryRuntime(m);
-
 try {
-  const compiled = compile(m, parsedResolved);
-  console.log(m.emitText());
+  const compiler = new Compiler(m);
+  const compiled = compiler.compile(parsedResolved);
+
+  writeFileSync('out.wat', m.emitText(), { encoding: 'utf-8' });
+  // writeFileSync('out.wasm', m.emitBinary());
+
+  // await init();
+
+  // let wasi = new WASI({
+  //   env: {},
+  //   args: [],
+  // });
+
+  // const buf = readFileSync('out2.wasm');
+
+  // const _module = await WebAssembly.compile(new Uint8Array(buf));
+  // await wasi.instantiate(_module, {});
+
+  // let exitCode = wasi.start();
+  // let stdout = wasi.getStdoutString();
+
+  // console.log(`${stdout}(exit code: ${exitCode})`);
 } catch (err) {
   console.log(err);
 }
-
