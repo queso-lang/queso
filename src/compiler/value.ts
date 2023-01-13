@@ -9,6 +9,7 @@ export enum ValueType {
   Null = 0,
   Number,
   String,
+  Closure,
 }
 
 export const createValue = (

@@ -92,6 +92,7 @@ export const insertMemoryRuntime = (m: binaryen.Module) => {
     m.block(
       null,
       [
+        // allocate 12 bytes and store in the ptr
         m.local.set(
           2,
           m.call(
@@ -116,9 +117,45 @@ export const insertMemoryRuntime = (m: binaryen.Module) => {
           8,
           0,
           m.local.get(2, binaryen.i32),
-          m.local.get(0, binaryen.i32),
+          m.local.get(1, binaryen.i32),
         ),
-        m.return(m.local.get(0, binaryen.i32)),
+        m.return(m.local.get(2, binaryen.i32)),
+      ],
+      binaryen.i32,
+    ),
+  );
+  m.addFunction(
+    '~rt/createValue/closure',
+    binaryen.createType([
+      /* 0: func id */ binaryen.i32,
+      /* 1: env len */ binaryen.i32,
+    ]),
+    binaryen.i32,
+    [/* 2: val ptr */ binaryen.i32],
+    m.block(
+      null,
+      [
+        m.local.set(
+          2,
+          m.call(
+            '~rt/alloc',
+            [m.i32.add(m.i32.const(4 + 4), m.local.get(1, binaryen.i32))],
+            binaryen.i32,
+          ),
+        ),
+        m.i32.store(
+          0,
+          0,
+          m.local.get(2, binaryen.i32),
+          m.i32.const(ValueType.Closure),
+        ),
+        m.i32.store(
+          4,
+          0,
+          m.local.get(2, binaryen.i32),
+          m.local.get(1, binaryen.i32),
+        ),
+        m.return(m.local.get(2, binaryen.i32)),
       ],
       binaryen.i32,
     ),

@@ -23,8 +23,9 @@ const parser = new Parser(tokenStream, errorReporter);
 const displayAST = (node: Expr | Stmt): string => {
   if (node[0] === 'ResolvedProgram') {
     return `
-    PROGRAM (${node[1].localCount} locals)
-    ${node[1].body.map((stmt) => displayAST(stmt)).join(';\n')}`;
+      PROGRAM (${node[1].localCount} locals)
+      ${node[1].body.map((stmt) => displayAST(stmt)).join(';\n')}
+    `;
   }
   if (node[0] === 'Expr') {
     return displayAST(node[1][0]);
@@ -39,9 +40,9 @@ const displayAST = (node: Expr | Stmt): string => {
       ? `mut #${node[1].id}_${node[1].token.val}`
       : `mut #${node[1].id}_${node[1].token.val} = ${displayAST(node[1].expr)}`;
   }
-  if (node[0] === 'Access') {
-    return node[1][0].val;
-  }
+  // if (node[0] === 'Access') {
+  //   return node[1][0].val;
+  // }
   if (node[0] === 'ResolvedAccess') {
     if ('local' in node[1].resolution) {
       return `#${node[1].resolution.local}_${node[1].token.val}`;
@@ -69,9 +70,11 @@ const displayAST = (node: Expr | Stmt): string => {
     // console.log(node[1].captured);
     return `[${node[1].upvalues
       .map((x, i) => `^${i} = ${x.isLocal ? 'local ' : ''}${x.id}`)
-      .join(', ')}][${node[1].localCount} locals](${node[1].params
-      .map((x) => x.val)
-      .join(', ')}) -> ${displayAST(node[1].body)}`;
+      .join(', ')}][${node[1].localCount} locals][${node[1].captured.join(
+      ',',
+    )}](${node[1].params.map((x) => x.val).join(', ')}) -> ${displayAST(
+      node[1].body,
+    )}`;
   }
   if (node[0] === 'IfElse') {
     return `if ${displayAST(node[1][0])} then {${displayAST(
@@ -120,27 +123,30 @@ const m = new binaryen.Module();
 
 try {
   const compiler = new Compiler(m);
-  const compiled = compiler.compile(parsedResolved);
-
+  compiler.compile(parsedResolved);
+  console.log('compiled');
+  m.validate();
+  console.log('validated');
+  // console.log(compiler.data);
   writeFileSync('out.wat', m.emitText(), { encoding: 'utf-8' });
-  // writeFileSync('out.wasm', m.emitBinary());
+  writeFileSync('out.wasm', m.emitBinary(), { encoding: 'binary' });
 
-  // await init();
+  await init();
 
-  // let wasi = new WASI({
-  //   env: {},
-  //   args: [],
-  // });
+  let wasi = new WASI({
+    env: {},
+    args: [],
+  });
 
-  // const buf = readFileSync('out2.wasm');
+  // const buf = readFileSync('out.wasm');
 
-  // const _module = await WebAssembly.compile(new Uint8Array(buf));
-  // await wasi.instantiate(_module, {});
+  const _module = await WebAssembly.compile(new Uint8Array(m.emitBinary()));
+  await wasi.instantiate(_module, {});
 
-  // let exitCode = wasi.start();
-  // let stdout = wasi.getStdoutString();
+  let exitCode = wasi.start();
+  let stdout = wasi.getStdoutString();
 
-  // console.log(`${stdout}(exit code: ${exitCode})`);
+  console.log(`${stdout}(exit code: ${exitCode})`);
 } catch (err) {
   console.log(err);
 }

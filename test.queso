@@ -1,1 +1,10 @@
-mut a = `abc`
+mut x = -> (
+  mut a;
+  mut b;
+  -> (
+    mut c;
+    b;a;
+    c
+  )
+);
+x()

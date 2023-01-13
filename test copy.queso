@@ -1,0 +1,17 @@
+mut g;
+mut h;
+mut a;
+mut b;
+-> (
+  mut i;
+  mut c;
+  mut j;
+  a;
+  -> (
+    a;
+    b;
+    -> (
+      c
+    )
+  )
+)

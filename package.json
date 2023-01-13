@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@wasmer/wasi": "^1.0.2",
-    "binaryen": "^109.0.0",
+    "binaryen": "109",
     "ts-pattern": "^4.0.4"
   }
 }

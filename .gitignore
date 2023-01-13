@@ -5,5 +5,5 @@ dist
 dist-client
 dist-ssr
 *.local
-
+wabt
 yarn-error.log

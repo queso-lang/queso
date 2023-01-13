@@ -99,7 +99,10 @@ export class Resolver {
   };
 
   resolve = (program: Program) => {
-    return createASTStmt('ResolvedProgram', {body: this.resolveStmts(program[1].body), localCount: this.frame().env.locals.length});
+    return createASTStmt('ResolvedProgram', {
+      body: this.resolveStmts(program[1].body),
+      localCount: this.frame().env.locals.length,
+    });
   };
 
   private resolveStmts = (stmts: Stmt[]) => {
@@ -190,6 +193,12 @@ export class Resolver {
           body: resolvedBody,
           localCount,
         });
+      })
+      .with(['FnCall', P._], ([, [callee, args]]) => {
+        return createASTExpr('FnCall', [
+          this.resolveExpr(callee),
+          args.map(this.resolveExpr),
+        ]);
       })
       .otherwise((expr) => expr);
   };
